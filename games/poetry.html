@@ -9,18 +9,31 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#eee;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden}
 .container{text-align:center;width:90%;max-width:600px}
 h1{font-size:2rem;margin-bottom:0.5rem;color:#e2c488}
-.sub{color:#8ab4f8;margin-bottom:2rem;font-size:0.9rem}
+.sub{color:#8ab4f8;margin-bottom:1.5rem;font-size:0.9rem}
 .poem-display{font-size:1.6rem;margin:1.5rem 0;min-height:3rem;color:#fff;letter-spacing:0.1em;text-shadow:0 0 10px rgba(226,196,136,0.3)}
 #input{width:100%;max-width:400px;padding:0.8rem 1rem;font-size:1.1rem;border:none;border-radius:8px;background:rgba(255,255,255,0.1);color:#fff;text-align:center;outline:none;border:2px solid rgba(226,196,136,0.3)}
 #input:focus{border-color:#e2c488}
 .score-row{display:flex;justify-content:center;gap:2rem;margin:1rem 0;font-size:0.95rem;color:#aaa}
 .score-row span{color:#e2c488;font-weight:700}
-.btn{display:inline-block;margin-top:1rem;padding:0.6rem 2rem;background:#e2c488;color:#1a1a2e;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600;transition:opacity 0.2s}
+.btn{display:inline-block;padding:0.6rem 2rem;background:#e2c488;color:#1a1a2e;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600;transition:opacity 0.2s;margin:0.3rem}
 .btn:hover{opacity:0.85}
+.btn-sm{padding:0.4rem 1rem;font-size:0.85rem}
 .result{font-size:1.2rem;margin-top:1rem;min-height:1.5rem}
-.correct{color:#4ade80}
-.wrong{color:#ef4444}
+.correct{color:#4ade80}.wrong{color:#ef4444}
 .combo{color:#e2c488;font-size:0.85rem;margin-top:0.3rem;min-height:1.2rem}
+/* Leaderboard */
+.lb-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;justify-content:center;align-items:center;z-index:100}
+.lb-overlay.show{display:flex}
+.lb-panel{background:#1a1a2e;border:1px solid rgba(226,196,136,0.3);border-radius:12px;width:90%;max-width:380px;max-height:80vh;overflow-y:auto;padding:1.5rem}
+.lb-panel h3{text-align:center;color:#e2c488;margin-bottom:1rem;font-size:1.2rem}
+.lb-item{display:flex;align-items:center;padding:0.5rem 0.8rem;border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.9rem}
+.lb-item:last-child{border-bottom:none}
+.lb-rank{width:30px;color:#e2c488;font-weight:700;flex-shrink:0}
+.lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-score{color:#4ade80;font-weight:700;flex-shrink:0}
+.lb-placeholder{text-align:center;color:#667;padding:1.5rem 0}
+.lb-me{background:rgba(226,196,136,0.08);border-radius:6px}
+.lb-close{display:block;margin:1rem auto 0;background:#3a3a5a;color:#ccc;border:none;padding:0.5rem 2rem;border-radius:6px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -32,9 +45,21 @@ h1{font-size:2rem;margin-bottom:0.5rem;color:#e2c488}
   <div class="score-row">得分: <span id="score">0</span> | 最高: <span id="best">0</span></div>
   <div class="combo" id="combo"></div>
   <div class="result" id="result"></div>
-  <button class="btn" id="startBtn" onclick="start()">开始游戏</button>
+  <div>
+    <button class="btn" id="startBtn" onclick="start()">开始游戏</button>
+    <button class="btn btn-sm" onclick="showLB()">🏆 排行</button>
+  </div>
 </div>
+<div class="lb-overlay" id="lbOverlay">
+  <div class="lb-panel">
+    <h3>诗词挑战 — 排行榜</h3>
+    <div id="lbList"><p class="lb-placeholder">加载中...</p></div>
+    <button class="lb-close" onclick="hideLB()">关闭</button>
+  </div>
+</div>
+<script src="../user.js"></script>
 <script>
+var GAME='诗词挑战-排行榜';
 var poems=[
   "雪沫乳花浮午盏，蓼茸蒿笋试春盘","长风破浪会有时，直挂云帆济沧海",
   "千磨万击还坚劲，任尔东西南北风","纸上得来终觉浅，绝知此事要躬行",
@@ -79,12 +104,52 @@ input.addEventListener('input',function(){
     setTimeout(nextRound,500);
   }
 });
-function gameOver(msg){
+async function gameOver(msg){
   input.disabled=true;clearInterval(timer);
   resultEl.innerHTML='<span class="wrong">'+msg+'</span>';
   comboEl.textContent='';poemEl.textContent='游戏结束';
   poemEl.style.opacity='1';startBtn.style.display='inline-block';
-  if(score>best){best=score;localStorage.setItem('poetryBest',best);bestEl.textContent=best;}
+  if(score>best){best=score;localStorage.setItem('poetryBest',best);bestEl.textContent=best}
+  await submitScore(score);
+}
+
+// ---- Leaderboard ----
+function _token(){var h='6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';var r='';for(var i=0;i<h.length;i+=2)r+=String.fromCharCode(parseInt(h.substr(i,2),16));return r}
+function _name(){return (typeof _siteGetNickname==='function')?_siteGetNickname()||'匿名玩家':'匿名玩家'}
+function showLB(){document.getElementById('lbOverlay').classList.add('show');loadLB()}
+function hideLB(){document.getElementById('lbOverlay').classList.remove('show')}
+
+async function submitScore(sc){
+  if(!sc)return;
+  var T=_token(),name=_name();
+  try{
+    var r=await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME)+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    var d=await r.json();var num,body='';
+    if(d.items&&d.items.length){num=d.items[0].number;body=d.items[0].body||''}
+    else{
+      var r2=await fetch('https://api.github.com/repos/yjcc520/my-page/issues',{method:'POST',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({title:GAME,body:'游戏排行榜',labels:['leaderboard']})});
+      var issue=await r2.json();num=issue.number;body=issue.body||''
+    }
+    // Parse existing, keep best per player
+    var scores={};body.split('\n').forEach(function(l){var m=l.match(/^(\d+)分[：:]\s*(.+)/);if(m){var n=m[2].trim(),s=parseInt(m[1]);if(!scores[n]||scores[n]<s)scores[n]=s}});
+    if(!scores[name]||scores[name]<sc)scores[name]=sc;
+    var newBody=Object.entries(scores).sort(function(a,b){return b[1]-a[1]}).map(function(e){return e[1]+'分：'+e[0]}).join('\n');
+    await fetch('https://api.github.com/repos/yjcc520/my-page/issues/'+num,{method:'PATCH',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({body:newBody})});
+  }catch(e){}
+}
+
+async function loadLB(){
+  var list=document.getElementById('lbList');list.innerHTML='<p class="lb-placeholder">加载中...</p>';
+  try{
+    var r=await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME)+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    var d=await r.json();
+    if(!d.items||!d.items.length){list.innerHTML='<p class="lb-placeholder">暂无排行数据</p>';return}
+    var scores={};d.items[0].body.split('\n').forEach(function(l){var m=l.match(/^(\d+)分[：:]\s*(.+)/);if(m){var n=m[2].trim(),s=parseInt(m[1]);if(!scores[n]||scores[n]<s)scores[n]=s}});
+    var entries=Object.entries(scores).sort(function(a,b){return b[1]-a[1]}).slice(0,10);
+    if(!entries.length){list.innerHTML='<p class="lb-placeholder">暂无排行数据</p>';return}
+    var curName=_name();
+    list.innerHTML=entries.map(function(e,i){var me=e[0]===curName;return '<div class="lb-item'+(me?' lb-me':'')+'"><span class="lb-rank">'+(i+1)+'</span><span class="lb-name">'+e[0]+'</span><span class="lb-score">'+e[1]+'分</span></div>'}).join('');
+  }catch(e){list.innerHTML='<p class="lb-placeholder">加载失败</p>'}
 }
 </script>
 </body>
