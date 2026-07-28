@@ -15,6 +15,7 @@
                 <a href="index.html">首页</a>
                 <a href="blog.html">博客</a>
                 <a href="write.html" class="active">写文章</a>
+                <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
             </div>
         </div>
     </nav>
@@ -189,5 +190,6 @@
                 .replace(/^- (.+)/gm, '<li>$1</li>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>');
         }
     </script>
+    <script src="theme.js"></script>
 </body>
 </html>
