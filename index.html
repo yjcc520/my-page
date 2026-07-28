@@ -33,6 +33,7 @@
     </section>
 
     <div class="quote-marquee" id="qm1">
+        <span class="quote-label">所爱佳句</span>
         <div class="quote-track" id="qt1"></div>
     </div>
 
@@ -55,10 +56,6 @@
             </div>
         </div>
     </section>
-
-    <div class="quote-marquee" id="qm2">
-        <div class="quote-track" id="qt2"></div>
-    </div>
 
     <section id="skills" class="skills">
         <h2>技能 & 兴趣</h2>
@@ -93,8 +90,9 @@
         </div>
     </section>
 
-    <div class="quote-marquee" id="qm3">
-        <div class="quote-track" id="qt3"></div>
+    <div class="quote-marquee" id="qm2">
+        <span class="quote-label">所作拙句</span>
+        <div class="quote-track" id="qt2"></div>
     </div>
 
     <section id="contact" class="contact">
@@ -106,10 +104,6 @@
         <p class="thanks-note">致谢：感谢 DeepSeek 大模型，让一个连程序怎么运行都不知道的文科生也能做出个人网页。</p>
     </section>
 
-    <div class="quote-marquee" id="qm4">
-        <div class="quote-track" id="qt4"></div>
-    </div>
-
     <footer>
         <p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
         <p style="text-align:center;color:var(--text-light);font-size:0.85rem;margin-top:1rem;" id="visitCount">正在加载访问量...</p>
@@ -118,8 +112,8 @@
     <script src="theme.js"></script>
     <script src="stats.js"></script>
     <script>
-// ---- Quotes Pool ----
-var _quotes = [
+// ---- 所爱佳句 ----
+var _lovedQuotes = [
   "雪沫乳花浮午盏，蓼茸蒿笋试春盘","长风破浪会有时，直挂云帆济沧海",
   "千磨万击还坚劲，任尔东西南北风","纸上得来终觉浅，绝知此事要躬行",
   "不畏浮云遮望眼，自缘身在最高层","山重水复疑无路，柳暗花明又一村",
@@ -140,7 +134,7 @@ var _quotes = [
   "遍身罗绮者，不是养蚕人","我生待明日，万事成蹉跎",
   "凭君莫话封侯事，一将功成万骨枯","日啖荔枝三百颗，不辞长作岭南人",
   "解衣欲睡，月色入户，欣然起行","吾家洗砚池头树，朵朵花开淡墨痕",
-  "绿蚁新醅酒，红泥小火炉。晚来天欲雪，能饮一杯无","无丝竹之乱耳，无案牍之劳形",
+  "绿蚁新醅酒，红泥小火炉。晚来天欲雪，���饮一杯无","无丝竹之乱耳，无案牍之劳形",
   "相看两不厌，只有敬亭山","侯门一入深如海，从此萧郎是路人",
   "书生事业真堪笑，忍冻孤吟笔退尖","溪柴火软蛮毡暖，我与狸奴不出门",
   "三杯两盏淡酒，怎敌他、晚来风急","闻君有两意，故来相决绝",
@@ -156,6 +150,20 @@ var _quotes = [
   "问君能有几多愁，恰似一江春水向东流"
 ];
 
+// ---- 所作拙句 ----
+var _myQuotes = [
+  "马江火炙泪难干，黄海血激威海卫",
+  "枉集铁石求幻梦，壮士钢車破碉楼",
+  "清酒黄菊满鬼祠，留归王师洗扶桑",
+  "满堤水柳牵桃色，一池清漪捭鸟纹",
+  "莲动妩媚蛙声池，水淙清圆流萤皋",
+  "休伤落木摇空杪，雪漫勾花便喜冬",
+  "盈盈笑语替匏革，寂寂神音笑兴亡",
+  "古道名亭色，翠微烟雨风",
+  "兴亚重楼锁影幽，朱门碧沼旧耻留：伪朝功狗哭傀恨，抗联英骨笑虐亡",
+  "今日得尝扶余水，明朝须眺长白松"
+];
+
 function _shuffle(arr) {
   var a = arr.slice();
   for (var i = a.length - 1; i > 0; i--) {
@@ -165,20 +173,20 @@ function _shuffle(arr) {
   return a;
 }
 
-function _initQuotes() {
-  var shuffled = _shuffle(_quotes);
-  var n = 4; // number of marquees
-  var per = Math.floor(shuffled.length / n);
-  for (var m = 0; m < n; m++) {
-    var track = document.getElementById('qt' + (m + 1));
-    var chunk = shuffled.slice(m * per, m === n - 1 ? shuffled.length : (m + 1) * per);
-    var html = '';
-    for (var q = 0; q < chunk.length; q++) {
-      html += '<span class="quote-item">' + chunk[q] + '</span>';
-      html += '<span class="quote-sep">✦</span>';
-    }
-    track.innerHTML = html + html; // duplicate for seamless loop
+function _fillTrack(id, quotes) {
+  var shuffled = _shuffle(quotes);
+  var track = document.getElementById(id);
+  var html = '';
+  for (var q = 0; q < shuffled.length; q++) {
+    html += '<span class="quote-item">' + shuffled[q] + '</span>';
+    html += '<span class="quote-sep">✦</span>';
   }
+  track.innerHTML = html + html;
+}
+
+function _initQuotes() {
+  _fillTrack('qt1', _lovedQuotes);
+  _fillTrack('qt2', _myQuotes);
 }
 
 // ---- Leaderboard ----
