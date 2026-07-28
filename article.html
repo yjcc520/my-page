@@ -36,7 +36,24 @@
 
     <section class="comments-section" id="comments">
         <h2>评论</h2>
+
+        <!-- 评论输入框引导 -->
+        <div class="comment-form-box" id="commentFormBox" onclick="loadComments()">
+            <div class="comment-avatar-icon">💬</div>
+            <div class="comment-input-hint">写下你的评论...</div>
+            <span class="comment-login-tip">使用 GitHub 账号登录后评论</span>
+        </div>
+
+        <!-- 加载中 -->
+        <div class="comments-loading" id="commentsLoading" style="display:none">
+            <div class="loading-spinner"></div>
+            <p>正在加载评论区...</p>
+        </div>
+
+        <!-- utterances 容器 -->
         <div id="utterances-comments"></div>
+
+        <p class="comments-note">评论将自动创建一条 GitHub Issue，所有人可见</p>
     </section>
 
     <footer>
@@ -113,16 +130,31 @@
 
             updateLikeUI();
 
-            // 加载 utterances 评论
-            const commentsDiv = document.getElementById('utterances-comments');
-            const script = document.createElement('script');
-            script.src = 'https://utteranc.es/client.js';
-            script.setAttribute('repo', 'yjcc520/my-page');
-            script.setAttribute('issue-term', article.title);
-            script.setAttribute('theme', 'github-light');
-            script.setAttribute('crossorigin', 'anonymous');
-            script.async = true;
-            commentsDiv.appendChild(script);
+            // 评论区
+            let commentsLoaded = false;
+
+            window.loadComments = function() {
+                if (commentsLoaded) return;
+                commentsLoaded = true;
+
+                document.getElementById('commentFormBox').style.display = 'none';
+                document.getElementById('commentsLoading').style.display = 'block';
+
+                const commentsDiv = document.getElementById('utterances-comments');
+                const script = document.createElement('script');
+                script.src = 'https://utteranc.es/client.js';
+                script.setAttribute('repo', 'yjcc520/my-page');
+                script.setAttribute('issue-term', article.title);
+                script.setAttribute('theme', 'github-light');
+                script.setAttribute('crossorigin', 'anonymous');
+                script.async = true;
+
+                script.onload = function() {
+                    document.getElementById('commentsLoading').style.display = 'none';
+                };
+
+                commentsDiv.appendChild(script);
+            };
         }
     </script>
 </body>
