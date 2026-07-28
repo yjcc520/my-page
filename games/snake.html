@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>贪吃蛇</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0f1e;
+  display: flex; justify-content: center; align-items: center;
+  height: 100vh; overflow: hidden;
+  font-family: -apple-system, "Microsoft YaHei", sans-serif;
+}
+#container {
+  position: relative;
+  width: min(400px, 100vw);
+  height: min(600px, 100vh);
+  background: #111827;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(34,197,94,0.15);
+}
+canvas { display: block; }
+#hud {
+  position: absolute; top: 12px; left: 0; right: 0;
+  display: flex; justify-content: space-between;
+  padding: 0 16px; pointer-events: none; z-index: 10;
+}
+.hud-item {
+  background: rgba(0,0,0,0.6);
+  color: #fff; padding: 4px 12px; border-radius: 20px;
+  font-size: 14px; font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+.hud-label { color: #9ca3af; font-weight: 400; margin-right: 4px; }
+.hud-val { color: #4ade80; }
+#backBtn {
+  position: absolute; left: 10px; top: 6px; width: 36px; height: 36px;
+  border-radius: 50%; background: rgba(120,120,120,0.85); color: #f0f0f0;
+  font-size: 18px; border: none; cursor: pointer; z-index: 12;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none;
+}
+#lbBtn {
+  position: absolute; right: 58px; top: 6px; width: 36px; height: 36px;
+  border-radius: 50%; background: rgba(120,120,120,0.85); color: #f0f0f0;
+  font-size: 16px; border: none; cursor: pointer; z-index: 12;
+  display: flex; align-items: center; justify-content: center;
+}
+#overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.65);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 15; visibility: hidden;
+}
+#overlay h2 { color: #f87171; font-size: 28px; margin-bottom: 6px; }
+#overlay p { color: #d1d5db; font-size: 15px; margin-bottom: 18px; }
+#overlay button {
+  padding: 10px 32px; border: none; border-radius: 8px;
+  background: #4ade80; color: #000; font-size: 16px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+  transition: transform 0.1s;
+}
+#overlay button:active { transform: scale(0.95); }
+#startPane {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 14;
+}
+#startPane h1 { color: #4ade80; font-size: 36px; margin-bottom: 8px; text-shadow: 0 0 20px rgba(74,222,128,0.3); }
+#startPane .sub { color: #9ca3af; font-size: 14px; margin-bottom: 28px; }
+#startPane button {
+  padding: 12px 40px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  color: #000; font-size: 18px; font-weight: 700; cursor: pointer;
+  font-family: inherit; box-shadow: 0 4px 20px rgba(74,222,128,0.3);
+  transition: transform 0.15s;
+}
+#startPane button:active { transform: scale(0.95); }
+.controls-hint {
+  color: #6b7280; font-size: 12px; margin-top: 20px; text-align: center;
+}
+.controls-hint kbd {
+  display: inline-block; background: #1f2937; color: #d1d5db;
+  padding: 2px 6px; border-radius: 4px; font-size: 11px;
+  margin: 0 2px; border: 1px solid #374151;
+}
+/* Leaderboard Panel */
+#lbPanel { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.82); z-index: 22; justify-content: center; align-items: center; }
+#lbPanel.active { display: flex; }
+#lbBox { width: min(300px, 85vw); background: rgba(15,20,35,0.98); border: 1px solid rgba(74,222,128,0.25); border-radius: 16px; padding: 18px; color: #fff; text-align: center; max-height: 70vh; overflow-y: auto; }
+#lbBox h2 { margin: 0 0 12px; font-size: 18px; }
+.lb-row { display: flex; align-items: center; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; background: rgba(255,255,255,0.04); }
+.lb-row.lb-me { background: rgba(74,222,128,0.15); border: 1px solid rgba(74,222,128,0.3); }
+.lb-rank { width: 28px; font-size: 16px; }
+.lb-name { flex: 1; text-align: left; font-size: 14px; padding: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-score { font-weight: bold; font-size: 15px; color: #4ade80; }
+#lbClose { display: block; margin: 12px auto 0; padding: 6px 24px; background: rgba(255,255,255,0.08); color: #ccc; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="container">
+  <a id="backBtn" href="../games.html" title="返回">←</a>
+  <button id="lbBtn" title="排行榜">🏆</button>
+  <div id="hud">
+    <div class="hud-item"><span class="hud-label">🐍</span><span class="hud-val" id="scoreVal">0</span></div>
+    <div class="hud-item"><span class="hud-label">🏆</span><span class="hud-val" id="bestVal">0</span></div>
+  </div>
+  <canvas id="c"></canvas>
+
+  <div id="startPane">
+    <h1>🐍 贪吃蛇</h1>
+    <p class="sub">经典街机，永不过时</p>
+    <button id="startBtn">开始游戏</button>
+    <div class="controls-hint">
+      <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 或 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><br>移动端滑动操控
+    </div>
+  </div>
+
+  <div id="overlay">
+    <h2>游戏结束</h2>
+    <p id="endMsg">得分：0</p>
+    <button id="restartBtn">再来一局</button>
+  </div>
+
+  <div id="lbPanel">
+    <div id="lbBox">
+      <h2>🏆 排行榜</h2>
+      <div id="lbList"><p style="color:#889;text-align:center">加载中...</p></div>
+      <button id="lbClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script src="../user.js"></script>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const container = document.getElementById('container');
+
+const COLS = 20, ROWS = 30;
+let cellW, cellH;
+function resize() {
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  cellW = Math.floor(w / COLS);
+  cellH = Math.floor(h / ROWS);
+  c.width = cellW * COLS;
+  c.height = cellH * ROWS;
+  c.style.position = 'absolute';
+  c.style.left = Math.floor((w - c.width) / 2) + 'px';
+  c.style.top = Math.floor((h - c.height) / 2) + 'px';
+}
+resize();
+window.addEventListener('resize', resize);
+
+const scoreEl = document.getElementById('scoreVal');
+const bestEl = document.getElementById('bestVal');
+const startPane = document.getElementById('startPane');
+const overlay = document.getElementById('overlay');
+const endMsg = document.getElementById('endMsg');
+const restartBtn = document.getElementById('restartBtn');
+const startBtn = document.getElementById('startBtn');
+
+let snake, food, dir, nextDir, score, best, running, speed, timer, particles;
+
+// Token
+function loadToken() {
+  var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
+  return h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
+}
+
+// Leaderboard
+let cloudBest = 0;
+async function fetchCloudBest() {
+  try {
+    var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+snake+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+    var d = await r.json();
+    if (!d.items || !d.items.length) return;
+    var num = d.items[0].number;
+    var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + num + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+    var comments = await r2.json();
+    var name = (typeof _siteGetNickname === 'function') ? _siteGetNickname() : '';
+    for (var i = 0; i < comments.length; i++) {
+      var m = comments[i].body.match(/^(\d+)分[：:]\s*(.+)/);
+      if (m && m[2].trim() === name) { cloudBest = Math.max(cloudBest, parseInt(m[1])); }
+    }
+    best = Math.max(best, cloudBest);
+    bestEl.textContent = best;
+  } catch(e) {}
+}
+
+async function postCloudScore() {
+  var name = (typeof _siteGetNickname === 'function') ? _siteGetNickname() : '';
+  if (!name) name = '匿名玩家';
+  if (!best) return;
+  try {
+    var T = loadToken();
+    var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+snake+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+    var d = await r.json();
+    var num;
+    if (d.items && d.items.length) {
+      num = d.items[0].number;
+    } else {
+      var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues', {
+        method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+        body: JSON.stringify({ title: 'snake-排行榜', body: '贪吃蛇排行榜', labels: ['leaderboard'] })
+      });
+      var issue = await r2.json();
+      num = issue.number;
+    }
+    await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + num + '/comments', {
+      method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+      body: JSON.stringify({ body: best + '分：' + name })
+    });
+  } catch(e) {}
+}
+
+async function loadLeaderboard() {
+  var list = document.getElementById('lbList');
+  list.innerHTML = '<p style="color:#889;text-align:center">加载中...</p>';
+  try {
+    var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+snake+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+    var d = await r.json();
+    if (!d.items || !d.items.length) { list.innerHTML = '<p style="color:#889;text-align:center">暂无排行</p>'; return; }
+    var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + d.items[0].number + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+    var comments = await r2.json();
+    var scores = [];
+    var curName = (typeof _siteGetNickname === 'function') ? _siteGetNickname() : '';
+    comments.forEach(function(c, idx) {
+      var m = c.body.match(/^(\d+)分[：:]\s*(.+)/);
+      if (m) scores.push({ score: parseInt(m[1]), name: m[2].trim(), idx: idx });
+    });
+    scores.sort(function(a, b) { return b.score - a.score; });
+    // Deduplicate by name, keep highest
+    var seen = {}, uniq = [];
+    scores.forEach(function(s) {
+      if (!seen[s.name] || seen[s.name] < s.score) {
+        if (seen[s.name]) {
+          uniq = uniq.filter(function(u) { return u.name !== s.name; });
+        }
+        seen[s.name] = s.score;
+        uniq.push(s);
+      }
+    });
+    uniq.sort(function(a, b) { return b.score - a.score; });
+    var top10 = uniq.slice(0, 10);
+    if (top10.length === 0) { list.innerHTML = '<p style="color:#889;text-align:center">暂无排行</p>'; return; }
+    var html = '';
+    top10.forEach(function(s, i) {
+      var isMe = curName && s.name === curName;
+      html += '<div class="lb-row' + (isMe ? ' lb-me' : '') + '">';
+      html += '<span class="lb-rank">' + (i+1) + '</span>';
+      html += '<span class="lb-name">' + s.name + '</span>';
+      html += '<span class="lb-score">' + s.score + '分</span>';
+      html += '</div>';
+    });
+    list.innerHTML = html;
+  } catch(e) { list.innerHTML = '<p style="color:#e53e3e;text-align:center">加载失败</p>'; }
+}
+
+// Particles
+function createParticles(x, y, color) {
+  for (var i = 0; i < 8; i++) {
+    var angle = Math.random() * Math.PI * 2;
+    var speed = 1 + Math.random() * 2;
+    particles.push({
+      x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+      life: 1, color: color
+    });
+  }
+}
+
+// Game
+function initGame() {
+  var startX = Math.floor(COLS / 2);
+  var startY = Math.floor(ROWS / 2);
+  snake = [
+    { x: startX, y: startY },
+    { x: startX - 1, y: startY },
+    { x: startX - 2, y: startY }
+  ];
+  dir = { x: 1, y: 0 };
+  nextDir = { x: 1, y: 0 };
+  score = 0;
+  speed = 120;
+  particles = [];
+  placeFood();
+  scoreEl.textContent = '0';
+  bestEl.textContent = best;
+}
+
+function placeFood() {
+  var occupied = {};
+  snake.forEach(function(s) { occupied[s.x + ',' + s.y] = true; });
+  var free = [];
+  for (var x = 0; x < COLS; x++)
+    for (var y = 0; y < ROWS; y++)
+      if (!occupied[x + ',' + y]) free.push({ x: x, y: y });
+  if (free.length === 0) return;
+  food = free[Math.floor(Math.random() * free.length)];
+}
+
+function gameOver() {
+  running = false;
+  clearInterval(timer);
+  var finalScore = score;
+  if (finalScore > best) {
+    best = finalScore;
+    bestEl.textContent = best;
+    postCloudScore();
+  }
+  endMsg.textContent = '得分：' + finalScore + (finalScore >= best ? ' 🎉新纪录！' : '');
+  overlay.style.visibility = 'visible';
+}
+
+function tick() {
+  dir = { x: nextDir.x, y: nextDir.y };
+  var head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+  // Wrap around
+  if (head.x < 0) head.x = COLS - 1;
+  if (head.x >= COLS) head.x = 0;
+  if (head.y < 0) head.y = ROWS - 1;
+  if (head.y >= ROWS) head.y = 0;
+
+  // Self collision (skip tail which will move)
+  for (var i = 0; i < snake.length - 1; i++) {
+    if (snake[i].x === head.x && snake[i].y === head.y) {
+      // Hit self
+      gameOver();
+      return;
+    }
+  }
+
+  snake.unshift(head);
+  var ate = false;
+  if (head.x === food.x && head.y === food.y) {
+    score += 10;
+    scoreEl.textContent = score;
+    ate = true;
+    placeFood();
+    createParticles(food.x * cellW + cellW/2, food.y * cellH + cellH/2, '#4ade80');
+    if (speed > 50) speed -= 2;
+    clearInterval(timer);
+    timer = setInterval(tick, speed);
+  } else {
+    snake.pop();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, c.width, c.height);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 0.5;
+  for (var x = 0; x < COLS; x++) {
+    ctx.beginPath(); ctx.moveTo(x * cellW, 0); ctx.lineTo(x * cellW, c.height); ctx.stroke();
+  }
+  for (var y = 0; y < ROWS; y++) {
+    ctx.beginPath(); ctx.moveTo(0, y * cellH); ctx.lineTo(c.width, y * cellH); ctx.stroke();
+  }
+
+  // Food with glow
+  if (food) {
+    var fx = food.x * cellW + cellW / 2, fy = food.y * cellH + cellH / 2, fr = Math.min(cellW, cellH) / 2 - 1;
+    // glow
+    ctx.save();
+    var glow = ctx.createRadialGradient(fx, fy, fr * 0.2, fx, fy, fr * 1.8);
+    glow.addColorStop(0, 'rgba(244,63,94,0.5)');
+    glow.addColorStop(1, 'rgba(244,63,94,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(fx - fr * 2, fy - fr * 2, fr * 4, fr * 4);
+    ctx.restore();
+
+    // food circle
+    ctx.beginPath();
+    ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+    ctx.fillStyle = '#f43f5e';
+    ctx.fill();
+    ctx.strokeStyle = '#fda4af';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // pulse
+    var pulse = Math.sin(Date.now() / 200) * 0.15 + 0.85;
+    ctx.beginPath();
+    ctx.arc(fx, fy, fr * pulse, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(244,63,94,' + (0.3 * pulse) + ')';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Snake
+  snake.forEach(function(seg, i) {
+    var sx = seg.x * cellW, sy = seg.y * cellH;
+    var r = 3; // corner radius
+    var pad = 1;
+
+    // body color gradient
+    var t = i / Math.max(1, snake.length - 1);
+    var g = Math.round(120 + 100 * (1 - t));
+    var b = Math.round(255 - 100 * t);
+    ctx.fillStyle = 'rgb(34,' + g + ',' + b + ')';
+
+    // rounded rect
+    ctx.beginPath();
+    ctx.moveTo(sx + pad + r, sy + pad);
+    ctx.lineTo(sx + cellW - pad - r, sy + pad);
+    ctx.arcTo(sx + cellW - pad, sy + pad, sx + cellW - pad, sy + pad + r, r);
+    ctx.lineTo(sx + cellW - pad, sy + cellH - pad - r);
+    ctx.arcTo(sx + cellW - pad, sy + cellH - pad, sx + cellW - pad - r, sy + cellH - pad, r);
+    ctx.lineTo(sx + pad + r, sy + cellH - pad);
+    ctx.arcTo(sx + pad, sy + cellH - pad, sx + pad, sy + cellH - pad - r, r);
+    ctx.lineTo(sx + pad, sy + pad + r);
+    ctx.arcTo(sx + pad, sy + pad, sx + pad + r, sy + pad, r);
+    ctx.fill();
+
+    if (i === 0) {
+      // Head eyes
+      var eyeR = Math.max(2, cellW * 0.18);
+      var cx = sx + cellW / 2, cy = sy + cellH / 2;
+      var ex1, ey1, ex2, ey2;
+      if (dir.x === 1)      { ex1 = cx + cellW*0.2; ey1 = cy - cellH*0.15; ex2 = cx + cellW*0.2; ey2 = cy + cellH*0.15; }
+      else if (dir.x === -1) { ex1 = cx - cellW*0.2; ey1 = cy - cellH*0.15; ex2 = cx - cellW*0.2; ey2 = cy + cellH*0.15; }
+      else if (dir.y === -1) { ex1 = cx - cellW*0.15; ey1 = cy - cellH*0.2; ex2 = cx + cellW*0.15; ey2 = cy - cellH*0.2; }
+      else                  { ex1 = cx - cellW*0.15; ey1 = cy + cellH*0.2; ex2 = cx + cellW*0.15; ey2 = cy + cellH*0.2; }
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(ex1, ey1, eyeR, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex2, ey2, eyeR, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.arc(ex1, ey1, eyeR*0.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex2, ey2, eyeR*0.5, 0, Math.PI*2); ctx.fill();
+    }
+  });
+
+  // Particles
+  for (var i = particles.length - 1; i >= 0; i--) {
+    var p = particles[i];
+    p.x += p.vx; p.y += p.vy;
+    p.life -= 0.04;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    ctx.fillStyle = p.color.replace(')', ',' + p.life + ')').replace('rgb', 'rgba');
+    ctx.beginPath(); ctx.arc(p.x, p.y, 2.5 * p.life, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function gameLoop() {
+  if (!running) return;
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  initGame();
+  running = true;
+  startPane.style.display = 'none';
+  overlay.style.visibility = 'hidden';
+  timer = setInterval(tick, speed);
+  gameLoop();
+}
+
+// Controls
+function setDir(dx, dy) {
+  if (!running) return;
+  if (dx !== 0 && dir.x === -dx) return;
+  if (dy !== 0 && dir.y === -dy) return;
+  if (dx === 0 && dy === 0) return;
+  nextDir = { x: dx, y: dy };
+}
+
+document.addEventListener('keydown', function(e) {
+  switch(e.key) {
+    case 'ArrowUp': case 'w': case 'W': setDir(0, -1); e.preventDefault(); break;
+    case 'ArrowDown': case 's': case 'S': setDir(0, 1); e.preventDefault(); break;
+    case 'ArrowLeft': case 'a': case 'A': setDir(-1, 0); e.preventDefault(); break;
+    case 'ArrowRight': case 'd': case 'D': setDir(1, 0); e.preventDefault(); break;
+  }
+});
+
+// Touch swipe
+let touchStartX = 0, touchStartY = 0;
+c.addEventListener('touchstart', function(e) {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  e.preventDefault();
+});
+c.addEventListener('touchmove', function(e) { e.preventDefault(); });
+c.addEventListener('touchend', function(e) {
+  if (!running) return;
+  var dx = (e.changedTouches[0] || e.touches[0]).clientX - touchStartX;
+  var dy = (e.changedTouches[0] || e.touches[0]).clientY - touchStartY;
+  if (Math.abs(dx) < 15 && Math.abs(dy) < 15) return;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    setDir(dx > 0 ? 1 : -1, 0);
+  } else {
+    setDir(0, dy > 0 ? 1 : -1);
+  }
+});
+
+// Buttons
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', startGame);
+
+// Leaderboard
+document.getElementById('lbBtn').addEventListener('click', function() {
+  document.getElementById('lbPanel').classList.add('active');
+  loadLeaderboard();
+});
+document.getElementById('lbClose').addEventListener('click', function() {
+  document.getElementById('lbPanel').classList.remove('active');
+});
+
+// Init
+best = parseInt(localStorage.getItem('snake_best') || '0');
+scoreEl.textContent = '0';
+bestEl.textContent = best;
+fetchCloudBest();
+
+// Save best locally
+var obs = new MutationObserver(function() {
+  localStorage.setItem('snake_best', best);
+});
+obs.observe(bestEl, { childList: true, characterData: true, subtree: true });
+
+// Initial draw to show empty grid
+initGame();
+running = false;
+draw();
+</script>
+</body>
+</html>
