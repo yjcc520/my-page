@@ -641,6 +641,16 @@ footer {
 }
 
 /* 评论列表 */
+.comment-pending {
+    opacity: 0.6;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 0.6; transform: translateY(0); }
+}
+
 .comment-item {
     background: var(--bg);
     border: 1px solid var(--border);
