@@ -11,7 +11,7 @@
   var player = document.createElement('div');
   player.id = 'musicPlayer';
   player.style.cssText = 'display:none;position:fixed;bottom:72px;left:20px;z-index:999;background:var(--bg-alt);border:1px solid var(--border);border-radius:12px;padding:8px;box-shadow:0 8px 32px rgba(0,0,0,0.2);';
-  player.innerHTML = '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="280" height="86" src="https://music.163.com/outchain/player?type=0&id=814265067&auto=0&height=90"></iframe>';
+  player.innerHTML = '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="280" height="86" src="https://music.163.com/outchain/player?type=2&id=552649225&auto=0&height=66"></iframe>';
 
   btn.onclick = function() {
     var v = player.style.display === 'none' ? 'block' : 'none';
