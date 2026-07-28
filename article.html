@@ -209,21 +209,32 @@
                 btn.textContent = '发表评论';
             };
 
+            function parseComment(c) {
+                var match = (c.body || '').match(/^\*\*(.+?)\*\*[：:]\s*([\s\S]*)$/);
+                return {
+                    name: match ? match[1] : (c.user ? c.user.login : '匿名'),
+                    body: match ? match[2] : (c.body || ''),
+                    time: c.created_at,
+                    pending: c.pending || false
+                };
+            }
+
             function prependComment(c) {
-                const el = document.createElement('div');
-                el.className = 'comment-item' + (c.pending ? ' comment-pending' : '');
+                var p = parseComment(c);
+                var el = document.createElement('div');
+                el.className = 'comment-item' + (p.pending ? ' comment-pending' : '');
                 el.id = 'c-' + c.id;
                 el.innerHTML = `
                     <div class="comment-header">
-                        <img class="comment-avatar" src="${c.user.avatar_url || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 36 36%22><rect fill=%22%23e2e8f0%22 width=%2236%22 height=%2236%22 rx=%2218%22/></svg>'}" alt="" width="36" height="36">
+                        <div class="comment-avatar-icon">${p.name[0].toUpperCase()}</div>
                         <div>
-                            <span class="comment-author-name">${escapeHtml(c.user.login)}</span>
-                            <span class="comment-time">${c.pending ? '发送中...' : new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
+                            <span class="comment-author-name">${escapeHtml(p.name)}</span>
+                            <span class="comment-time">${p.pending ? '发送中...' : new Date(p.time).toLocaleDateString('zh-CN')}</span>
                         </div>
                     </div>
-                    <div class="comment-body">${formatCommentBody(c.body)}</div>
+                    <div class="comment-body">${formatCommentBody(p.body)}</div>
                 `;
-                const list = document.getElementById('comments-list');
+                var list = document.getElementById('comments-list');
                 if (list.firstChild) {
                     list.insertBefore(el, list.firstChild);
                 } else {
@@ -253,20 +264,17 @@
                         listEl.innerHTML = '<p class="comments-empty">暂无评论，来做第一个评论的人吧 👇</p>';
                     } else {
                         listEl.innerHTML = comments.map(c => {
-                            // 从评论内容解析昵称和正文
-                            const match = c.body.match(/^\*\*(.+?)\*\*[：:]\s*([\s\S]*)$/);
-                            const displayName = match ? match[1] : c.user.login;
-                            const displayBody = match ? match[2] : c.body;
+                            var p = parseComment(c);
                             return `
                                 <div class="comment-item">
                                     <div class="comment-header">
-                                        <img class="comment-avatar" src="${c.user.avatar_url}" alt="" width="36" height="36">
+                                        <div class="comment-avatar-icon">${p.name[0].toUpperCase()}</div>
                                         <div>
-                                            <span class="comment-author-name">${escapeHtml(displayName)}</span>
-                                            <span class="comment-time">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
+                                            <span class="comment-author-name">${escapeHtml(p.name)}</span>
+                                            <span class="comment-time">${new Date(p.time).toLocaleDateString('zh-CN')}</span>
                                         </div>
                                     </div>
-                                    <div class="comment-body">${formatCommentBody(displayBody)}</div>
+                                    <div class="comment-body">${formatCommentBody(p.body)}</div>
                                 </div>
                             `;
                         }).join('');
