@@ -485,6 +485,21 @@ footer {
     margin-bottom: 0.5rem;
 }
 
+.article-del-btn {
+    float: right;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    margin-top: -2rem;
+}
+
+.article-del-btn:hover { opacity: 1; color: #e53e3e; border-color: #e53e3e; }
+
 .article-header time {
     color: var(--text-light);
     font-size: 0.95rem;
