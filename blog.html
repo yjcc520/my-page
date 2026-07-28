@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="蔡梓涵的博客">
+    <title>博客 | 蔡梓涵</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a href="index.html" class="logo">Zihan</a>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="index.html#about">关于我</a>
+                <a href="blog.html" class="active">博客</a>
+                <a href="index.html#contact">联系</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="blog-page">
+        <div class="blog-header">
+            <h1>博客</h1>
+            <p>记录思考，分享成长</p>
+        </div>
+        <div class="blog-list" id="blogList">
+            <!-- JS 动态生成 -->
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
+    </footer>
+
+    <script src="blog-data.js"></script>
+    <script>
+        const list = document.getElementById('blogList');
+        articles.forEach(a => {
+            const card = document.createElement('article');
+            card.className = 'blog-card';
+            card.innerHTML = `
+                <div class="blog-card-tags">
+                    ${a.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+                </div>
+                <h2><a href="article.html?id=${a.id}">${a.title}</a></h2>
+                <time>${a.date}</time>
+                <p class="blog-card-summary">${a.summary}</p>
+                <a href="article.html?id=${a.id}" class="read-more">阅读全文 →</a>
+            `;
+            list.appendChild(card);
+        });
+    </script>
+</body>
+</html>
