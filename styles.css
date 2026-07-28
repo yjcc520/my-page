@@ -747,7 +747,12 @@ footer {
     overflow: hidden;
 }
 
-.avt-preview img {
+.avt-preview-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.avt-preview-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -760,6 +765,12 @@ footer {
     margin-bottom: 1rem;
 }
 
+.modal-avt-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
 .modal-avt-btn {
     padding: 0.35rem 0.9rem;
     border: 1px solid var(--border);
@@ -769,6 +780,7 @@ footer {
     font-family: inherit;
     font-size: 0.85rem;
     color: var(--text);
+    width: fit-content;
 }
 
 .modal-avt-del {
@@ -779,18 +791,56 @@ footer {
     cursor: pointer;
     font-family: inherit;
     font-size: 0.8rem;
-    margin-left: 0.25rem;
+    margin-left: 0;
+    width: fit-content;
 }
-    display: inline-flex;
+
+/* 裁剪对话框 */
+.crop-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 300;
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    animation: fadeInBg 0.2s ease;
+}
+
+.crop-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    max-width: 90vw;
+}
+
+.crop-box h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text);
+}
+
+.crop-area {
+    width: 280px;
+    height: 280px;
+    margin: 0 auto;
+    position: relative;
+    cursor: move;
     border-radius: 50%;
-    background: var(--primary);
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.8rem;
+    overflow: hidden;
+    background: #1a1a2e;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.crop-area canvas {
+    display: block;
+}
+
+.crop-btns {
+    margin-top: 1rem;
 }
 
 .user-name {
@@ -844,6 +894,10 @@ footer {
     max-width: 90vw;
     box-shadow: 0 20px 60px rgba(0,0,0,0.15);
     animation: slideUp 0.25s ease;
+}
+
+.reg-modal-box {
+    width: 420px;
 }
 
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
