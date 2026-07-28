@@ -69,18 +69,50 @@
         // 获取文章 ID
         const params = new URLSearchParams(window.location.search);
         const articleId = parseInt(params.get('id'));
+        const isIssue = params.get('type') === 'issue';
 
-        // 查找文章
-        const article = articles.find(a => a.id === articleId);
+        if (isIssue) {
+            // 从 GitHub Issue 加载文章
+            (async function() {
+                try {
+                    var resp = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + articleId, {
+                        headers: { 'Accept': 'application/vnd.github.v3+json' }
+                    });
+                    if (!resp.ok) throw new Error('not found');
+                    var issue = await resp.json();
+                    var body = issue.body || '';
+                    var content = body.replace(/\*\*作者\*\*[：:].+\n?/, '').replace(/\*\*标签\*\*[：:].+\n?/, '').trim();
+                    var tags = [];
+                    var tm = body.match(/\*\*标签\*\*[：:]\s*(.+)/);
+                    if (tm) tags = tm[1].split(/[,，]/).map(function(t) { return t.trim(); }).filter(Boolean);
+                    var author = '匿名';
+                    var am = body.match(/\*\*作者\*\*[：:]\s*(.+)/);
+                    if (am) author = am[1].trim();
 
-        if (!article) {
-            document.getElementById('articleContent').innerHTML = `
-                <div class="article-not-found">
-                    <h1>文章不存在</h1>
-                    <p><a href="blog.html">← 返回博客列表</a></p>
-                </div>
-            `;
+                    document.title = issue.title + ' | 蔡梓涵';
+                    document.getElementById('articleContent').innerHTML =
+                        '<header class="article-header"><div class="article-tags">' +
+                        tags.map(function(t) { return '<span class="tag">' + t + '</span>'; }).join('') +
+                        '</div><h1>' + issue.title + '</h1><time>' + issue.created_at.split('T')[0] + '</time></header>' +
+                        '<div class="article-body">' + formatMarkdown(content) + '</div>' +
+                        '<div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
+                    document.getElementById('interactions').style.display = 'none';
+                    initComments(articleId);
+                } catch (e) {
+                    document.getElementById('articleContent').innerHTML = '<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
+                }
+            })();
         } else {
+            // 来自 blog-data.js 的预置文章
+            const article = articles.find(a => a.id === articleId);
+            if (!article) {
+                document.getElementById('articleContent').innerHTML = `
+                    <div class="article-not-found">
+                        <h1>文章不存在</h1>
+                        <p><a href="blog.html">← 返回博客列表</a></p>
+                    </div>
+                `;
+            } else {
             // 设置标题
             document.title = `${article.title} | 蔡梓涵`;
             document.querySelector('meta[name="description"]')?.setAttribute('content', article.summary);
@@ -393,6 +425,40 @@
                 try {
                     var resp = await fetch('https://api.github.com/repos/' + REPO + '/issues/' + issueNumber + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
                     allComments = await resp.json();
+                } catch (e) {}
+                renderAll(allComments);
+            })();
+        }
+
+        function formatMarkdown(md) {
+            return ('<p>' + md
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/### (.+)/g, '<h4>$1</h4>')
+                .replace(/## (.+)/g, '<h3>$1</h3>')
+                .replace(/# (.+)/g, '<h2>$1</h2>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/^> (.+)/gm, '<blockquote>$1</blockquote>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>') + '</p>');
+        }
+
+        function initComments(id) {
+            var iterm = 'article-' + id;
+            ghToken = loadToken();
+            (async function() {
+                try {
+                    var sUrl = 'https://api.github.com/search/issues?q=repo:' + REPO + '+label:comment+' + iterm + '+in:title+type:issue&sort=created&order=desc';
+                    var sResp = await fetch(sUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+                    var sData = await sResp.json();
+                    if (sData.items && sData.items.length > 0) issueNumber = sData.items[0].number;
+                } catch (e) {}
+                loadingEl.style.display = 'none';
+                if (!issueNumber) { listEl.innerHTML = '<p class="comments-empty">暂无评论</p>'; listEl.style.display = 'block'; return; }
+                try {
+                    var r = await fetch('https://api.github.com/repos/' + REPO + '/issues/' + issueNumber + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+                    allComments = await r.json();
                 } catch (e) {}
                 renderAll(allComments);
             })();
