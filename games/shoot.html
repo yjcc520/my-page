@@ -88,6 +88,43 @@
       cursor: pointer;
       border-radius: 4px;
     }
+    /* 新手教程 */
+    #tutorial-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+    }
+    #tutorial-box {
+      background: rgba(20,25,40,0.97);
+      border: 1px solid rgba(111,222,255,0.3);
+      border-radius: 16px;
+      padding: 24px;
+      width: min(320px, 85vw);
+      text-align: center;
+    }
+    #tutorial-box h2 { margin: 0 0 12px; font-size: 20px; color: #4fc3f7; }
+    #tutorial-box .tut-icon { font-size: 48px; margin-bottom: 8px; }
+    #tutorial-box .tut-text { line-height: 1.7; margin-bottom: 6px; min-height: 60px; }
+    #tutorial-box .tut-tip { font-size: 13px; color: #8899aa; margin-top: 8px; }
+    #tutorial-box .tut-dots { margin: 14px 0 10px; }
+    #tutorial-box .tut-dots span {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.25); margin: 0 4px; transition: background 0.3s;
+    }
+    #tutorial-box .tut-dots span.on { background: #4fc3f7; }
+    #tutorial-box .tut-btns { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+    #tutorial-box .tut-btns button {
+      padding: 8px 20px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer;
+    }
+    .tut-btn-next { background: #4fc3f7; color: #000; font-weight: bold; }
+    .tut-btn-skip { background: rgba(255,255,255,0.1); color: #889; }
+    .tut-btn-start { background: #2ecc71; color: #000; font-weight: bold; font-size: 17px; padding: 10px 28px; }
     #controls {
       position: absolute;
       right: 12px;
@@ -220,6 +257,18 @@
         <h2>飞机皮肤</h2>
         <div id="skinList"></div>
         <button id="settingsClose">关闭</button>
+      </div>
+    </div>
+    <div id="tutorial-overlay">
+      <div id="tutorial-box">
+        <div class="tut-icon" id="tut-icon">🖱️</div>
+        <h2 id="tut-title">移动飞机</h2>
+        <div class="tut-text" id="tut-text">用鼠标或手指触摸来移动你的战机</div>
+        <div class="tut-dots" id="tut-dots"><span class="on"></span><span></span><span></span><span></span></div>
+        <div class="tut-btns">
+          <button class="tut-btn-skip" id="tutSkip" onclick="skipTutorial()">跳过</button>
+          <button class="tut-btn-next" id="tutNext" onclick="nextTutorial()">下一步</button>
+        </div>
       </div>
     </div>
   </div>
@@ -949,7 +998,64 @@
       overlay.style.pointerEvents = 'none';
       setTimeout(() => {
         overlay.style.pointerEvents = 'auto';
-        resetGame();
+        const tutorialSteps = [
+      { icon: '🖱️', title: '移动飞机', text: '用鼠标移动或手指触摸来操控战机，跟随你的指针飞行' },
+      { icon: '🔥', title: '开火攻击', text: '按住右下角「开火」按钮或空格键射击敌人「邓宸铭」' },
+      { icon: '💊', title: '道具系统', text: '西地那非：穿透射击 + 散射\n杜蕾斯：无敌护盾\n枸杞：回复 1 点生命' },
+      { icon: '🎯', title: '开始战斗', text: '消灭敌人得分，被击中会扣血。生命归零则游戏结束，准备好了吗？' }
+    ];
+    let tutStep = 0;
+    const tutOverlay = document.getElementById('tutorial-overlay');
+    const tutIcon = document.getElementById('tut-icon');
+    const tutTitle = document.getElementById('tut-title');
+    const tutText = document.getElementById('tut-text');
+    const tutDots = document.getElementById('tut-dots');
+    const tutNext = document.getElementById('tutNext');
+
+    function updateTutorial() {
+      if (tutStep >= tutorialSteps.length) {
+        tutOverlay.style.display = 'none';
+        localStorage.setItem('shoot_tutorial_done', '1');
+        return;
+      }
+      const s = tutorialSteps[tutStep];
+      tutIcon.textContent = s.icon;
+      tutTitle.textContent = s.title;
+      tutText.innerHTML = s.text.replace(/\n/g, '<br>');
+      tutDots.innerHTML = tutorialSteps.map((_, i) => '<span' + (i === tutStep ? ' class="on"' : '') + '></span>').join('');
+      if (tutStep === tutorialSteps.length - 1) {
+        tutNext.textContent = '开始游戏';
+        tutNext.className = 'tut-btn-start';
+        document.getElementById('tutSkip').style.display = 'none';
+      } else {
+        tutNext.textContent = '下一步';
+        tutNext.className = 'tut-btn-next';
+      }
+    }
+
+    window.nextTutorial = function() {
+      tutStep++;
+      if (tutStep >= tutorialSteps.length) {
+        tutOverlay.style.display = 'none';
+        localStorage.setItem('shoot_tutorial_done', '1');
+        hideOverlay();
+        return;
+      }
+      updateTutorial();
+    };
+
+    window.skipTutorial = function() {
+      tutOverlay.style.display = 'none';
+      localStorage.setItem('shoot_tutorial_done', '1');
+    };
+
+    if (localStorage.getItem('shoot_tutorial_done')) {
+      tutOverlay.style.display = 'none';
+    } else {
+      updateTutorial();
+    }
+
+    resetGame();
         hideOverlay();
       }, 1200);
     }
@@ -1112,7 +1218,64 @@
     });
 
     restartBtn.addEventListener('click', () => {
-      resetGame();
+      const tutorialSteps = [
+      { icon: '🖱️', title: '移动飞机', text: '用鼠标移动或手指触摸来操控战机，跟随你的指针飞行' },
+      { icon: '🔥', title: '开火攻击', text: '按住右下角「开火」按钮或空格键射击敌人「邓宸铭」' },
+      { icon: '💊', title: '道具系统', text: '西地那非：穿透射击 + 散射\n杜蕾斯：无敌护盾\n枸杞：回复 1 点生命' },
+      { icon: '🎯', title: '开始战斗', text: '消灭敌人得分，被击中会扣血。生命归零则游戏结束，准备好了吗？' }
+    ];
+    let tutStep = 0;
+    const tutOverlay = document.getElementById('tutorial-overlay');
+    const tutIcon = document.getElementById('tut-icon');
+    const tutTitle = document.getElementById('tut-title');
+    const tutText = document.getElementById('tut-text');
+    const tutDots = document.getElementById('tut-dots');
+    const tutNext = document.getElementById('tutNext');
+
+    function updateTutorial() {
+      if (tutStep >= tutorialSteps.length) {
+        tutOverlay.style.display = 'none';
+        localStorage.setItem('shoot_tutorial_done', '1');
+        return;
+      }
+      const s = tutorialSteps[tutStep];
+      tutIcon.textContent = s.icon;
+      tutTitle.textContent = s.title;
+      tutText.innerHTML = s.text.replace(/\n/g, '<br>');
+      tutDots.innerHTML = tutorialSteps.map((_, i) => '<span' + (i === tutStep ? ' class="on"' : '') + '></span>').join('');
+      if (tutStep === tutorialSteps.length - 1) {
+        tutNext.textContent = '开始游戏';
+        tutNext.className = 'tut-btn-start';
+        document.getElementById('tutSkip').style.display = 'none';
+      } else {
+        tutNext.textContent = '下一步';
+        tutNext.className = 'tut-btn-next';
+      }
+    }
+
+    window.nextTutorial = function() {
+      tutStep++;
+      if (tutStep >= tutorialSteps.length) {
+        tutOverlay.style.display = 'none';
+        localStorage.setItem('shoot_tutorial_done', '1');
+        hideOverlay();
+        return;
+      }
+      updateTutorial();
+    };
+
+    window.skipTutorial = function() {
+      tutOverlay.style.display = 'none';
+      localStorage.setItem('shoot_tutorial_done', '1');
+    };
+
+    if (localStorage.getItem('shoot_tutorial_done')) {
+      tutOverlay.style.display = 'none';
+    } else {
+      updateTutorial();
+    }
+
+    resetGame();
     });
 
     overlay.addEventListener('click', () => {
@@ -1146,6 +1309,63 @@
         applyPlayerSkin(skin);
       }
     });
+
+    const tutorialSteps = [
+      { icon: '🖱️', title: '移动飞机', text: '用鼠标移动或手指触摸来操控战机，跟随你的指针飞行' },
+      { icon: '🔥', title: '开火攻击', text: '按住右下角「开火」按钮或空格键射击敌人「邓宸铭」' },
+      { icon: '💊', title: '道具系统', text: '西地那非：穿透射击 + 散射\n杜蕾斯：无敌护盾\n枸杞：回复 1 点生命' },
+      { icon: '🎯', title: '开始战斗', text: '消灭敌人得分，被击中会扣血。生命归零则游戏结束，准备好了吗？' }
+    ];
+    let tutStep = 0;
+    const tutOverlay = document.getElementById('tutorial-overlay');
+    const tutIcon = document.getElementById('tut-icon');
+    const tutTitle = document.getElementById('tut-title');
+    const tutText = document.getElementById('tut-text');
+    const tutDots = document.getElementById('tut-dots');
+    const tutNext = document.getElementById('tutNext');
+
+    function updateTutorial() {
+      if (tutStep >= tutorialSteps.length) {
+        tutOverlay.style.display = 'none';
+        localStorage.setItem('shoot_tutorial_done', '1');
+        return;
+      }
+      const s = tutorialSteps[tutStep];
+      tutIcon.textContent = s.icon;
+      tutTitle.textContent = s.title;
+      tutText.innerHTML = s.text.replace(/\n/g, '<br>');
+      tutDots.innerHTML = tutorialSteps.map((_, i) => '<span' + (i === tutStep ? ' class="on"' : '') + '></span>').join('');
+      if (tutStep === tutorialSteps.length - 1) {
+        tutNext.textContent = '开始游戏';
+        tutNext.className = 'tut-btn-start';
+        document.getElementById('tutSkip').style.display = 'none';
+      } else {
+        tutNext.textContent = '下一步';
+        tutNext.className = 'tut-btn-next';
+      }
+    }
+
+    window.nextTutorial = function() {
+      tutStep++;
+      if (tutStep >= tutorialSteps.length) {
+        tutOverlay.style.display = 'none';
+        localStorage.setItem('shoot_tutorial_done', '1');
+        hideOverlay();
+        return;
+      }
+      updateTutorial();
+    };
+
+    window.skipTutorial = function() {
+      tutOverlay.style.display = 'none';
+      localStorage.setItem('shoot_tutorial_done', '1');
+    };
+
+    if (localStorage.getItem('shoot_tutorial_done')) {
+      tutOverlay.style.display = 'none';
+    } else {
+      updateTutorial();
+    }
 
     resetGame();
     loadSkin();
