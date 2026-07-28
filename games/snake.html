@@ -170,15 +170,12 @@ function loadToken() {
   return h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
 }
 
-// Leaderboard
+// Leaderboard — use pre-created issue #81
+const LB_ISSUE = 81;
 let cloudBest = 0;
 async function fetchCloudBest() {
   try {
-    var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+snake+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-    var d = await r.json();
-    if (!d.items || !d.items.length) return;
-    var num = d.items[0].number;
-    var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + num + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+    var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + LB_ISSUE + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
     var comments = await r2.json();
     var name = (typeof _siteGetNickname === 'function') ? _siteGetNickname() : '';
     for (var i = 0; i < comments.length; i++) {
@@ -187,7 +184,7 @@ async function fetchCloudBest() {
     }
     best = Math.max(best, cloudBest);
     bestEl.textContent = best;
-  } catch(e) {}
+  } catch(e) { console.error('fetchCloudBest', e); }
 }
 
 async function postCloudScore() {
@@ -196,56 +193,37 @@ async function postCloudScore() {
   if (!best) return;
   try {
     var T = loadToken();
-    var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+snake+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-    var d = await r.json();
-    var num;
-    if (d.items && d.items.length) {
-      num = d.items[0].number;
-    } else {
-      var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues', {
-        method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-        body: JSON.stringify({ title: 'snake-排行榜', body: '贪吃蛇排行榜', labels: ['leaderboard'] })
-      });
-      var issue = await r2.json();
-      num = issue.number;
-    }
-    await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + num + '/comments', {
+    await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + LB_ISSUE + '/comments', {
       method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
       body: JSON.stringify({ body: best + '分：' + name })
     });
-  } catch(e) {}
+  } catch(e) { console.error('postCloudScore', e); }
 }
 
 async function loadLeaderboard() {
   var list = document.getElementById('lbList');
   list.innerHTML = '<p style="color:#889;text-align:center">加载中...</p>';
   try {
-    var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+snake+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-    var d = await r.json();
-    if (!d.items || !d.items.length) { list.innerHTML = '<p style="color:#889;text-align:center">暂无排行</p>'; return; }
-    var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + d.items[0].number + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+    var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + LB_ISSUE + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
     var comments = await r2.json();
     var scores = [];
     var curName = (typeof _siteGetNickname === 'function') ? _siteGetNickname() : '';
-    comments.forEach(function(c, idx) {
+    comments.forEach(function(c) {
       var m = c.body.match(/^(\d+)分[：:]\s*(.+)/);
-      if (m) scores.push({ score: parseInt(m[1]), name: m[2].trim(), idx: idx });
+      if (m) scores.push({ score: parseInt(m[1]), name: m[2].trim() });
     });
-    scores.sort(function(a, b) { return b.score - a.score; });
     // Deduplicate by name, keep highest
     var seen = {}, uniq = [];
     scores.forEach(function(s) {
       if (!seen[s.name] || seen[s.name] < s.score) {
-        if (seen[s.name]) {
-          uniq = uniq.filter(function(u) { return u.name !== s.name; });
-        }
+        if (seen[s.name]) uniq = uniq.filter(function(u) { return u.name !== s.name; });
         seen[s.name] = s.score;
         uniq.push(s);
       }
     });
     uniq.sort(function(a, b) { return b.score - a.score; });
+    if (uniq.length === 0) { list.innerHTML = '<p style="color:#889;text-align:center">暂无排行，玩一局上榜吧</p>'; return; }
     var top10 = uniq.slice(0, 10);
-    if (top10.length === 0) { list.innerHTML = '<p style="color:#889;text-align:center">暂无排行</p>'; return; }
     var html = '';
     top10.forEach(function(s, i) {
       var isMe = curName && s.name === curName;
@@ -256,7 +234,7 @@ async function loadLeaderboard() {
       html += '</div>';
     });
     list.innerHTML = html;
-  } catch(e) { list.innerHTML = '<p style="color:#e53e3e;text-align:center">加载失败</p>'; }
+  } catch(e) { console.error('loadLeaderboard', e); list.innerHTML = '<p style="color:#e53e3e;text-align:center">加载失败，请刷新</p>'; }
 }
 
 // Particles
