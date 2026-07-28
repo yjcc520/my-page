@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>标签分类 | 蔡梓涵</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.tags-page { padding: 6rem 2rem 4rem; max-width: 900px; margin: 0 auto; min-height: 70vh; }
+.tags-header { text-align: center; margin-bottom: 2rem; }
+.tags-header h1 { font-size: 2rem; margin-bottom: 0.3rem; }
+.tags-header p { color: var(--text-light); }
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-bottom: 2.5rem; }
+.tag-pill {
+  display: inline-block; padding: 0.4rem 1rem; border-radius: 20px;
+  background: rgba(79,70,229,0.08); color: var(--primary);
+  font-size: 0.9rem; cursor: pointer; border: 1px solid transparent;
+  transition: all 0.15s; text-decoration: none; font-weight: 500;
+}
+.tag-pill:hover, .tag-pill.active { background: var(--primary); color: #fff; }
+.tag-pill .count { opacity: 0.6; font-size: 0.8rem; margin-left: 2px; }
+.tagged-articles { margin-top: 1rem; }
+.tagged-articles h2 { font-size: 1.3rem; margin-bottom: 1rem; color: var(--text); }
+.ta-card {
+  background: var(--bg-alt); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 0.75rem;
+  transition: box-shadow 0.15s;
+}
+.ta-card:hover { box-shadow: var(--shadow); }
+.ta-card h3 { font-size: 1rem; margin-bottom: 0.2rem; }
+.ta-card h3 a { color: var(--text); text-decoration: none; }
+.ta-card h3 a:hover { color: var(--primary); }
+.ta-card .ta-meta { font-size: 0.8rem; color: var(--text-light); }
+.ta-card .ta-summary { font-size: 0.85rem; color: var(--text-light); margin-top: 0.4rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Zihan</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="blog.html">博客</a>
+      <a href="tags.html" class="active">标签</a>
+      <a href="games.html">小游戏</a>
+      <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
+    </div>
+  </div>
+</nav>
+
+<div class="tags-page">
+  <div class="tags-header">
+    <h1>标签分类</h1>
+    <p>按主题浏览所有文章</p>
+  </div>
+  <div class="tag-cloud" id="tagCloud"></div>
+  <div class="tagged-articles" id="taggedArticles"></div>
+</div>
+
+<footer><p>&copy; 2026 蔡梓涵</p></footer>
+
+<script src="blog-data.js"></script>
+<script src="user.js"></script>
+<script src="theme.js"></script>
+<script>
+var allArticles = [];
+
+// Load preset
+articles.forEach(function(a) {
+  allArticles.push({ id: a.id, title: a.title, date: a.date, summary: a.summary, tags: a.tags, issueId: false });
+});
+
+// Load from issues
+(async function() {
+  try {
+    var resp = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:article+type:issue+state:open&sort=created&order=desc&per_page=50', {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    });
+    var data = await resp.json();
+    (data.items || []).forEach(function(issue) {
+      var body = issue.body || '';
+      var tagList = [];
+      var tm = body.match(/\*\*标签\*\*[：:]\s*(.+)/);
+      if (tm) tagList = tm[1].split(/[,，]/).map(function(t){return t.trim();}).filter(Boolean);
+      var content = body.replace(/\*\*作者\*\*[：:].+\n?/, '').replace(/\*\*标签\*\*[：:].+\n?/, '').trim();
+      var summary = content.replace(/[#*>\n`]/g, '').substring(0, 100) + '...';
+      allArticles.push({
+        id: issue.number, title: issue.title, date: issue.created_at.split('T')[0],
+        summary: summary, tags: tagList, issueId: true
+      });
+    });
+  } catch(e) {}
+  buildTagCloud();
+})();
+
+function buildTagCloud() {
+  var tagMap = {};
+  allArticles.forEach(function(a) {
+    (a.tags || []).forEach(function(t) {
+      if (!tagMap[t]) tagMap[t] = [];
+      tagMap[t].push(a);
+    });
+  });
+
+  var tags = Object.keys(tagMap).sort(function(a,b) { return tagMap[b].length - tagMap[a].length; });
+  var cloud = document.getElementById('tagCloud');
+  cloud.innerHTML = tags.map(function(t) {
+    return '<span class="tag-pill" onclick="showTag(\'' + t.replace(/'/g, "\\'") + '\')">' + t + '<span class="count">' + tagMap[t].length + '</span></span>';
+  }).join('');
+
+  if (tags.length > 0) showTag(tags[0]);
+}
+
+window.showTag = function(tag) {
+  // Highlight active
+  document.querySelectorAll('.tag-pill').forEach(function(p) {
+    p.classList.toggle('active', p.textContent.replace(/\d/g,'').trim() === tag);
+  });
+
+  var articles = allArticles.filter(function(a) {
+    return (a.tags || []).indexOf(tag) >= 0;
+  });
+
+  var html = '<h2>#' + tag + ' (' + articles.length + '篇)</h2>';
+  articles.forEach(function(a) {
+    html += '<div class="ta-card">';
+    html += '<h3><a href="article.html?id=' + a.id + (a.issueId ? '&type=issue' : '') + '">' + a.title + '</a></h3>';
+    html += '<div class="ta-meta">' + a.date + '</div>';
+    html += '<div class="ta-summary">' + a.summary + '</div>';
+    html += '</div>';
+  });
+  document.getElementById('taggedArticles').innerHTML = html;
+};
+</script>
+</body>
+</html>
