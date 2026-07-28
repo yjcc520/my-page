@@ -12,12 +12,17 @@
         <div class="nav-inner">
             <span class="logo">Zihan</span>
             <div class="nav-links">
-                <a href="index.html">首页</a>
-                <a href="index.html#about">关于我</a>
-                <a href="blog.html">博客</a>
-                <a href="tags.html">标签</a>
-                <a href="gallery.html">画廊</a>
-                <a href="games.html">小游戏</a>
+                <a href="index.html" data-i18n-text="nav_home">首页</a>
+                <a href="index.html#about" data-i18n-text="nav_about">关于我</a>
+                <a href="blog.html" data-i18n-text="nav_blog">博客</a>
+                <a href="tags.html" data-i18n-text="nav_tags">标签</a>
+                <a href="gallery.html" data-i18n-text="nav_gallery">画廊</a>
+                <a href="games.html" data-i18n-text="nav_games">小游戏</a>
+                <span class="lang-switcher">
+                    <button class="lang-btn" onclick="_setLang('zh')" id="langZh">中</button>
+                    <button class="lang-btn" onclick="_setLang('en')" id="langEn">EN</button>
+                    <button class="lang-btn" onclick="_setLang('ja')" id="langJa">日</button>
+                </span>
                 <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
             </div>
         </div>
@@ -25,9 +30,9 @@
 
     <section id="home" class="hero">
         <div class="hero-content">
-            <p class="greeting">你好，我是</p>
+            <p class="greeting" data-i18n-text="hero_greet">你好，我是</p>
             <h1>蔡梓涵</h1>
-            <p class="tagline">中国人</p>
+            <p class="tagline" data-i18n-text="hero_tagline">中国人</p>
             <p class="intro">门虽设，而常关</p>
         </div>
     </section>
@@ -38,27 +43,27 @@
     </div>
 
     <section id="about" class="about">
-        <h2>关于我</h2>
+        <h2 data-i18n-text="section_about">关于我</h2>
         <div class="about-card">
             <div class="info-grid">
                 <div class="info-item">
-                    <span class="label">📍 所在城市</span>
-                    <span class="value">北京 / 长沙</span>
+                    <span class="label" data-i18n-text="about_city">📍 所在城市</span>
+                    <span class="value" data-i18n-text="about_city_val">北京 / 长沙</span>
                 </div>
                 <div class="info-item">
-                    <span class="label">🎓 身份</span>
-                    <span class="value">中国人</span>
+                    <span class="label" data-i18n-text="about_id">🎓 身份</span>
+                    <span class="value" data-i18n-text="about_id_val">中国人</span>
                 </div>
                 <div class="info-item">
-                    <span class="label">💡 兴趣</span>
-                    <span class="value">吃喝、睡觉、养生、找乐子</span>
+                    <span class="label" data-i18n-text="about_interest">💡 兴趣</span>
+                    <span class="value" data-i18n-text="about_interest_val">吃喝、睡觉、养生、找乐子</span>
                 </div>
             </div>
         </div>
     </section>
 
     <section id="skills" class="skills">
-        <h2>技能 & 兴趣</h2>
+        <h2 data-i18n-text="section_skills">技能 & 兴趣</h2>
         <div class="skill-grid">
             <div class="skill-card">
                 <div class="skill-icon">🍲</div>
@@ -84,9 +89,9 @@
     </section>
 
     <section id="leaderboard" class="leaderboard-section">
-        <h2>游戏排行榜</h2>
+        <h2 data-i18n-text="section_lb">游戏排行榜</h2>
         <div class="lb-grid" id="lbGrid">
-            <p class="lb-placeholder">加载中…</p>
+            <p class="lb-placeholder" data-i18n-text="lb_loading">加载中…</p>
         </div>
     </section>
 
@@ -96,20 +101,21 @@
     </div>
 
     <section id="contact" class="contact">
-        <h2>联系我</h2>
-        <p class="contact-intro">欢迎交流，一起成长</p>
+        <h2 data-i18n-text="section_contact">联系我</h2>
+        <p class="contact-intro" data-i18n-text="contact_intro">欢迎交流，一起成长</p>
         <div class="contact-links">
             <a href="https://github.com/yjcc520" class="contact-btn" target="_blank">GitHub</a>
         </div>
-        <p class="thanks-note">致谢：感谢 DeepSeek 大模型，让一个连程序怎么运行都不知道的文科生也能做出个人网页。</p>
+        <p class="thanks-note" data-i18n="thanks">致谢：感谢 DeepSeek 大模型，让一个连程序怎么运行都不知道的文科生也能做出个人网页。</p>
     </section>
 
     <footer>
-        <p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
+        <p data-i18n-text="footer_copy">&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
         <p style="text-align:center;color:var(--text-light);font-size:0.85rem;margin-top:1rem;" id="visitCount">正在加载访问量...</p>
     </footer>
     <script src="user.js"></script>
     <script src="theme.js"></script>
+    <script src="lang.js"></script>
     <script src="stats.js"></script>
     <script>
 // ---- 所爱佳句 ----
@@ -190,17 +196,14 @@ function _initQuotes() {
 }
 
 // ---- Leaderboard ----
-async function _initLeaderboard() {
-  var grid = document.getElementById('lbGrid');
+var _lbData = null;
+async function _loadLBData() {
   try {
     var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+type:issue&per_page=10', {
       headers: { 'Accept': 'application/vnd.github.v3+json' }
     });
     var data = await r.json();
-    if (!data.items || !data.items.length) {
-      grid.innerHTML = '<p class="lb-placeholder">暂无排行数据，去<a href="games.html">小游戏</a>玩一局吧</p>';
-      return;
-    }
+    if (!data.items || !data.items.length) return null;
     var games = {};
     data.items.forEach(function(issue) {
       var gameName = issue.title.replace('-排行榜', '').trim();
@@ -224,31 +227,51 @@ async function _initLeaderboard() {
       var entries = Object.entries(scores).sort(function(a, b) { return lowerBetter ? a[1] - b[1] : b[1] - a[1]; }).slice(0, 5);
       if (entries.length) games[gameName] = { entries: entries, unit: unit };
     });
-    if (!Object.keys(games).length) {
-      grid.innerHTML = '<p class="lb-placeholder">暂无排行数据，去<a href="games.html">小游戏</a>玩一局吧</p>';
-      return;
-    }
-    var html = '';
-    Object.entries(games).forEach(function(g) {
-      html += '<div class="lb-card"><h3 class="lb-game-title">' + g[0] + '</h3><ol class="lb-list">';
-      g[1].entries.forEach(function(e, i) {
-        html += '<li class="lb-row"><span class="lb-rank">' + (i + 1) + '</span><span class="lb-name">' + e[0] + '</span><span class="lb-score">' + e[1] + g[1].unit + '</span></li>';
-      });
-      html += '</ol></div>';
-    });
-    grid.innerHTML = html;
-  } catch(e) {
-    grid.innerHTML = '<p class="lb-placeholder">排行榜加载失败</p>';
-  }
+    return Object.keys(games).length ? games : null;
+  } catch(e) { return null; }
 }
+
+function _renderLB(games) {
+  var grid = document.getElementById('lbGrid');
+  if (!games) { grid.innerHTML = '<p class="lb-placeholder">'+_t('lb_empty')+'</p>'; return; }
+  var html = '';
+  Object.entries(games).forEach(function(g) {
+    html += '<div class="lb-card"><h3 class="lb-game-title">' + g[0] + '</h3><ol class="lb-list">';
+    g[1].entries.forEach(function(e, i) {
+      html += '<li class="lb-row"><span class="lb-rank">' + (i + 1) + '</span><span class="lb-name">' + e[0] + '</span><span class="lb-score">' + e[1] + g[1].unit + '</span></li>';
+    });
+    html += '</ol></div>';
+  });
+  grid.innerHTML = html;
+}
+
+async function _initLeaderboard() {
+  var grid = document.getElementById('lbGrid');
+  grid.innerHTML = '<p class="lb-placeholder">'+_t('lb_loading')+'</p>';
+  _lbData = await _loadLBData();
+  _renderLB(_lbData);
+}
+
+window._refreshLeaderboard = function() {
+  if (_lbData !== undefined) _renderLB(_lbData);
+};
+
+var _visitHits = 0;
+window._refreshVisits = function() {
+  var el = document.getElementById('visitCount');
+  if (el && _visitHits) el.textContent = _t('footer_visits') + _visitHits + ' ';
+};
 
 _initQuotes();
 _initLeaderboard();
 _trackVisit();
 _fetchStats().then(function(s) {
-  document.getElementById('visitCount').textContent = '累计访问：'+s.hits+' 次';
+  _visitHits = s.hits;
+  document.getElementById('visitCount').textContent = _t('footer_visits')+s.hits+' ';
 });
-</script>
+
+// Apply i18n on load
+window._applyI18n();
     <script src="music.js"></script>
 </body>
 </html>
