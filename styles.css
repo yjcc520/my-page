@@ -284,17 +284,32 @@ nav {
 
 /* Quote Marquee */
 .quote-marquee {
-    overflow: hidden;
-    white-space: nowrap;
-    padding: 0.6rem 0;
+    display: flex;
+    align-items: center;
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
     background: var(--bg);
-    position: relative;
+    overflow: hidden;
+}
+.quote-label {
+    flex-shrink: 0;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+    color: #fff;
+    background: var(--primary);
+    border-radius: 3px;
+    margin-left: 1rem;
+    z-index: 2;
+    white-space: nowrap;
+    letter-spacing: 0.08em;
 }
 .quote-track {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 0.6rem 0.5rem 0.6rem 1rem;
     display: inline-block;
-    animation: marquee-scroll 45s linear infinite;
+    animation: marquee-scroll 80s linear infinite;
 }
 .quote-item {
     color: var(--text-light);
@@ -424,6 +439,11 @@ footer {
     }
     .quote-item {
         font-size: 0.82rem;
+    }
+    .quote-label {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        margin-left: 0.5rem;
     }
 }
 
