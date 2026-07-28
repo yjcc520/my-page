@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>诗词挑战 | 蔡梓涵</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#eee;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden}
+.container{text-align:center;width:90%;max-width:600px}
+h1{font-size:2rem;margin-bottom:0.5rem;color:#e2c488}
+.sub{color:#8ab4f8;margin-bottom:2rem;font-size:0.9rem}
+.poem-display{font-size:1.6rem;margin:1.5rem 0;min-height:3rem;color:#fff;letter-spacing:0.1em;text-shadow:0 0 10px rgba(226,196,136,0.3)}
+#input{width:100%;max-width:400px;padding:0.8rem 1rem;font-size:1.1rem;border:none;border-radius:8px;background:rgba(255,255,255,0.1);color:#fff;text-align:center;outline:none;border:2px solid rgba(226,196,136,0.3)}
+#input:focus{border-color:#e2c488}
+.score-row{display:flex;justify-content:center;gap:2rem;margin:1rem 0;font-size:0.95rem;color:#aaa}
+.score-row span{color:#e2c488;font-weight:700}
+.btn{display:inline-block;margin-top:1rem;padding:0.6rem 2rem;background:#e2c488;color:#1a1a2e;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600;transition:opacity 0.2s}
+.btn:hover{opacity:0.85}
+.result{font-size:1.2rem;margin-top:1rem;min-height:1.5rem}
+.correct{color:#4ade80}
+.wrong{color:#ef4444}
+.combo{color:#e2c488;font-size:0.85rem;margin-top:0.3rem;min-height:1.2rem}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>诗词挑战</h1>
+  <p class="sub">在诗句消失前，把它敲出来</p>
+  <div class="poem-display" id="poem"></div>
+  <input type="text" id="input" placeholder="在这里输入..." autocomplete="off">
+  <div class="score-row">得分: <span id="score">0</span> | 最高: <span id="best">0</span></div>
+  <div class="combo" id="combo"></div>
+  <div class="result" id="result"></div>
+  <button class="btn" id="startBtn" onclick="start()">开始游戏</button>
+</div>
+<script>
+var poems=[
+  "雪沫乳花浮午盏，蓼茸蒿笋试春盘","长风破浪会有时，直挂云帆济沧海",
+  "千磨万击还坚劲，任尔东西南北风","纸上得来终觉浅，绝知此事要躬行",
+  "不畏浮云遮望眼，自缘身在最高层","山重水复疑无路，柳暗花明又一村",
+  "莫愁前路无知己，天下谁人不识君","人生得意须尽欢，莫使金樽空对月",
+  "同是天涯沦落人，相逢何必曾相识","门虽设而常关",
+  "采得百花成蜜后，为谁辛苦为谁甜","相看两不厌，只有敬亭山",
+  "只恐夜深花睡去，故烧高烛照红妆","绿蚁新醅酒，红泥小火炉",
+  "安得广厦千万间，大庇天下寒士俱欢颜","问君能有几多愁，恰似一江春水向东流"
+];
+var score=0,best=0,combo=0,timer=null,timeLeft=0,current="";
+var input=document.getElementById('input'),poemEl=document.getElementById('poem');
+var scoreEl=document.getElementById('score'),bestEl=document.getElementById('best');
+var resultEl=document.getElementById('result'),comboEl=document.getElementById('combo');
+var startBtn=document.getElementById('startBtn');
+best=parseInt(localStorage.getItem('poetryBest')||'0');bestEl.textContent=best;
+
+function start(){
+  score=0;combo=0;scoreEl.textContent='0';comboEl.textContent='';
+  resultEl.textContent='';startBtn.style.display='none';
+  input.disabled=false;input.focus();nextRound();
+}
+function nextRound(){
+  clearInterval(timer);
+  current=poems[Math.floor(Math.random()*poems.length)];
+  poemEl.textContent=current;timeLeft=current.length*1.5;
+  input.value='';
+  timer=setInterval(function(){
+    timeLeft-=0.1;
+    poemEl.style.opacity=Math.max(0.2,timeLeft/current.length);
+    if(timeLeft<=0){clearInterval(timer);gameOver('超时了');}
+  },100);
+}
+input.addEventListener('input',function(){
+  if(input.value===current){
+    clearInterval(timer);combo++;
+    var pts=Math.ceil(timeLeft*10);
+    score+=pts;scoreEl.textContent=score;
+    resultEl.innerHTML='<span class="correct">+'+pts+'分</span>';
+    comboEl.textContent=combo>1?'连击 x'+combo:'';
+    poemEl.style.opacity='1';
+    setTimeout(nextRound,500);
+  }
+});
+function gameOver(msg){
+  input.disabled=true;clearInterval(timer);
+  resultEl.innerHTML='<span class="wrong">'+msg+'</span>';
+  comboEl.textContent='';poemEl.textContent='游戏结束';
+  poemEl.style.opacity='1';startBtn.style.display='inline-block';
+  if(score>best){best=score;localStorage.setItem('poetryBest',best);bestEl.textContent=best;}
+}
+</script>
+</body>
+</html>
