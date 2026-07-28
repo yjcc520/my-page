@@ -540,26 +540,6 @@ footer {
     gap: 0.6rem;
 }
 
-.comment-name-input {
-    padding: 0.6rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-family: inherit;
-    width: 200px;
-    transition: border-color 0.2s;
-}
-
-.comment-name-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
-}
-
-.comment-name-input::placeholder {
-    color: #94a3b8;
-}
-
 .comment-input {
     width: 100%;
     padding: 0.75rem;
@@ -709,3 +689,138 @@ footer {
     color: #e53e3e;
     padding: 1rem;
 }
+
+/* ===== 用户系统 ===== */
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.user-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.user-name {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.user-logout {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.user-logout:hover { color: #e53e3e; }
+
+.user-login-btn {
+    padding: 0.35rem 1rem;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.user-login-btn:hover { background: var(--primary-light); }
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    animation: fadeInBg 0.2s ease;
+}
+
+@keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2rem;
+    width: 360px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-box h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.4rem;
+}
+
+.modal-hint {
+    color: var(--text-light);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.modal-input {
+    width: 100%;
+    padding: 0.65rem 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    margin-bottom: 0.5rem;
+    transition: border-color 0.2s;
+}
+
+.modal-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.modal-btns {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.modal-btn-cancel {
+    padding: 0.5rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text-light);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.modal-btn-ok {
+    padding: 0.5rem 1.5rem;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.modal-btn-ok:hover { background: var(--primary-light); }
