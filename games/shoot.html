@@ -557,24 +557,20 @@
 
     function loadToken() {
       var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
-      return h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
+      var r = ''; for (var i = 0; i < h.length; i += 2) r += String.fromCharCode(parseInt(h.substr(i, 2), 16)); return r;
     }
+    var GAME_SHOOT = '射爆邓宸铭-排行榜';
 
     async function fetchCloudScore() {
       try {
-        var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+射爆邓宸铭+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME_SHOOT)+'+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
         var d = await r.json();
         if (!d.items || !d.items.length) return;
-        var num = d.items[0].number;
-        var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + num + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-        var comments = await r2.json();
         var name = (typeof _siteGetNickname === 'function') ? _siteGetNickname() : '';
-        for (var i = 0; i < comments.length; i++) {
-          var m = comments[i].body.match(/^(\d+)分[：:]\s*(.+)/);
-          if (m && m[2].trim() === name) {
-            cloudScore = Math.max(cloudScore, parseInt(m[1]));
-          }
-        }
+        d.items[0].body.split('\n').forEach(function(l) {
+          var m = l.match(/^(\d+)分[：:]\s*(.+)/);
+          if (m && m[2].trim() === name) cloudScore = Math.max(cloudScore, parseInt(m[1]));
+        });
         highScore = Math.max(highScore, cloudScore);
         bestScoreEl.textContent = highScore;
       } catch(e) {}
@@ -587,23 +583,17 @@
       if (!myScore) return;
       try {
         var T = loadToken();
-        var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+射爆邓宸铭+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-        var d = await r.json();
-        var num;
-        if (d.items && d.items.length) {
-          num = d.items[0].number;
-        } else {
-          var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues', {
-            method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-            body: JSON.stringify({ title: '射爆邓宸铭-排行榜', body: '游戏排行榜', labels: ['leaderboard'] })
-          });
-          var issue = await r2.json();
-          num = issue.number;
+        var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME_SHOOT)+'+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        var d = await r.json(); var num, body = '';
+        if (d.items && d.items.length) { num = d.items[0].number; body = d.items[0].body || ''; }
+        else {
+          var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues', { method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ title: GAME_SHOOT, body: '游戏排行榜', labels: ['leaderboard'] }) });
+          var issue = await r2.json(); num = issue.number; body = issue.body || '';
         }
-        await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + num + '/comments', {
-          method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-          body: JSON.stringify({ body: myScore + '分：' + name })
-        });
+        var scores = {}; body.split('\n').forEach(function(l) { var m = l.match(/^(\d+)分[：:]\s*(.+)/); if (m) { var n = m[2].trim(), s = parseInt(m[1]); if (!scores[n] || scores[n] < s) scores[n] = s; } });
+        if (!scores[name] || scores[name] < myScore) scores[name] = myScore;
+        var newBody = Object.entries(scores).sort(function(a, b) { return b[1] - a[1]; }).map(function(e) { return e[1] + '分：' + e[0]; }).join('\n');
+        await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + num, { method: 'PATCH', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }, body: JSON.stringify({ body: newBody }) });
       } catch(e) {}
     }
 
@@ -611,19 +601,11 @@
       var list = document.getElementById('lbList');
       list.innerHTML = '<p style="color:#889;text-align:center">加载中...</p>';
       try {
-        var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+射爆邓宸铭+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME_SHOOT)+'+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
         var d = await r.json();
         if (!d.items || !d.items.length) { list.innerHTML = '<p style="color:#889;text-align:center">暂无排行</p>'; return; }
-        var r2 = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + d.items[0].number + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-        var comments = await r2.json();
         var scores = {};
-        comments.forEach(function(c) {
-          var m = c.body.match(/^(\d+)分[：:]\s*(.+)/);
-          if (m) {
-            var name = m[2].trim(), sc = parseInt(m[1]);
-            if (!scores[name] || scores[name] < sc) scores[name] = sc;
-          }
-        });
+        d.items[0].body.split('\n').forEach(function(l) { var m = l.match(/^(\d+)分[：:]\s*(.+)/); if (m) { var n = m[2].trim(), s = parseInt(m[1]); if (!scores[n] || scores[n] < s) scores[n] = s; } });
         var entries = Object.entries(scores).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 10);
         if (!entries.length) { list.innerHTML = '<p style="color:#889;text-align:center">暂无排行</p>'; return; }
         var curName = (typeof _siteGetNickname === 'function') ? _siteGetNickname() : '';
