@@ -19,12 +19,9 @@
         </div>
     </nav>
 
-    <article class="article-page" id="articleContent">
-        <!-- JS 动态生成 -->
-    </article>
+    <article class="article-page" id="articleContent"></article>
 
     <section class="article-interactions" id="interactions">
-        <!-- 点赞 -->
         <div class="like-section">
             <button id="likeBtn" class="like-btn" onclick="toggleLike()">
                 <span class="like-icon">👍</span>
@@ -36,8 +33,6 @@
 
     <section class="comments-section" id="comments">
         <h2>评论</h2>
-
-        <!-- 评论表单 -->
         <div class="comment-form-wrap" id="commentFormWrap">
             <div class="comment-form-row">
                 <textarea id="commentInput" class="comment-input" placeholder="写下你的评论...（支持 Markdown）" rows="3"></textarea>
@@ -48,421 +43,146 @@
                 <p id="commentError" class="comment-error" style="display:none"></p>
             </div>
         </div>
-
-        <!-- 加载中 -->
         <div class="comments-loading" id="commentsLoading">
-            <div class="loading-spinner"></div>
-            <p>正在加载评论...</p>
+            <div class="loading-spinner"></div><p>正在加载评论...</p>
         </div>
-
-        <!-- 评论列表 -->
         <div id="comments-list" style="display:none"></div>
     </section>
 
-    <footer>
-        <p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
-    </footer>
+    <footer><p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p></footer>
 
     <script src="blog-data.js"></script>
     <script src="user.js"></script>
     <script>
-        // 获取文章 ID
-        const params = new URLSearchParams(window.location.search);
-        const articleId = parseInt(params.get('id'));
-        const isIssue = params.get('type') === 'issue';
+// ===== 全局评论系统 =====
+var REPO='yjcc520/my-page', loadingEl=document.getElementById('commentsLoading'), listEl=document.getElementById('comments-list');
+var issueNumber=null, ghToken='', allComments=[];
 
-        if (isIssue) {
-            // 从 GitHub Issue 加载文章
-            (async function() {
-                try {
-                    var resp = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + articleId, {
-                        headers: { 'Accept': 'application/vnd.github.v3+json' }
-                    });
-                    if (!resp.ok) throw new Error('not found');
-                    var issue = await resp.json();
-                    var body = issue.body || '';
-                    var content = body.replace(/\*\*作者\*\*[：:].+\n?/, '').replace(/\*\*标签\*\*[：:].+\n?/, '').trim();
-                    var tags = [];
-                    var tm = body.match(/\*\*标签\*\*[：:]\s*(.+)/);
-                    if (tm) tags = tm[1].split(/[,，]/).map(function(t) { return t.trim(); }).filter(Boolean);
-                    var author = '匿名';
-                    var am = body.match(/\*\*作者\*\*[：:]\s*(.+)/);
-                    if (am) author = am[1].trim();
+function loadToken(){ var h='6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e'; return h.match(/.{1,2}/g).map(function(b){return String.fromCharCode(parseInt(b,16));}).join(''); }
+function eHtml(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function fBody(b){ return b.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>'); }
+function gLike(id){ return {count:parseInt(localStorage.getItem('comment_like_'+id)||'0'),liked:localStorage.getItem('comment_liked_'+id)==='true'}; }
+function tLike(id){ var l=gLike(id); if(l.liked){l.count=Math.max(0,l.count-1);l.liked=false;}else{l.count++;l.liked=true;} localStorage.setItem('comment_like_'+id,l.count); localStorage.setItem('comment_liked_'+id,l.liked); return l; }
 
-                    document.title = issue.title + ' | 蔡梓涵';
-                    document.getElementById('articleContent').innerHTML =
-                        '<header class="article-header"><div class="article-tags">' +
-                        tags.map(function(t) { return '<span class="tag">' + t + '</span>'; }).join('') +
-                        '</div><h1>' + issue.title + '</h1><time>' + issue.created_at.split('T')[0] + '</time></header>' +
-                        '<div class="article-body">' + formatMarkdown(content) + '</div>' +
-                        '<div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
-                    document.getElementById('interactions').style.display = 'none';
-                    initComments(articleId);
-                } catch (e) {
-                    document.getElementById('articleContent').innerHTML = '<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
-                }
-            })();
-        } else {
-            // 来自 blog-data.js 的预置文章
-            const article = articles.find(a => a.id === articleId);
-            if (!article) {
-                document.getElementById('articleContent').innerHTML = `
-                    <div class="article-not-found">
-                        <h1>文章不存在</h1>
-                        <p><a href="blog.html">← 返回博客列表</a></p>
-                    </div>
-                `;
-            } else {
-            // 设置标题
-            document.title = `${article.title} | 蔡梓涵`;
-            document.querySelector('meta[name="description"]')?.setAttribute('content', article.summary);
+function pComment(c){
+    var raw=c.body||'',pid=null,cont=raw,m=raw.match(/^>>(\d+)\n/);
+    if(m){pid=parseInt(m[1]);cont=raw.slice(m[0].length);}
+    var nm=cont.match(/^\*\*(.+?)\*\*[：:]\s*([\s\S]*)$/);
+    return {id:c.id,name:nm?nm[1]:(c.user?c.user.login:'匿名'),body:nm?nm[2]:cont,time:c.created_at,parentId:pid,pending:c.pending||false};
+}
 
-            // 渲染文章
-            document.getElementById('articleContent').innerHTML = `
-                <header class="article-header">
-                    <div class="article-tags">
-                        ${article.tags.map(t => `<span class="tag">${t}</span>`).join('')}
-                    </div>
-                    <h1>${article.title}</h1>
-                    <time>${article.date}</time>
-                </header>
-                <div class="article-body">
-                    ${article.content}
-                </div>
-                <div class="article-back">
-                    <a href="blog.html">← 返回博客列表</a>
-                </div>
-            `;
+function avHtml(n){
+    var cn=window._siteGetNickname?window._siteGetNickname():'',av=window._siteGetAvatar?window._siteGetAvatar():'';
+    if(cn&&n===cn&&av) return '<img class="comment-avatar" src="'+av+'" alt="" width="32" height="32">';
+    return '<div class="comment-avatar-icon comment-avatar-sm">'+n[0].toUpperCase()+'</div>';
+}
 
-            // 点赞系统
-            const storageKey = `likes_${articleId}`;
-            let liked = localStorage.getItem(`${storageKey}_liked`) === 'true';
-            let count = parseInt(localStorage.getItem(storageKey) || '0');
+function rComment(p){
+    var l=gLike(p.id);
+    return '<div class="comment-header">'+avHtml(p.name)+'<div><span class="comment-author-name">'+eHtml(p.name)+'</span><span class="comment-time">'+(p.pending?'发送中...':new Date(p.time).toLocaleDateString('zh-CN'))+'</span></div></div>'+
+    '<div class="comment-body">'+fBody(p.body)+'</div>'+
+    '<div class="comment-actions"><button class="comment-action-btn '+(l.liked?'liked':'')+'" onclick="toggleCLike('+p.id+',this)">👍 <span>'+l.count+'</span></button><button class="comment-action-btn" onclick="showReplyForm('+p.id+')">💬 回复</button></div>'+
+    '<div class="comment-reply-form" id="replyForm-'+p.id+'" style="display:none"><textarea id="replyInput-'+p.id+'" class="comment-input comment-input-sm" placeholder="回复 '+eHtml(p.name)+'..." rows="2"></textarea><button id="replyBtn-'+p.id+'" class="comment-submit-btn comment-submit-sm" onclick="submitComment('+p.id+')">回复</button></div>';
+}
 
-            function updateLikeUI() {
-                document.getElementById('likeCount').textContent = count;
-                const btn = document.getElementById('likeBtn');
-                if (liked) {
-                    btn.classList.add('liked');
-                    btn.querySelector('.like-text').textContent = '已赞';
-                } else {
-                    btn.classList.remove('liked');
-                    btn.querySelector('.like-text').textContent = '点赞';
-                }
-            }
+window.toggleCLike=function(id,btn){ var l=tLike(id); btn.classList.toggle('liked',l.liked); btn.querySelector('span').textContent=l.count; };
+window.showReplyForm=function(id){ var f=document.getElementById('replyForm-'+id); if(!f)return; f.style.display=f.style.display==='none'?'block':'none'; if(f.style.display==='block'){var t=document.getElementById('replyInput-'+id);if(t)t.focus();} };
 
-            window.toggleLike = function() {
-                if (liked) {
-                    count = Math.max(0, count - 1);
-                    liked = false;
-                } else {
-                    count++;
-                    liked = true;
-                }
-                localStorage.setItem(storageKey, count);
-                localStorage.setItem(`${storageKey}_liked`, liked);
-                updateLikeUI();
-            };
+function rNode(node,level){
+    var p=node.data,h='';
+    if(level===0){ h+='<div class="comment-item'+(p.pending?' comment-pending':'')+'" id="c-'+p.id+'">'+rComment(p); }
+    else { var l=gLike(p.id); h+='<div class="comment-reply-item" id="c-'+p.id+'">'+avHtml(p.name)+'<div class="comment-reply-content"><span class="comment-author-name">'+eHtml(p.name)+'</span> '+fBody(p.body)+'<div class="comment-reply-actions-inline"><button class="comment-action-btn '+(l.liked?'liked':'')+'" onclick="toggleCLike('+p.id+',this)">👍 <span>'+l.count+'</span></button><button class="comment-action-btn" onclick="showReplyForm('+p.id+')">💬 回复</button></div><div class="comment-reply-form" id="replyForm-'+p.id+'" style="display:none"><textarea id="replyInput-'+p.id+'" class="comment-input comment-input-sm" placeholder="回复 '+eHtml(p.name)+'..." rows="2"></textarea><button id="replyBtn-'+p.id+'" class="comment-submit-btn comment-submit-sm" onclick="submitComment('+p.id+')">回复</button></div>'; }
+    var ch=node.children||[];
+    if(ch.length>0){ ch.sort(function(a,b){return gLike(b.data.id).count-gLike(a.data.id).count;});
+        h+='<div class="comment-replies">'+rNode(ch[0],level+1);
+        if(ch.length>1){ var c=ch.length-1,gid='replies-'+p.id;
+            h+='<div class="comment-replies-more" onclick="toggleRep(this)" data-group="'+gid+'">展开 '+c+' 条回复 ▾</div><div class="comment-replies-all" id="'+gid+'" style="display:none">';
+            for(var i=1;i<ch.length;i++) h+=rNode(ch[i],level+1);
+            h+='</div>'; }
+        h+='</div>'; }
+    if(level===0) h+='</div>'; else h+='</div></div>';
+    return h;
+}
 
-            updateLikeUI();
+window.toggleRep=function(btn){ var a=document.getElementById(btn.getAttribute('data-group')); if(!a)return; var v=a.style.display!=='none'; a.style.display=v?'none':'block'; btn.textContent=v?('展开 '+a.children.length+' 条回复 ▾'):'收起 ▴'; };
 
-            // ===== 评论区 =====
-            const REPO = 'yjcc520/my-page';
-            const issueTerm = 'article-' + articleId;
-            const loadingEl = document.getElementById('commentsLoading');
-            const listEl = document.getElementById('comments-list');
-            let issueNumber = null;
-            let ghToken = '';
-            let allComments = [];
+function renderAll(comments){
+    var map={},roots=[];
+    comments.forEach(function(c){var p=pComment(c);map[p.id]={data:p,children:[]};});
+    comments.forEach(function(c){var n=map[c.id],pid=n&&n.data.parentId;if(pid&&map[pid])map[pid].children.push(n);else if(n)roots.push(n);});
+    roots.sort(function(a,b){var la=gLike(a.data.id).count,lb=gLike(b.data.id).count;if(la!==lb)return lb-la;return new Date(b.data.time)-new Date(a.data.time);});
+    var h=roots.length===0?'<p class="comments-empty">暂无评论，来做第一个评论的人吧 👇</p>':roots.map(function(n){return rNode(n,0);}).join('');
+    listEl.innerHTML=h;listEl.style.display='block';
+}
 
-            function loadToken() {
-                var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
-                return h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
-            }
+window.submitComment=async function(pid){
+    var name=window._siteGetNickname?window._siteGetNickname():'';
+    if(!name){if(window._siteShowRegister)window._siteShowRegister();return;}
+    var ti=pid?document.getElementById('replyInput-'+pid):document.getElementById('commentInput');
+    var err=document.getElementById('commentError'),btn=pid?document.getElementById('replyBtn-'+pid):document.getElementById('submitBtn');
+    var body=ti.value.trim();
+    if(!body){err.textContent='请输入内容';err.style.display='block';return;}
+    btn.disabled=true;btn.textContent='发送中...';err.style.display='none';ti.value='';
+    if(!ghToken)ghToken=loadToken();
+    if(!ghToken){err.textContent='服务暂不可用';err.style.display='block';btn.disabled=false;btn.textContent=pid?'回复':'发表评论';return;}
+    var prefix=pid?('>>'+pid+'\n'):'',cb=prefix+'**'+name+'**：'+body;
+    var fid='opt-'+Date.now();
+    renderAll([{id:fid,user:{login:name},created_at:new Date().toISOString(),body:cb,pending:true}].concat(allComments));
+    try{
+        var resp=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+issueNumber+'/comments',{method:'POST',headers:{'Authorization':'token '+ghToken,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({body:cb})});
+        if(resp.ok){var real=await resp.json();allComments.unshift(real);}
+        else{var e=await resp.json().catch(function(){return{};});err.textContent='发送失败：'+(e.message||'请重试');err.style.display='block';}
+    }catch(ex){err.textContent='网络错误';err.style.display='block';}
+    allComments=allComments.filter(function(c){return c.id!==fid;});
+    renderAll(allComments);
+    btn.disabled=false;btn.textContent=pid?'回复':'发表评论';
+};
 
-            // 点赞
-            function getCommentLike(id) {
-                return {
-                    count: parseInt(localStorage.getItem('comment_like_' + id) || '0'),
-                    liked: localStorage.getItem('comment_liked_' + id) === 'true'
-                };
-            }
-            function toggleCommentLike(id) {
-                var lk = getCommentLike(id);
-                if (lk.liked) { lk.count = Math.max(0, lk.count - 1); lk.liked = false; }
-                else { lk.count++; lk.liked = true; }
-                localStorage.setItem('comment_like_' + id, lk.count);
-                localStorage.setItem('comment_liked_' + id, lk.liked);
-                return lk;
-            }
+function initComments(id){
+    ghToken=loadToken();
+    (async function(){
+        try{var sr=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:comment+article-'+id+'+in:title+type:issue&sort=created&order=desc',{headers:{'Accept':'application/vnd.github.v3+json'}});var sd=await sr.json();if(sd.items&&sd.items.length>0)issueNumber=sd.items[0].number;}catch(e){}
+        loadingEl.style.display='none';
+        if(!issueNumber){listEl.innerHTML='<p class="comments-empty">暂无评论</p>';listEl.style.display='block';return;}
+        try{var r=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+issueNumber+'/comments',{headers:{'Accept':'application/vnd.github.v3+json'}});allComments=await r.json();}catch(e){}
+        renderAll(allComments);
+    })();
+}
 
-            // 提交评论（支持回复）
-            window.submitComment = async function(parentId) {
-                var name = window._siteGetNickname ? window._siteGetNickname() : '';
-                if (!name) { if (window._siteShowRegister) window._siteShowRegister(); return; }
-                var textInput = parentId ? document.getElementById('replyInput-' + parentId) : document.getElementById('commentInput');
-                var errorEl = document.getElementById('commentError');
-                var btn = parentId ? document.getElementById('replyBtn-' + parentId) : document.getElementById('submitBtn');
-                var body = textInput.value.trim();
-                if (!body) { errorEl.textContent = '请输入内容'; errorEl.style.display = 'block'; return; }
+function fm(md){ return ('<p>'+(md||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/### (.+)/g,'<h4>$1</h4>').replace(/## (.+)/g,'<h3>$1</h3>').replace(/# (.+)/g,'<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/^> (.+)/gm,'<blockquote>$1</blockquote>').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')+'</p>'); }
 
-                btn.disabled = true; btn.textContent = '发送中...'; errorEl.style.display = 'none';
-                textInput.value = '';
-                if (!ghToken) ghToken = loadToken();
-                if (!ghToken) { errorEl.textContent = '服务暂不可用'; errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = parentId ? '回复' : '发表评论'; return; }
+// ===== 文章加载 =====
+var params=new URLSearchParams(window.location.search),aid=parseInt(params.get('id')),isIssue=params.get('type')==='issue';
 
-                var prefix = parentId ? '>>' + parentId + '\n' : '';
-                var commentBody = prefix + '**' + name + '**：' + body;
-
-                // 乐观更新
-                var fakeId = 'opt-' + Date.now();
-                renderAll([{ id: fakeId, user: { login: name }, created_at: new Date().toISOString(), body: commentBody, pending: true }].concat(allComments));
-
-                try {
-                    var apiUrl = 'https://api.github.com/repos/' + REPO + '/issues/' + issueNumber + '/comments';
-                    var resp = await fetch(apiUrl, { method: 'POST', headers: { 'Authorization': 'token ' + ghToken, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ body: commentBody }) });
-                    if (resp.ok) {
-                        var real = await resp.json();
-                        allComments.unshift(real);
-                        // 清理同名乐观评论
-                        allComments = allComments.filter(function(c) { return c.id !== fakeId; });
-                        renderAll(allComments);
-                    } else {
-                        allComments = allComments.filter(function(c) { return c.id !== fakeId; });
-                        renderAll(allComments);
-                        var err = await resp.json().catch(function() { return {}; });
-                        errorEl.textContent = '发送失败：' + (err.message || '请重试');
-                        errorEl.style.display = 'block';
-                    }
-                } catch (e) {
-                    allComments = allComments.filter(function(c) { return c.id !== fakeId; });
-                    renderAll(allComments);
-                    errorEl.textContent = '网络错误，请刷新后重试';
-                    errorEl.style.display = 'block';
-                }
-                btn.disabled = false;
-                btn.textContent = parentId ? '回复' : '发表评论';
-            };
-
-            // 解析评论，返回 { name, body, parentId (null if top-level) }
-            function parseComment(c) {
-                var raw = c.body || '';
-                var parentId = null;
-                var content = raw;
-                var match = raw.match(/^>>(\d+)\n/);
-                if (match) { parentId = parseInt(match[1]); content = raw.slice(match[0].length); }
-                var nm = content.match(/^\*\*(.+?)\*\*[：:]\s*([\s\S]*)$/);
-                return {
-                    id: c.id, name: nm ? nm[1] : (c.user ? c.user.login : '匿名'),
-                    body: nm ? nm[2] : content, time: c.created_at,
-                    parentId: parentId, pending: c.pending || false, raw: raw
-                };
-            }
-
-            function getAvatarHtml(name) {
-                var curName = window._siteGetNickname ? window._siteGetNickname() : '';
-                var avt = window._siteGetAvatar ? window._siteGetAvatar() : '';
-                if (curName && name === curName && avt) return '<img class="comment-avatar" src="' + avt + '" alt="" width="32" height="32">';
-                return '<div class="comment-avatar-icon comment-avatar-sm">' + name[0].toUpperCase() + '</div>';
-            }
-
-            function renderCommentHtml(p) {
-                var lk = getCommentLike(p.id);
-                return '<div class="comment-header">' + getAvatarHtml(p.name) +
-                    '<div><span class="comment-author-name">' + escapeHtml(p.name) + '</span>' +
-                    '<span class="comment-time">' + (p.pending ? '发送中...' : new Date(p.time).toLocaleDateString('zh-CN')) + '</span></div></div>' +
-                    '<div class="comment-body">' + formatCommentBody(p.body) + '</div>' +
-                    '<div class="comment-actions">' +
-                        '<button class="comment-action-btn ' + (lk.liked ? 'liked' : '') + '" onclick="toggleCLike(' + p.id + ', this)">👍 <span>' + lk.count + '</span></button>' +
-                        '<button class="comment-action-btn" onclick="showReplyForm(' + p.id + ')">💬 回复</button>' +
-                    '</div>' +
-                    '<div class="comment-reply-form" id="replyForm-' + p.id + '" style="display:none">' +
-                        '<textarea id="replyInput-' + p.id + '" class="comment-input comment-input-sm" placeholder="回复 ' + escapeHtml(p.name) + '..." rows="2"></textarea>' +
-                        '<button id="replyBtn-' + p.id + '" class="comment-submit-btn comment-submit-sm" onclick="submitComment(' + p.id + ')">回复</button>' +
-                    '</div>';
-            }
-
-            window.toggleCLike = function(id, btn) {
-                var lk = toggleCommentLike(id);
-                btn.classList.toggle('liked', lk.liked);
-                btn.querySelector('span').textContent = lk.count;
-            };
-
-            window.showReplyForm = function(id) {
-                var form = document.getElementById('replyForm-' + id);
-                if (!form) return;
-                form.style.display = form.style.display === 'none' ? 'block' : 'none';
-                if (form.style.display === 'block') {
-                    var ta = document.getElementById('replyInput-' + id);
-                    if (ta) ta.focus();
-                }
-            };
-
-            function renderAll(comments) {
-                // 构建评论树
-                var map = {}, roots = [];
-                comments.forEach(function(c) {
-                    var p = parseComment(c);
-                    map[p.id] = { data: p, children: [] };
-                });
-                comments.forEach(function(c) {
-                    var node = map[c.id];
-                    var pid = node.data.parentId;
-                    if (pid && map[pid]) {
-                        map[pid].children.push(node);
-                    } else if (node) {
-                        roots.push(node);
-                    }
-                });
-
-                var html = '';
-                if (roots.length === 0) {
-                    html = '<p class="comments-empty">暂无评论，来做第一个评论的人吧 👇</p>';
-                }
-                // 按点赞数降序，相同则按时间降序
-                roots.sort(function(a, b) {
-                    var la = getCommentLike(a.data.id).count, lb = getCommentLike(b.data.id).count;
-                    if (la !== lb) return lb - la;
-                    return new Date(b.data.time) - new Date(a.data.time);
-                });
-                roots.forEach(function(node) {
-                    html += renderNode(node, 0);
-                });
-                listEl.innerHTML = html;
-                listEl.style.display = 'block';
-            }
-
-            function renderNode(node, level) {
-                var p = node.data;
-                var html = '';
-                if (level === 0) {
-                    html += '<div class="comment-item' + (p.pending ? ' comment-pending' : '') + '" id="c-' + p.id + '">';
-                    html += renderCommentHtml(p);
-                } else {
-                    var lk = getCommentLike(p.id);
-                    html += '<div class="comment-reply-item" id="c-' + p.id + '">';
-                    html += getAvatarHtml(p.name);
-                    html += '<div class="comment-reply-content"><span class="comment-author-name">' + escapeHtml(p.name) + '</span> ' + formatCommentBody(p.body);
-                    html += '<div class="comment-reply-actions-inline">';
-                    html += '<button class="comment-action-btn ' + (lk.liked ? 'liked' : '') + '" onclick="toggleCLike(' + p.id + ', this)">👍 <span>' + lk.count + '</span></button>';
-                    html += '<button class="comment-action-btn" onclick="showReplyForm(' + p.id + ')">💬 回复</button>';
-                    html += '</div>';
-                    html += '<div class="comment-reply-form" id="replyForm-' + p.id + '" style="display:none">';
-                    html += '<textarea id="replyInput-' + p.id + '" class="comment-input comment-input-sm" placeholder="回复 ' + escapeHtml(p.name) + '..." rows="2"></textarea>';
-                    html += '<button id="replyBtn-' + p.id + '" class="comment-submit-btn comment-submit-sm" onclick="submitComment(' + p.id + ')">回复</button>';
-                    html += '</div>';
-                }
-
-                // 子回复（嵌套在父评论内）
-                var children = node.children || [];
-                if (children.length > 0) {
-                    children.sort(function(a, b) { return getCommentLike(b.data.id).count - getCommentLike(a.data.id).count; });
-                    html += '<div class="comment-replies">';
-                    html += renderNode(children[0], level + 1);
-                    if (children.length > 1) {
-                        var count = children.length - 1;
-                        var gid = 'replies-' + p.id;
-                        html += '<div class="comment-replies-more" onclick="toggleReplies(this)" data-group="' + gid + '">展开 ' + count + ' 条回复 ▾</div>';
-                        html += '<div class="comment-replies-all" id="' + gid + '" style="display:none">';
-                        for (var i = 1; i < children.length; i++) {
-                            html += renderNode(children[i], level + 1);
-                        }
-                        html += '</div>';
-                    }
-                    html += '</div>';
-                }
-
-                if (level === 0) {
-                    html += '</div>';
-                } else {
-                    html += '</div>'; // close comment-reply-content
-                    html += '</div>'; // close comment-reply-item
-                }
-                return html;
-            }
-
-            window.toggleReplies = function(btn) {
-                var groupId = btn.getAttribute('data-group');
-                var all = document.getElementById(groupId);
-                if (!all) return;
-                var visible = all.style.display !== 'none';
-                all.style.display = visible ? 'none' : 'block';
-                var count = all.children.length;
-                btn.textContent = visible ? ('展开 ' + count + ' 条回复 ▾') : '收起 ▴';
-            };
-
-            function scrollToList() {
-                document.getElementById('comments').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-
-            function escapeHtml(s) {
-                var d = document.createElement('div');
-                d.textContent = s;
-                return d.innerHTML;
-            }
-
-            function formatCommentBody(body) {
-                return body
-                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                    .replace(/`([^`]+)`/g, '<code>$1</code>')
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                    .replace(/\n/g, '<br>');
-            }
-
-            // 初始化
-            (async function init() {
-                ghToken = loadToken();
-                try {
-                    var searchUrl = 'https://api.github.com/search/issues?q=repo:' + REPO + '+label:comment+' + encodeURIComponent(issueTerm) + '+in:title+type:issue&sort=created&order=desc';
-                    var searchResp = await fetch(searchUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-                    var searchData = await searchResp.json();
-                    if (searchData.items && searchData.items.length > 0) issueNumber = searchData.items[0].number;
-                } catch (e) {}
-
-                loadingEl.style.display = 'none';
-                if (!issueNumber) { listEl.innerHTML = '<p class="comments-empty">暂无评论</p>'; listEl.style.display = 'block'; return; }
-                try {
-                    var resp = await fetch('https://api.github.com/repos/' + REPO + '/issues/' + issueNumber + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-                    allComments = await resp.json();
-                } catch (e) {}
-                renderAll(allComments);
-            })();
-        }
-
-        function formatMarkdown(md) {
-            return ('<p>' + md
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                .replace(/### (.+)/g, '<h4>$1</h4>')
-                .replace(/## (.+)/g, '<h3>$1</h3>')
-                .replace(/# (.+)/g, '<h2>$1</h2>')
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                .replace(/`([^`]+)`/g, '<code>$1</code>')
-                .replace(/^> (.+)/gm, '<blockquote>$1</blockquote>')
-                .replace(/\n\n/g, '</p><p>')
-                .replace(/\n/g, '<br>') + '</p>');
-        }
-
-        function initComments(id) {
-            var iterm = 'article-' + id;
-            ghToken = loadToken();
-            (async function() {
-                try {
-                    var sUrl = 'https://api.github.com/search/issues?q=repo:' + REPO + '+label:comment+' + iterm + '+in:title+type:issue&sort=created&order=desc';
-                    var sResp = await fetch(sUrl, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-                    var sData = await sResp.json();
-                    if (sData.items && sData.items.length > 0) issueNumber = sData.items[0].number;
-                } catch (e) {}
-                loadingEl.style.display = 'none';
-                if (!issueNumber) { listEl.innerHTML = '<p class="comments-empty">暂无评论</p>'; listEl.style.display = 'block'; return; }
-                try {
-                    var r = await fetch('https://api.github.com/repos/' + REPO + '/issues/' + issueNumber + '/comments', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
-                    allComments = await r.json();
-                } catch (e) {}
-                renderAll(allComments);
-            })();
-        }
+if(isIssue){
+    (async function(){
+        try{
+            var resp=await fetch('https://api.github.com/repos/yjcc520/my-page/issues/'+aid,{headers:{'Accept':'application/vnd.github.v3+json'}});
+            if(!resp.ok)throw new Error('nf');
+            var issue=await resp.json(),body=issue.body||'';
+            var content=body.replace(/\*\*作者\*\*[：:].+\n?/,'').replace(/\*\*标签\*\*[：:].+\n?/,'').trim();
+            var tags=[],tm=body.match(/\*\*标签\*\*[：:]\s*(.+)/);
+            if(tm)tags=tm[1].split(/[,，]/).map(function(t){return t.trim();}).filter(Boolean);
+            document.title=issue.title+' | 蔡梓涵';
+            document.getElementById('articleContent').innerHTML='<header class="article-header"><div class="article-tags">'+tags.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</div><h1>'+issue.title+'</h1><time>'+issue.created_at.split('T')[0]+'</time></header><div class="article-body">'+fm(content)+'</div><div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
+            document.getElementById('interactions').style.display='none';
+            initComments(aid);
+        }catch(e){ document.getElementById('articleContent').innerHTML='<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>'; }
+    })();
+}else{
+    var article=articles.find(function(a){return a.id===aid;});
+    if(!article){
+        document.getElementById('articleContent').innerHTML='<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
+    }else{
+        document.title=article.title+' | 蔡梓涵';
+        document.getElementById('articleContent').innerHTML='<header class="article-header"><div class="article-tags">'+article.tags.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</div><h1>'+article.title+'</h1><time>'+article.date+'</time></header><div class="article-body">'+article.content+'</div><div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
+        var sk='likes_'+aid,liked=localStorage.getItem(sk+'_liked')==='true',count=parseInt(localStorage.getItem(sk)||'0');
+        function ul(){document.getElementById('likeCount').textContent=count;var b=document.getElementById('likeBtn');if(liked){b.classList.add('liked');b.querySelector('.like-text').textContent='已赞';}else{b.classList.remove('liked');b.querySelector('.like-text').textContent='点赞';}}
+        window.toggleLike=function(){if(liked){count=Math.max(0,count-1);liked=false;}else{count++;liked=true;}localStorage.setItem(sk,count);localStorage.setItem(sk+'_liked',liked);ul();};
+        ul();
+        initComments(aid);
+    }
+}
     </script>
 </body>
 </html>
