@@ -274,6 +274,14 @@ nav {
     background: var(--primary-light);
 }
 
+.thanks-note {
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-top: 1.5rem;
+    font-style: italic;
+}
+
 /* Footer */
 footer {
     text-align: center;
