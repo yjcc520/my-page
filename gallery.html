@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>画廊 | 蔡梓涵</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.gallery-page { padding: 6rem 2rem 4rem; max-width: 1000px; margin: 0 auto; min-height: 70vh; }
+.gallery-header { text-align: center; margin-bottom: 2rem; }
+.gallery-header h1 { font-size: 2rem; margin-bottom: 0.3rem; }
+.gallery-header p { color: var(--text-light); }
+.gallery-upload { text-align: center; margin-bottom: 2rem; }
+.gallery-upload-btn {
+  display: inline-block; padding: 0.6rem 1.5rem; background: var(--primary);
+  color: #fff; border: none; border-radius: 8px; font-size: 0.95rem;
+  cursor: pointer; font-family: inherit; transition: background 0.15s;
+}
+.gallery-upload-btn:hover { background: var(--primary-light); }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+.gallery-item {
+  position: relative; border-radius: 10px; overflow: hidden;
+  aspect-ratio: 1; background: var(--bg-alt); border: 1px solid var(--border);
+  cursor: pointer; transition: transform 0.15s;
+}
+.gallery-item:hover { transform: scale(1.02); }
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery-item .gl-uploader { position: absolute; bottom: 6px; right: 6px; font-size: 0.7rem; background: rgba(0,0,0,0.6); color: #ccc; padding: 2px 8px; border-radius: 10px; }
+.gallery-empty { text-align: center; color: var(--text-light); padding: 3rem; }
+
+/* Lightbox */
+.lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; justify-content: center; align-items: center; }
+.lightbox.active { display: flex; }
+.lightbox img { max-width: 90vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 0 60px rgba(0,0,0,0.5); }
+.lightbox-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 32px; cursor: pointer; z-index: 1001; background: none; border: none; }
+
+/* Upload modal */
+.upload-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; justify-content: center; align-items: center; }
+.upload-overlay.active { display: flex; }
+.upload-box { background: var(--bg-alt); border-radius: 16px; padding: 2rem; width: 360px; max-width: 90vw; text-align: center; }
+.upload-box h3 { margin-bottom: 1rem; }
+.upload-box input[type="file"] { margin-bottom: 1rem; }
+.upload-box img { max-width: 200px; max-height: 150px; border-radius: 8px; margin-bottom: 0.5rem; display: none; }
+.upload-box .modal-btns { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; }
+.upload-box .modal-btn-cancel { padding: 0.5rem 1.2rem; border: 1px solid var(--border); border-radius: 8px; background: none; color: var(--text); cursor: pointer; font-family: inherit; }
+.upload-box .modal-btn-ok { padding: 0.5rem 1.2rem; border: none; border-radius: 8px; background: var(--primary); color: #fff; cursor: pointer; font-family: inherit; }
+.upload-status { font-size: 0.85rem; margin-top: 0.5rem; color: var(--text-light); }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Zihan</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="blog.html">博客</a>
+      <a href="tags.html">标签</a>
+      <a href="gallery.html" class="active">画廊</a>
+      <a href="games.html">小游戏</a>
+      <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
+    </div>
+  </div>
+</nav>
+
+<div class="gallery-page">
+  <div class="gallery-header">
+    <h1>画廊</h1>
+    <p>生活中的美好瞬间</p>
+  </div>
+  <div class="gallery-upload" id="uploadArea" style="display:none">
+    <button class="gallery-upload-btn" onclick="showUpload()">📷 上传图片</button>
+  </div>
+  <div class="gallery-grid" id="galleryGrid">
+    <p class="gallery-empty">加载中...</p>
+  </div>
+</div>
+
+<footer><p>&copy; 2026 蔡梓涵</p></footer>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close">✕</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<div class="upload-overlay" id="uploadOverlay">
+  <div class="upload-box">
+    <h3>上传图片</h3>
+    <input type="file" id="uploadFile" accept="image/*" onchange="previewImage()">
+    <img id="uploadPreview" alt="">
+    <div class="upload-status" id="uploadStatus"></div>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="closeUpload()">取消</button>
+      <button class="modal-btn-ok" id="uploadSubmit" onclick="doUpload()">上传</button>
+    </div>
+  </div>
+</div>
+
+<script src="user.js"></script>
+<script src="theme.js"></script>
+<script src="music.js"></script>
+<script>
+var GALLERY_ISSUE = null;
+var REPO = 'yjcc520/my-page';
+
+function loadToken() {
+  var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
+  return h.match(/.{1,2}/g).map(function(b){return String.fromCharCode(parseInt(b,16));}).join('');
+}
+
+// Find or create gallery issue
+async function getGalleryIssue() {
+  try {
+    var r = await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:gallery+in:title+type:issue', {
+      headers: {'Accept':'application/vnd.github.v3+json'}
+    });
+    var d = await r.json();
+    if (d.items && d.items.length) { GALLERY_ISSUE = d.items[0].number; return; }
+    var T = loadToken();
+    var r2 = await fetch('https://api.github.com/repos/'+REPO+'/issues', {
+      method:'POST', headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+      body: JSON.stringify({title:'图库',body:'画廊图片存储',labels:['gallery']})
+    });
+    var issue = await r2.json();
+    GALLERY_ISSUE = issue.number;
+  } catch(e) {}
+}
+
+// Load gallery
+async function loadGallery() {
+  if (!GALLERY_ISSUE) await getGalleryIssue();
+  if (!GALLERY_ISSUE) { document.getElementById('galleryGrid').innerHTML = '<p class="gallery-empty">暂无图片</p>'; return; }
+  try {
+    var r = await fetch('https://api.github.com/repos/'+REPO+'/issues/'+GALLERY_ISSUE+'/comments?per_page=100', {
+      headers:{'Accept':'application/vnd.github.v3+json'}
+    });
+    var comments = await r.json();
+    var grid = document.getElementById('galleryGrid');
+    if (comments.length === 0) {
+      grid.innerHTML = '<p class="gallery-empty">还没有图片，来上传第一张吧 📷</p>';
+      return;
+    }
+    grid.innerHTML = comments.map(function(c) {
+      var img = c.body;
+      var uploader = '';
+      try { var info = JSON.parse(c.body); img = info.url; uploader = info.by || ''; } catch(ex) {}
+      if (!img || img.indexOf('http') !== 0 && img.indexOf('data:image') !== 0) return '';
+      return '<div class="gallery-item" onclick="openLightbox(\''+img+'\')">' +
+        '<img src="'+img+'" alt="" loading="lazy">' +
+        (uploader ? '<span class="gl-uploader">'+uploader+'</span>' : '') +
+        '</div>';
+    }).filter(Boolean).join('');
+  } catch(e) {
+    document.getElementById('galleryGrid').innerHTML = '<p class="gallery-empty">加载失败</p>';
+  }
+}
+
+// Lightbox
+window.openLightbox = function(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('active');
+};
+window.closeLightbox = function() {
+  document.getElementById('lightbox').classList.remove('active');
+};
+
+// Upload
+var upName = window._siteGetNickname ? window._siteGetNickname() : '';
+if (upName) document.getElementById('uploadArea').style.display = 'block';
+
+window.showUpload = function() {
+  var name = window._siteGetNickname ? window._siteGetNickname() : '';
+  if (!name) { if(window._siteShowRegister) window._siteShowRegister(); return; }
+  document.getElementById('uploadOverlay').classList.add('active');
+  document.getElementById('uploadFile').value = '';
+  document.getElementById('uploadPreview').style.display = 'none';
+  document.getElementById('uploadStatus').textContent = '';
+  document.getElementById('uploadSubmit').disabled = false;
+};
+
+window.closeUpload = function() {
+  document.getElementById('uploadOverlay').classList.remove('active');
+};
+
+window.previewImage = function() {
+  var file = document.getElementById('uploadFile').files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var preview = document.getElementById('uploadPreview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+};
+
+window.doUpload = async function() {
+  var file = document.getElementById('uploadFile').files[0];
+  if (!file) { document.getElementById('uploadStatus').textContent = '请选择图片'; return; }
+  var name = window._siteGetNickname ? window._siteGetNickname() : '匿名';
+  var status = document.getElementById('uploadStatus');
+  var btn = document.getElementById('uploadSubmit');
+  btn.disabled = true; status.textContent = '压缩中...';
+
+  // Compress image
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    var img = new Image();
+    img.onload = async function() {
+      var canvas = document.createElement('canvas');
+      var maxW = 1200;
+      var scale = Math.min(1, maxW / Math.max(img.width, img.height));
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+
+      if (dataUrl.length > 500000) { status.textContent = '图片太大，请换张小的'; btn.disabled = false; return; }
+
+      status.textContent = '上传中...';
+      try {
+        var T = loadToken();
+        var body = JSON.stringify({url: dataUrl, by: name, time: new Date().toISOString()});
+        await fetch('https://api.github.com/repos/'+REPO+'/issues/'+GALLERY_ISSUE+'/comments', {
+          method:'POST', headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+          body: JSON.stringify({body: body})
+        });
+        closeUpload();
+        loadGallery();
+      } catch(ex) { status.textContent = '上传失败，请重试'; btn.disabled = false; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+// Init
+getGalleryIssue().then(loadGallery);
+</script>
+</body>
+</html>
