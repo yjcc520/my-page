@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>俄罗斯方块 | 蔡梓涵</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0a1a;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;touch-action:none}
+.container{display:flex;gap:1.5rem;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+.left{text-align:center}
+h1{font-size:1.8rem;margin-bottom:0.5rem}
+#canvas{border:2px solid #334;background:#111;display:block}
+.right{display:flex;flex-direction:column;gap:0.8rem;min-width:120px}
+.info-box{background:#1a1a2e;border:1px solid #334;padding:0.8rem;border-radius:6px;text-align:center}
+.info-box .label{font-size:0.7rem;opacity:0.6;text-transform:uppercase}
+.info-box .val{font-size:1.4rem;font-weight:700;color:#4ade80}
+#nextCanvas{border:1px solid #334;display:block;margin:0 auto}
+.controls{font-size:0.75rem;opacity:0.5;text-align:center;margin-top:0.5rem}
+.btn{background:#334;color:#fff;border:none;padding:0.5rem;border-radius:4px;cursor:pointer;font-size:0.85rem;width:100%;transition:background 0.2s}
+.btn:hover{background:#556}
+.btns{display:flex;gap:0.3rem}
+.btns .btn{flex:1;font-size:1.2rem;padding:0.8rem 0}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="left">
+    <h1>俄罗斯方块</h1>
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="right">
+    <div class="info-box"><div class="label">分数</div><div class="val" id="scoreVal">0</div></div>
+    <div class="info-box"><div class="label">消除行</div><div class="val" id="linesVal">0</div></div>
+    <div class="info-box"><div class="label">下一个</div><canvas id="nextCanvas" width="80" height="60"></canvas></div>
+    <button class="btn" onclick="togglePause()" id="pauseBtn">暂停</button>
+    <button class="btn" onclick="reset()">新游戏</button>
+    <div class="controls">← → 移动<br>↑ 旋转 ↓ 速降<br>空格 硬降</div>
+  </div>
+</div>
+<div class="btns" style="position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);gap:0.5rem;display:none" id="touchControls">
+  <button class="btn" ontouchstart="move(-1)">◀</button>
+  <button class="btn" ontouchstart="rotate()">↻</button>
+  <button class="btn" ontouchstart="move(1)">▶</button>
+  <button class="btn" ontouchstart="drop()">▼▼</button>
+</div>
+<script>
+var COLS=10,ROWS=20,SIZE=28;
+var canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
+canvas.width=COLS*SIZE;canvas.height=ROWS*SIZE;
+var nextCanvas=document.getElementById('nextCanvas'),nctx=nextCanvas.getContext('2d');
+var pieces=[
+  [[1,1,1,1]],[[1,1,1],[0,1,0]],[[1,1,1],[1,0,0]],
+  [[1,1,1],[0,0,1]],[[1,1],[1,1]],[[0,1,1],[1,1,0]],[[1,1,0],[0,1,1]]
+];
+var colors=['#0ff','#ff0','#f0f','#0f0','#f00','#fa0','#00f'];
+var board=[],piece=null,next=null,pos={x:0,y:0},score=0,lines=0,interval=null,paused=false,speed=600;
+
+function rand(){return Math.floor(Math.random()*pieces.length)}
+function newPiece(t){
+  var p=pieces[t];var rotated=Math.random()<0.3;
+  if(rotated){var rows=p[0].length,cols=p.length;var np=[];for(var r=0;r<rows;r++){np[r]=[];for(var c=0;c<cols;c++)np[r][c]=p[cols-1-c][r]}p=np}
+  return{shape:p,color:t,type:t}
+}
+function reset(){
+  clearInterval(interval);interval=null;
+  board=Array(ROWS).fill().map(()=>Array(COLS).fill(0));
+  score=0;lines=0;paused=false;
+  document.getElementById('scoreVal').textContent='0';
+  document.getElementById('linesVal').textContent='0';
+  document.getElementById('pauseBtn').textContent='暂停';
+  next=newPiece(rand());spawn();startLoop();
+}
+function spawn(){
+  piece=next;next=newPiece(rand());
+  pos={x:Math.floor((COLS-piece.shape[0].length)/2),y:0};
+  if(collide()){clearInterval(interval);alert('游戏结束！得分:'+score);reset()}
+  drawNext();
+}
+function collide(){for(var r=0;r<piece.shape.length;r++)for(var c=0;c<piece.shape[r].length;c++){if(!piece.shape[r][c])continue;var nx=pos.x+c,ny=pos.y+r;if(nx<0||nx>=COLS||ny>=ROWS||(ny>=0&&board[ny][nx]))return true}return false}
+function lock(){
+  for(var r=0;r<piece.shape.length;r++)for(var c=0;c<piece.shape[r].length;c++){if(!piece.shape[r][c])continue;var ny=pos.y+r;if(ny<0){clearInterval(interval);alert('游戏结束！得分:'+score);reset();return}board[ny][pos.x+c]=piece.type+1}
+  clearLines();spawn();
+}
+function clearLines(){
+  var cleared=0;
+  for(var r=ROWS-1;r>=0;r--){if(board[r].every(v=>v)){board.splice(r,1);board.unshift(Array(COLS).fill(0));cleared++;r++}}
+  if(cleared){lines+=cleared;score+=[0,100,300,500,800][cleared]*Math.floor(1+lines/10);document.getElementById('scoreVal').textContent=score;document.getElementById('linesVal').textContent=lines;speed=Math.max(100,600-lines*15);startLoop()}
+}
+function move(dx){if(!piece)return;pos.x+=dx;if(collide())pos.x-=dx;draw()}
+function rotate(){
+  if(!piece)return;var s=piece.shape,rows=s.length,cols=s[0].length;
+  var ns=[];for(var r=0;r<cols;r++){ns[r]=[];for(var c=0;c<rows;c++)ns[r][c]=s[rows-1-c][r]}
+  piece.shape=ns;if(collide())piece.shape=s;draw()
+}
+function drop(){if(!piece)return;pos.y++;if(collide()){pos.y--;lock()}draw()}
+function hardDrop(){if(!piece)return;while(!collide())pos.y++;pos.y--;lock();draw()}
+function togglePause(){paused=!paused;document.getElementById('pauseBtn').textContent=paused?'继续':'暂停'}
+function startLoop(){clearInterval(interval);interval=setInterval(()=>{if(!paused)drop()},speed)}
+function draw(){
+  ctx.fillStyle='#111';ctx.fillRect(0,0,canvas.width,canvas.height);
+  // Board
+  for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++){if(board[r][c]){ctx.fillStyle=colors[board[r][c]-1];ctx.fillRect(c*SIZE+1,r*SIZE+1,SIZE-2,SIZE-2)}}
+  // Piece
+  if(piece)for(var r=0;r<piece.shape.length;r++)for(var c=0;c<piece.shape[r].length;c++){if(!piece.shape[r][c])continue;ctx.fillStyle=colors[piece.color];ctx.fillRect((pos.x+c)*SIZE+1,(pos.y+r)*SIZE+1,SIZE-2,SIZE-2)}
+  // Grid
+  ctx.strokeStyle='#1a1a2e';ctx.lineWidth=0.5;
+  for(var r=0;r<=ROWS;r++){ctx.beginPath();ctx.moveTo(0,r*SIZE);ctx.lineTo(COLS*SIZE,r*SIZE);ctx.stroke()}
+  for(var c=0;c<=COLS;c++){ctx.beginPath();ctx.moveTo(c*SIZE,0);ctx.lineTo(c*SIZE,ROWS*SIZE);ctx.stroke()}
+}
+function drawNext(){
+  nctx.fillStyle='#111';nctx.fillRect(0,0,80,60);
+  if(!next)return;var s=next.shape;
+  var ox=(80-s[0].length*16)/2,oy=(60-s.length*16)/2;
+  for(var r=0;r<s.length;r++)for(var c=0;c<s[r].length;c++){if(!s[r][c])continue;nctx.fillStyle=colors[next.color];nctx.fillRect(ox+c*16+1,oy+r*16+1,14,14)}
+}
+document.addEventListener('keydown',e=>{
+  if(paused&&e.key!=='p')return;
+  var k=e.key;
+  if(k==='ArrowLeft')move(-1);else if(k==='ArrowRight')move(1);
+  else if(k==='ArrowDown')drop();else if(k==='ArrowUp')rotate();
+  else if(k===' ')hardDrop();else if(k==='p')togglePause();
+  e.preventDefault();
+});
+// Touch controls
+if('ontouchstart' in window)document.getElementById('touchControls').style.display='flex';
+reset();
+</script>
+</body>
+</html>
