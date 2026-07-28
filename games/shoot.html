@@ -174,6 +174,25 @@
       font-size: 20px;
       line-height: 1;
     }
+    #tutorialBtn {
+      position: absolute;
+      right: 62px;
+      top: 38px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(120, 120, 120, 0.95);
+      color: #f0f0f0;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      cursor: pointer;
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     #settingsPanel {
       position: absolute;
       inset: 0;
@@ -252,6 +271,7 @@
     </div>
     <div id="controls"><button id="fireBtn">开火</button></div>
     <button id="settingsBtn">设</button>
+    <button id="tutorialBtn" title="新手教程">?</button>
     <div id="settingsPanel">
       <div id="settingsContent">
         <h2>飞机皮肤</h2>
@@ -1293,6 +1313,12 @@
     settingsBtn.addEventListener('click', beginSettings);
     settingsBtn.addEventListener('pointerdown', beginSettings);
     settingsClose.addEventListener('click', closeSettings);
+    document.getElementById('tutorialBtn').addEventListener('click', () => {
+      tutStep = 0;
+      tutOverlay.style.display = 'flex';
+      document.getElementById('tutSkip').style.display = 'inline-block';
+      updateTutorial();
+    });
     settingsPanel.addEventListener('click', (e) => {
       if (e.target === settingsPanel) {
         closeSettings();
