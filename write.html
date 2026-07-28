@@ -19,26 +19,41 @@
         </div>
     </nav>
 
-    <div class="write-page">
-        <div class="write-container">
+    <div class="write-page" id="writePage">
+        <div class="write-container" id="writeContainer">
+            <!-- 标题区 -->
             <div class="write-header">
-                <input type="text" id="edTitle" class="write-title" placeholder="输入文章标题..." maxlength="100">
+                <textarea id="edTitle" class="write-title" placeholder="输入文章标题..." rows="1" maxlength="100"></textarea>
                 <div class="write-meta">
-                    <input type="text" id="edTags" class="write-tags" placeholder="添加标签，用逗号分隔（如：技术, 生活, 教程）" maxlength="100">
+                    <input type="text" id="edTags" class="write-tags" placeholder="添加标签，逗号分隔（如：技术, 生活, 教程）" maxlength="100">
                     <span class="write-author" id="writeAuthor"></span>
                 </div>
             </div>
 
+            <!-- Markdown 工具栏 -->
             <div class="write-toolbar">
-                <span class="toolbar-label">正文（Markdown）</span>
+                <div class="toolbar-group">
+                    <button class="tb-btn" onclick="insertMD('**', '**')" title="粗体">B</button>
+                    <button class="tb-btn tb-italic" onclick="insertMD('*', '*')" title="斜体">I</button>
+                    <button class="tb-btn" onclick="insertMD('`', '`')" title="代码">&lt;/&gt;</button>
+                    <span class="tb-divider"></span>
+                    <button class="tb-btn" onclick="insertMD('\n## ', '')" title="二级标题">H2</button>
+                    <button class="tb-btn" onclick="insertMD('\n### ', '')" title="三级标题">H3</button>
+                    <span class="tb-divider"></span>
+                    <button class="tb-btn" onclick="insertMD('\n> ', '')" title="引用">❝</button>
+                    <button class="tb-btn" onclick="insertMD('\n- ', '')" title="列表">≡</button>
+                    <button class="tb-btn" onclick="insertMD('[', '](url)')" title="链接">🔗</button>
+                </div>
                 <div class="toolbar-actions">
+                    <span class="word-count" id="wordCount">0 字</span>
                     <button class="tool-btn" onclick="togglePreview()" id="previewBtn">👁 预览</button>
-                    <button class="tool-btn-publish" onclick="publish()" id="publishBtn">发布文章</button>
+                    <button class="tb-btn-publish" onclick="publish()" id="publishBtn">发布</button>
                 </div>
             </div>
 
-            <div class="write-editor-area">
-                <textarea id="edContent" class="write-content" placeholder="开始写作...&#10;&#10;支持 Markdown 语法：&#10;&#10;# 一级标题&#10;## 二级标题&#10;### 三级标题&#10;&#10;**粗体** *斜体* `代码`&#10;&#10;> 引用文字&#10;&#10;- 列表项"></textarea>
+            <!-- 编辑区 -->
+            <div class="write-editor-wrap">
+                <textarea id="edContent" class="write-content" placeholder="开始写作..."></textarea>
                 <div id="mdPreview" class="write-preview" style="display:none"></div>
             </div>
 
@@ -49,10 +64,6 @@
         </div>
     </div>
 
-    <footer>
-        <p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
-    </footer>
-
     <script src="user.js"></script>
     <script>
         function loadToken() {
@@ -60,10 +71,10 @@
             return h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
         }
 
-        // 检查登录
         var name = window._siteGetNickname ? window._siteGetNickname() : '';
         if (!name) {
-            document.querySelector('.write-page').innerHTML = '<div class="write-login-prompt"><h2>请先登录</h2><p>点击右上角「登录」设置昵称后再写文章</p><a href="blog.html" class="modal-btn-ok" style="display:inline-block;text-decoration:none;margin-top:1rem;">返回博客</a></div>';
+            document.getElementById('writePage').innerHTML =
+                '<div class="write-login-wrap"><div class="write-login-card"><div class="write-login-icon">✍️</div><h2>开始写作</h2><p>设置昵称后即可发布文章</p><button class="tb-btn-publish" style="margin-top:1.2rem;padding:0.6rem 2rem;font-size:1rem;" onclick="window._siteShowRegister()">设置昵称</button><p style="margin-top:1rem;font-size:0.85rem;color:var(--text-light)">已设置？<a href="write.html" style="color:var(--primary)">刷新页面</a></p></div></div>';
         } else {
             document.getElementById('writeAuthor').textContent = '作者：' + name;
         }
@@ -74,38 +85,65 @@
             var prev = document.getElementById('mdPreview');
             var btn = document.getElementById('previewBtn');
             previewMode = !previewMode;
-            if (previewMode) {
-                ta.style.display = 'none';
-                prev.style.display = 'block';
-                prev.innerHTML = formatMarkdown(ta.value || '*暂无内容*');
-                btn.textContent = '✏️ 编辑';
-            } else {
-                ta.style.display = 'block';
-                prev.style.display = 'none';
-                btn.textContent = '👁 预览';
-            }
+            ta.style.display = previewMode ? 'none' : 'block';
+            prev.style.display = previewMode ? 'block' : 'none';
+            btn.innerHTML = previewMode ? '✏️ 编辑' : '👁 预览';
+            if (previewMode) prev.innerHTML = formatMarkdown(ta.value || '*暂无内容*');
         };
 
-        var autoSaveTimer;
-        document.getElementById('edContent').addEventListener('input', function() {
-            clearTimeout(autoSaveTimer);
-            autoSaveTimer = setTimeout(function() {
-                localStorage.setItem('draft_title', document.getElementById('edTitle').value);
-                localStorage.setItem('draft_tags', document.getElementById('edTags').value);
-                localStorage.setItem('draft_content', document.getElementById('edContent').value);
-            }, 1000);
+        // 插入 Markdown 语法
+        window.insertMD = function(before, after) {
+            var ta = document.getElementById('edContent');
+            var s = ta.selectionStart, e = ta.selectionEnd;
+            var text = ta.value;
+            var selected = text.substring(s, e);
+            ta.value = text.substring(0, s) + before + selected + after + text.substring(e);
+            ta.focus();
+            var newPos = s + before.length + selected.length + after.length;
+            if (!selected) newPos = s + before.length;
+            ta.setSelectionRange(newPos, newPos);
+            updateWordCount();
+        };
+
+        // 字数统计
+        function updateWordCount() {
+            var text = document.getElementById('edContent').value;
+            var count = text.replace(/\s/g, '').length;
+            document.getElementById('wordCount').textContent = count + ' 字';
+        }
+        document.getElementById('edContent').addEventListener('input', updateWordCount);
+
+        // 自动标题高度
+        var titleEl = document.getElementById('edTitle');
+        titleEl.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
         });
 
+        // 草稿自动保存
+        var saveTimer;
+        function saveDraft() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(function() {
+                localStorage.setItem('draft_title', titleEl.value);
+                localStorage.setItem('draft_tags', document.getElementById('edTags').value);
+                localStorage.setItem('draft_content', document.getElementById('edContent').value);
+            }, 800);
+        }
+        titleEl.addEventListener('input', saveDraft);
+        document.getElementById('edTags').addEventListener('input', saveDraft);
+        document.getElementById('edContent').addEventListener('input', saveDraft);
+
         // 恢复草稿
-        var draftTitle = localStorage.getItem('draft_title');
-        var draftTags = localStorage.getItem('draft_tags');
-        var draftContent = localStorage.getItem('draft_content');
-        if (draftTitle) document.getElementById('edTitle').value = draftTitle;
-        if (draftTags) document.getElementById('edTags').value = draftTags;
-        if (draftContent) document.getElementById('edContent').value = draftContent;
+        var dt = localStorage.getItem('draft_title');
+        var dg = localStorage.getItem('draft_tags');
+        var dc = localStorage.getItem('draft_content');
+        if (dt) { titleEl.value = dt; titleEl.dispatchEvent(new Event('input')); }
+        if (dg) document.getElementById('edTags').value = dg;
+        if (dc) { document.getElementById('edContent').value = dc; updateWordCount(); }
 
         window.publish = async function() {
-            var title = document.getElementById('edTitle').value.trim();
+            var title = titleEl.value.trim();
             var tagsStr = document.getElementById('edTags').value.trim();
             var body = document.getElementById('edContent').value.trim();
             var btn = document.getElementById('publishBtn');
@@ -116,7 +154,6 @@
 
             btn.disabled = true; btn.textContent = '发布中...'; err.style.display = 'none';
             var tags = tagsStr ? tagsStr.split(/[,，]/).map(function(t) { return t.trim(); }).filter(Boolean) : [];
-
             var issueBody = '**作者**：' + name + '\n**标签**：' + (tags.join(',') || '未分类') + '\n\n' + body;
 
             try {
@@ -131,20 +168,17 @@
                         method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
                         body: JSON.stringify({ title: 'article-' + issue.number, body: '> 文章：' + title + '\n\n欢迎留下你的想法 👇', labels: ['comment'] })
                     });
-                    // 清除草稿
                     localStorage.removeItem('draft_title');
                     localStorage.removeItem('draft_tags');
                     localStorage.removeItem('draft_content');
-                    document.getElementById('edStatus').textContent = '✅ 发布成功！';
-                    setTimeout(function() { window.location.href = 'article.html?id=' + issue.number + '&type=issue'; }, 1000);
+                    document.getElementById('edStatus').textContent = '✅ 发布成功！即将跳转...';
+                    setTimeout(function() { window.location.href = 'article.html?id=' + issue.number + '&type=issue'; }, 1200);
                 } else {
                     var e = await resp.json().catch(function() { return {}; });
                     err.textContent = '发布失败：' + (e.message || '请重试'); err.style.display = 'block';
                 }
-            } catch (ex) {
-                err.textContent = '网络错误，请重试'; err.style.display = 'block';
-            }
-            btn.disabled = false; btn.textContent = '发布文章';
+            } catch (ex) { err.textContent = '网络错误，请重试'; err.style.display = 'block'; }
+            btn.disabled = false; btn.textContent = '发布';
         };
 
         function formatMarkdown(md) {
@@ -152,7 +186,7 @@
                 .replace(/### (.+)/g, '<h4>$1</h4>').replace(/## (.+)/g, '<h3>$1</h3>').replace(/# (.+)/g, '<h2>$1</h2>')
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')
                 .replace(/`([^`]+)`/g, '<code>$1</code>').replace(/^> (.+)/gm, '<blockquote>$1</blockquote>')
-                .replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>');
+                .replace(/^- (.+)/gm, '<li>$1</li>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>');
         }
     </script>
 </body>
