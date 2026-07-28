@@ -698,6 +698,87 @@ footer {
     font-size: 0.95rem;
 }
 
+/* 评论操作按钮 */
+.comment-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.comment-action-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0.2rem 0;
+    transition: color 0.15s;
+}
+
+.comment-action-btn:hover { color: var(--primary); }
+.comment-action-btn.liked { color: var(--primary); font-weight: 600; }
+
+/* 回复区 */
+.comment-replies {
+    margin-top: 0.6rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--border);
+}
+
+.comment-reply-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+    font-size: 0.9rem;
+}
+
+.comment-reply-content {
+    flex: 1;
+    line-height: 1.5;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.comment-reply-actions {
+    flex-shrink: 0;
+}
+
+.comment-replies-more {
+    font-size: 0.8rem;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 0.3rem 0;
+    user-select: none;
+}
+
+.comment-replies-more:hover { text-decoration: underline; }
+
+/* 回复表单 */
+.comment-reply-form {
+    margin-top: 0.5rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--border);
+}
+
+.comment-input-sm {
+    min-height: 50px;
+    font-size: 0.9rem;
+}
+
+.comment-submit-sm {
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    padding: 0.35rem 1rem;
+}
+
+.comment-avatar-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+}
+
 .comments-error {
     text-align: center;
     color: #e53e3e;
