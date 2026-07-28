@@ -54,6 +54,7 @@
 
     <script src="blog-data.js"></script>
     <script src="user.js"></script>
+    <script src="stats.js"></script>
     <script>
 // ===== 全局评论系统 =====
 var REPO='yjcc520/my-page', loadingEl=document.getElementById('commentsLoading'), listEl=document.getElementById('comments-list');
@@ -172,6 +173,7 @@ window.deleteArticle=async function(id){
 
 // ===== 文章加载 =====
 var params=new URLSearchParams(window.location.search),aid=parseInt(params.get('id')),isIssue=params.get('type')==='issue';
+_trackRead(aid);
 
 if(isIssue){
     (async function(){
@@ -205,5 +207,6 @@ if(isIssue){
 }
     </script>
     <script src="theme.js"></script>
+    <script src="music.js"></script>
 </body>
 </html>
