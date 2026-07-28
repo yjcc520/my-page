@@ -1,0 +1,90 @@
+// 国际化翻译模块
+(function() {
+  var langs = {
+    zh: {
+      nav_home: '首页', nav_about: '关于我', nav_blog: '博客',
+      nav_tags: '标签', nav_gallery: '画廊', nav_games: '小游戏',
+      hero_greet: '你好，我是', hero_tagline: '中国人',
+      section_about: '关于我',
+      about_city: '📍 所在城市', about_city_val: '北京 / 长沙',
+      about_id: '🎓 身份', about_id_val: '中国人',
+      about_interest: '💡 兴趣', about_interest_val: '吃喝、睡觉、养生、找乐子',
+      section_skills: '技能 & 兴趣',
+      section_lb: '游戏排行榜', lb_loading: '加载中…', lb_empty: '暂无排行数据，去<a href="games.html">小游戏</a>玩一局吧', lb_error: '排行榜加载失败',
+      section_contact: '联系我', contact_intro: '欢迎交流，一起成长',
+      thanks: '致谢：感谢 DeepSeek 大模型，让一个连程序怎么运行都不知道的文科生也能做出个人网页。',
+      footer_copy: '© 2026 蔡梓涵 · Powered by GitHub Pages',
+      footer_visits: '累计访问：'
+    },
+    en: {
+      nav_home: 'Home', nav_about: 'About', nav_blog: 'Blog',
+      nav_tags: 'Tags', nav_gallery: 'Gallery', nav_games: 'Games',
+      hero_greet: 'Hello, I am', hero_tagline: 'Chinese',
+      section_about: 'About Me',
+      about_city: '📍 City', about_city_val: 'Beijing / Changsha',
+      about_id: '🎓 Identity', about_id_val: 'Chinese',
+      about_interest: '💡 Interests', about_interest_val: 'Food, Sleep, Wellness, Fun',
+      section_skills: 'Skills & Interests',
+      section_lb: 'Leaderboard', lb_loading: 'Loading…', lb_empty: 'No data yet — <a href="games.html">play a game</a>!', lb_error: 'Failed to load',
+      section_contact: 'Contact', contact_intro: 'Let\'s connect and grow together.',
+      thanks: 'Thanks to DeepSeek AI, who made it possible for a liberal arts student with zero coding knowledge to build a personal website.',
+      footer_copy: '© 2026 Zihan Cai · Powered by GitHub Pages',
+      footer_visits: 'Visits: '
+    },
+    ja: {
+      nav_home: 'ホーム', nav_about: '私について', nav_blog: 'ブログ',
+      nav_tags: 'タグ', nav_gallery: 'ギャラリー', nav_games: 'ゲーム',
+      hero_greet: 'こんにちは、', hero_tagline: '中国人',
+      section_about: '私について',
+      about_city: '📍 都市', about_city_val: '北京 / 長沙',
+      about_id: '🎓 身分', about_id_val: '中国人',
+      about_interest: '💡 趣味', about_interest_val: '食べる・寝る・養生・楽しむ',
+      section_skills: 'スキル＆趣味',
+      section_lb: 'ランキング', lb_loading: '読み込み中…', lb_empty: 'まだデータがありません — <a href="games.html">ゲームをプレイ</a>！', lb_error: '読み込み失敗',
+      section_contact: 'お問い合わせ', contact_intro: '一緒に成長しましょう。',
+      thanks: 'DeepSeek AIに感謝 — プログラミングを知らない文系学生でも個人サイトを作れました。',
+      footer_copy: '© 2026 Zihan Cai · Powered by GitHub Pages',
+      footer_visits: '訪問数：'
+    }
+  };
+
+  window._t = function(key) {
+    var lang = window._siteGetLang ? window._siteGetLang() : 'zh';
+    return (langs[lang] && langs[lang][key]) ? langs[lang][key] : (langs.zh[key] || key);
+  };
+
+  window._applyI18n = function() {
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      el.innerHTML = window._t(key);
+    });
+    document.querySelectorAll('[data-i18n-text]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-text');
+      el.textContent = window._t(key);
+    });
+    // Update leaderboard if already loaded
+    if (window._refreshLeaderboard) window._refreshLeaderboard();
+    // Update visit count
+    if (window._refreshVisits) window._refreshVisits();
+  };
+
+  window._setLang = function(l) {
+    localStorage.setItem('site_lang', l);
+    // Highlight active button
+    document.querySelectorAll('.lang-btn').forEach(function(b) { b.style.background = ''; b.style.color = ''; });
+    var activeBtn = document.getElementById('lang' + (l === 'zh' ? 'Zh' : l === 'en' ? 'En' : 'Ja'));
+    if (activeBtn) { activeBtn.style.background = 'var(--primary)'; activeBtn.style.color = '#fff'; }
+    window._applyI18n();
+  };
+
+  window._siteGetLang = function() {
+    return localStorage.getItem('site_lang') || 'zh';
+  };
+
+  // Highlight current lang on load
+  (function() {
+    var cur = window._siteGetLang();
+    var btn = document.getElementById('lang' + (cur === 'zh' ? 'Zh' : cur === 'en' ? 'En' : 'Ja'));
+    if (btn) { btn.style.background = 'var(--primary)'; btn.style.color = '#fff'; }
+  })();
+})();
