@@ -1149,53 +1149,6 @@
       restartBtn.style.display = 'inline-block';
     }
 
-    function updateTutorial() {
-      if (tutStep >= tutorialSteps.length) {
-        tutOverlay.style.display = 'none';
-        localStorage.setItem('shoot_tutorial_done', '1');
-        return;
-      }
-      const s = tutorialSteps[tutStep];
-      tutIcon.textContent = s.icon;
-      tutTitle.textContent = s.title;
-      tutText.innerHTML = s.text.replace(/\n/g, '<br>');
-      tutDots.innerHTML = tutorialSteps.map((_, i) => '<span' + (i === tutStep ? ' class="on"' : '') + '></span>').join('');
-      if (tutStep === tutorialSteps.length - 1) {
-        tutNext.textContent = '开始游戏';
-        tutNext.className = 'tut-btn-start';
-        document.getElementById('tutSkip').style.display = 'none';
-      } else {
-        tutNext.textContent = '下一步';
-        tutNext.className = 'tut-btn-next';
-      }
-    }
-
-    window.nextTutorial = function() {
-      tutStep++;
-      if (tutStep >= tutorialSteps.length) {
-        tutOverlay.style.display = 'none';
-        localStorage.setItem('shoot_tutorial_done', '1');
-        hideOverlay();
-        return;
-      }
-      updateTutorial();
-    };
-
-    window.skipTutorial = function() {
-      tutOverlay.style.display = 'none';
-      localStorage.setItem('shoot_tutorial_done', '1');
-    };
-
-    if (localStorage.getItem('shoot_tutorial_done')) {
-      tutOverlay.style.display = 'none';
-    } else {
-      updateTutorial();
-    }
-
-    resetGame();
-        hideOverlay();
-      }, 1200);
-    }
 
     let lastTime = 0;
     function loop(timestamp) {
