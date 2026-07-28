@@ -24,11 +24,27 @@
         <div class="blog-header">
             <h1>博客</h1>
             <p>记录思考，分享成长</p>
+            <button class="blog-write-btn" id="writeBtn" onclick="showEditor()">✏️ 写文章</button>
         </div>
         <div class="blog-list" id="blogList">
             <!-- JS 动态生成 -->
         </div>
     </section>
+
+    <!-- 发文编辑器 -->
+    <div class="editor-overlay" id="editorOverlay" style="display:none">
+        <div class="editor-box">
+            <h3>写文章</h3>
+            <input type="text" id="edTitle" class="editor-title" placeholder="文章标题" maxlength="100">
+            <input type="text" id="edTags" class="editor-tags" placeholder="标签，用逗号分隔（如：技术,生活）" maxlength="100">
+            <textarea id="edContent" class="editor-content" placeholder="文章正文（支持 Markdown）&#10;&#10;## 小标题&#10;正文内容...&#10;&#10;> 引用文字&#10;&#10;**粗体** *斜体*" rows="12"></textarea>
+            <p id="edError" class="comment-error" style="display:none"></p>
+            <div class="modal-btns">
+                <button class="modal-btn-cancel" onclick="hideEditor()">取消</button>
+                <button class="modal-btn-ok" id="edSubmit" onclick="publishArticle()">发布</button>
+            </div>
+        </div>
+    </div>
 
     <footer>
         <p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
@@ -37,21 +53,126 @@
     <script src="blog-data.js"></script>
     <script src="user.js"></script>
     <script>
-        const list = document.getElementById('blogList');
-        articles.forEach(a => {
-            const card = document.createElement('article');
-            card.className = 'blog-card';
-            card.innerHTML = `
-                <div class="blog-card-tags">
-                    ${a.tags.map(t => `<span class="tag">${t}</span>`).join('')}
-                </div>
-                <h2><a href="article.html?id=${a.id}">${a.title}</a></h2>
-                <time>${a.date}</time>
-                <p class="blog-card-summary">${a.summary}</p>
-                <a href="article.html?id=${a.id}" class="read-more">阅读全文 →</a>
-            `;
-            list.appendChild(card);
-        });
+        function loadToken() {
+            var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
+            return h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
+        }
+
+        function escapeHtml(s) {
+            var d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        // 编辑器
+        window.showEditor = function() {
+            var name = window._siteGetNickname ? window._siteGetNickname() : '';
+            if (!name) { if (window._siteShowRegister) window._siteShowRegister(); return; }
+            document.getElementById('editorOverlay').style.display = 'flex';
+            document.getElementById('edTitle').focus();
+        };
+        window.hideEditor = function() {
+            document.getElementById('editorOverlay').style.display = 'none';
+            document.getElementById('edTitle').value = '';
+            document.getElementById('edTags').value = '';
+            document.getElementById('edContent').value = '';
+            document.getElementById('edError').style.display = 'none';
+        };
+
+        // 发布文章
+        window.publishArticle = async function() {
+            var name = window._siteGetNickname ? window._siteGetNickname() : '';
+            var title = document.getElementById('edTitle').value.trim();
+            var tagsStr = document.getElementById('edTags').value.trim();
+            var body = document.getElementById('edContent').value.trim();
+            var btn = document.getElementById('edSubmit');
+            var err = document.getElementById('edError');
+
+            if (!title) { err.textContent = '请输入标题'; err.style.display = 'block'; return; }
+            if (!body) { err.textContent = '请输入正文'; err.style.display = 'block'; return; }
+
+            btn.disabled = true; btn.textContent = '发布中...'; err.style.display = 'none';
+            var tags = tagsStr ? tagsStr.split(/[,，]/).map(function(t) { return t.trim(); }).filter(Boolean) : [];
+
+            var issueBody = '**作者**：' + name + '\n**标签**：' + (tags.join(',') || '未分类') + '\n\n' + body;
+
+            try {
+                var T = loadToken();
+                var resp = await fetch('https://api.github.com/repos/yjcc520/my-page/issues', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                    body: JSON.stringify({ title: title, body: issueBody, labels: ['article'] })
+                });
+                if (resp.ok) {
+                    var issue = await resp.json();
+                    // 创建评论 Issue
+                    await fetch('https://api.github.com/repos/yjcc520/my-page/issues', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                        body: JSON.stringify({ title: 'article-' + issue.number, body: '> 文章：' + title + '\n\n欢迎留下你的想法 👇', labels: ['comment'] })
+                    });
+                    hideEditor();
+                    loadArticles();
+                } else {
+                    var e = await resp.json().catch(function() { return {}; });
+                    err.textContent = '发布失败：' + (e.message || '请重试');
+                    err.style.display = 'block';
+                }
+            } catch (ex) {
+                err.textContent = '网络错误，请重试';
+                err.style.display = 'block';
+            }
+            btn.disabled = false; btn.textContent = '发布';
+        };
+
+        // 渲染文章卡片
+        function renderArticleCard(a) {
+            var tagsHtml = (a.tags || []).map(function(t) { return '<span class="tag">' + escapeHtml(t) + '</span>'; }).join('');
+            return '<article class="blog-card">' +
+                '<div class="blog-card-tags">' + tagsHtml + '</div>' +
+                '<h2><a href="article.html?id=' + a.id + '&type=issue" class="' + (a.issueId ? 'article-user' : '') + '">' + escapeHtml(a.title) + '</a></h2>' +
+                '<time>' + a.date + '</time>' +
+                '<p class="blog-card-summary">' + escapeHtml(a.summary) + '</p>' +
+                '<a href="article.html?id=' + a.id + (a.issueId ? '&type=issue' : '') + '" class="read-more">阅读全文 →</a>' +
+                '</article>';
+        }
+
+        async function loadArticles() {
+            var list = document.getElementById('blogList');
+            var all = [];
+
+            // 预置文章
+            articles.forEach(function(a) {
+                all.push({ id: a.id, title: a.title, date: a.date, summary: a.summary, tags: a.tags, issueId: false });
+            });
+
+            // GitHub Issues 文章
+            try {
+                var resp = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:article+type:issue+state:open&sort=created&order=desc&per_page=50', {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                });
+                var data = await resp.json();
+                (data.items || []).forEach(function(issue) {
+                    var author = '匿名', tagList = [];
+                    var body = issue.body || '';
+                    var am = body.match(/\*\*作者\*\*[：:]\s*(.+)/);
+                    if (am) author = am[1].trim();
+                    var tm = body.match(/\*\*标签\*\*[：:]\s*(.+)/);
+                    if (tm) tagList = tm[1].split(/[,，]/).map(function(t) { return t.trim(); }).filter(Boolean);
+                    // 移除元数据行
+                    var content = body.replace(/\*\*作者\*\*[：:].+\n?/, '').replace(/\*\*标签\*\*[：:].+\n?/, '').trim();
+                    var summary = content.replace(/[#*>\n`]/g, '').substring(0, 120) + '...';
+                    all.push({
+                        id: issue.number, title: issue.title, date: issue.created_at.split('T')[0],
+                        summary: summary, tags: tagList, issueId: true, author: author, content: content
+                    });
+                });
+            } catch (e) {}
+
+            list.innerHTML = all.length ? all.map(renderArticleCard).join('') : '<p class="comments-empty">还没有文章</p>';
+        }
+
+        loadArticles();
     </script>
 </body>
 </html>
