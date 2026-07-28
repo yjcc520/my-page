@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>记忆翻牌 | 蔡梓涵</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(135deg,#2d1b69,#1e3a5f);color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.container{text-align:center;width:90%;max-width:500px}
+h1{font-size:2rem;margin-bottom:0.3rem}
+.sub{color:#a78bfa;margin-bottom:1rem}
+.stats{display:flex;justify-content:center;gap:2rem;margin-bottom:1rem;font-size:0.9rem}
+.stats span{color:#a78bfa;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:400px;margin:0 auto}
+.card{aspect-ratio:1;background:#3b2d7a;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:2rem;transition:transform 0.3s,background 0.3s;user-select:none;-webkit-tap-highlight-color:transparent}
+.card.flipped{background:#5b4fcf;transform:rotateY(180deg)}
+.card.matched{background:#22c55e;cursor:default;transform:scale(0.95)}
+.card:active:not(.matched):not(.flipped){transform:scale(0.9)}
+.btn{background:#a78bfa;color:#fff;border:none;padding:0.6rem 2rem;border-radius:6px;font-size:1rem;cursor:pointer;margin-top:1rem;font-weight:600;transition:opacity 0.2s}
+.btn:hover{opacity:0.85}
+.msg{font-size:1.1rem;margin-top:0.8rem;min-height:1.5rem;color:#a78bfa}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>记忆翻牌</h1>
+  <p class="sub">找出所有相同的配对</p>
+  <div class="stats">步数: <span id="moves">0</span> | 配对: <span id="pairs">0/8</span></div>
+  <div class="grid" id="grid"></div>
+  <div class="msg" id="msg"></div>
+  <button class="btn" onclick="start()">新游戏</button>
+</div>
+<script>
+var icons=['🍲','😴','🎯','🎵','🍵','🌸','🐼','🎋'];
+var cards=[],flipped=[],moves=0,pairs=0,locked=false;
+function start(){
+  cards=[...icons,...icons].sort(()=>Math.random()-0.5);
+  flipped=[];moves=0;pairs=0;locked=false;
+  document.getElementById('moves').textContent='0';
+  document.getElementById('pairs').textContent='0/8';
+  document.getElementById('msg').textContent='';
+  render();
+}
+function render(){
+  var g=document.getElementById('grid');g.innerHTML='';
+  cards.forEach((icon,i)=>{
+    var d=document.createElement('div');d.className='card';
+    d.textContent=flipped.includes(i)||cards[i]==='done'?icon:'?';
+    if(flipped.includes(i))d.classList.add('flipped');
+    if(cards[i]==='done')d.classList.add('matched');
+    d.onclick=()=>flip(i);g.appendChild(d);
+  });
+}
+function flip(i){
+  if(locked||cards[i]==='done'||flipped.includes(i))return;
+  flipped.push(i);render();
+  if(flipped.length===2){
+    moves++;locked=true;document.getElementById('moves').textContent=moves;
+    var a=flipped[0],b=flipped[1];
+    if(cards[a]===cards[b]){
+      cards[a]=cards[b]='done';pairs++;
+      document.getElementById('pairs').textContent=pairs+'/8';
+      flipped=[];locked=false;render();
+      if(pairs===8)document.getElementById('msg').textContent='恭喜通关！用了'+moves+'步';
+    }else{
+      setTimeout(()=>{flipped=[];locked=false;render()},800);
+    }
+  }
+}
+start();
+</script>
+</body>
+</html>
