@@ -128,32 +128,43 @@
         // 渲染文章卡片
         function renderArticleCard(a) {
             var tagsHtml = (a.tags || []).map(function(t) { return '<span class="tag">' + escapeHtml(t) + '</span>'; }).join('');
-            var delBtn = a.issueId ? '<button class="blog-del-btn" onclick="deleteBlog(' + a.id + ', this)" title="删除">✕</button>' : '';
+            var curName = window._siteGetNickname ? window._siteGetNickname() : '';
+            var canDel = (a.issueId && curName && curName === a.author) || (!a.issueId && curName);
+            var delBtn = canDel ? '<button class="blog-del-btn" onclick="deleteBlog(\'' + a.delId + '\', this)" title="删除">✕</button>' : '';
+            var authorHtml = a.author ? '<span class="blog-author">' + escapeHtml(a.author) + '</span>' : '';
             return '<article class="blog-card' + (a.issueId ? ' blog-card-user' : '') + '">' +
                 delBtn +
                 '<div class="blog-card-tags">' + tagsHtml + '</div>' +
                 '<h2><a href="article.html?id=' + a.id + (a.issueId ? '&type=issue' : '') + '">' + escapeHtml(a.title) + '</a></h2>' +
-                '<time>' + a.date + '</time>' +
+                '<div class="blog-meta"><time>' + a.date + '</time>' + authorHtml + '</div>' +
                 '<p class="blog-card-summary">' + escapeHtml(a.summary) + '</p>' +
                 '<a href="article.html?id=' + a.id + (a.issueId ? '&type=issue' : '') + '" class="read-more">阅读全文 →</a>' +
                 '</article>';
         }
 
         // 删除文章
-        window.deleteBlog = async function(id, btn) {
+        window.deleteBlog = async function(delId, btn) {
             if (!confirm('确定删除这篇文章吗？')) return;
-            var name = window._siteGetNickname ? window._siteGetNickname() : '';
-            if (!name) { alert('请先登录'); return; }
+            // delId format: "issue-123" or "preset-1"
+            if (delId.indexOf('preset-') === 0) {
+                // 预置文章用 localStorage 标记删除
+                var deleted = JSON.parse(localStorage.getItem('deleted_preset_articles') || '[]');
+                deleted.push(delId);
+                localStorage.setItem('deleted_preset_articles', JSON.stringify(deleted));
+                var card = btn.closest('.blog-card');
+                if (card) { card.style.opacity = '0'; setTimeout(function() { card.remove(); }, 300); }
+                return;
+            }
+            // Issue 文章
+            var id = parseInt(delId.replace('issue-', ''));
             try {
                 var T = loadToken();
-                // 关闭文章 Issue
                 var resp = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + id, {
                     method: 'PATCH',
                     headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
                     body: JSON.stringify({ state: 'closed' })
                 });
-                if (!resp.ok) { var e = await resp.json().catch(function(){return{};}); alert('删除失败：' + (e.message || '')); return; }
-                // 关闭对应评论 Issue
+                if (!resp.ok) { var e = await resp.json().catch(function(){return{};}); alert('删除失败'); return; }
                 try {
                     var sr = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:comment+article-'+id+'+in:title+type:issue', {
                         headers: { 'Accept': 'application/vnd.github.v3+json' }
@@ -167,20 +178,20 @@
                         });
                     }
                 } catch (ex) {}
-                // 从列表移除
                 var card = btn.closest('.blog-card');
-                if (card) card.style.opacity = '0';
-                setTimeout(function() { if (card) card.remove(); }, 300);
-            } catch (ex) { alert('网络错误，请重试'); }
+                if (card) { card.style.opacity = '0'; setTimeout(function() { card.remove(); }, 300); }
+            } catch (ex) { alert('网络错误'); }
         };
 
         async function loadArticles() {
             var list = document.getElementById('blogList');
             var all = [];
+            var deletedPreset = JSON.parse(localStorage.getItem('deleted_preset_articles') || '[]');
 
             // 预置文章
             articles.forEach(function(a) {
-                all.push({ id: a.id, title: a.title, date: a.date, summary: a.summary, tags: a.tags, issueId: false });
+                if (deletedPreset.indexOf('preset-' + a.id) >= 0) return;
+                all.push({ id: a.id, title: a.title, date: a.date, summary: a.summary, tags: a.tags, issueId: false, author: '蔡梓涵', delId: 'preset-' + a.id });
             });
 
             // GitHub Issues 文章
@@ -196,12 +207,11 @@
                     if (am) author = am[1].trim();
                     var tm = body.match(/\*\*标签\*\*[：:]\s*(.+)/);
                     if (tm) tagList = tm[1].split(/[,，]/).map(function(t) { return t.trim(); }).filter(Boolean);
-                    // 移除元数据行
                     var content = body.replace(/\*\*作者\*\*[：:].+\n?/, '').replace(/\*\*标签\*\*[：:].+\n?/, '').trim();
                     var summary = content.replace(/[#*>\n`]/g, '').substring(0, 120) + '...';
                     all.push({
                         id: issue.number, title: issue.title, date: issue.created_at.split('T')[0],
-                        summary: summary, tags: tagList, issueId: true, author: author, content: content
+                        summary: summary, tags: tagList, issueId: true, author: author, delId: 'issue-' + issue.number
                     });
                 });
             } catch (e) {}
