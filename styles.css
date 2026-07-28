@@ -269,6 +269,93 @@ footer {
 .blog-header {
     text-align: center;
     margin-bottom: 3rem;
+    position: relative;
+}
+
+.blog-write-btn {
+    margin-top: 1rem;
+    padding: 0.5rem 1.5rem;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.blog-write-btn:hover { background: var(--primary-light); }
+
+/* 用户文章标记 */
+.article-user { color: var(--primary); }
+
+/* 发文编辑器 */
+.editor-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInBg 0.2s ease;
+}
+
+.editor-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2rem;
+    width: 600px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    animation: slideUp 0.25s ease;
+}
+
+.editor-box h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.editor-title {
+    width: 100%;
+    padding: 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-family: inherit;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.editor-title:focus, .editor-tags:focus, .editor-content:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+}
+
+.editor-tags {
+    width: 100%;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    margin-bottom: 0.75rem;
+}
+
+.editor-content {
+    width: 100%;
+    padding: 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    line-height: 1.7;
+    resize: vertical;
+    min-height: 200px;
 }
 
 .blog-header h1 {
