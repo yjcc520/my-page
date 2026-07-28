@@ -28,9 +28,13 @@
             <p class="greeting">你好，我是</p>
             <h1>蔡梓涵</h1>
             <p class="tagline">中国人</p>
-            <p class="intro">门虽设，而常关。</p>
+            <p class="intro">门虽设，而常关</p>
         </div>
     </section>
+
+    <div class="quote-marquee" id="qm1">
+        <div class="quote-track" id="qt1"></div>
+    </div>
 
     <section id="about" class="about">
         <h2>关于我</h2>
@@ -51,6 +55,10 @@
             </div>
         </div>
     </section>
+
+    <div class="quote-marquee" id="qm2">
+        <div class="quote-track" id="qt2"></div>
+    </div>
 
     <section id="skills" class="skills">
         <h2>技能 & 兴趣</h2>
@@ -78,6 +86,17 @@
         </div>
     </section>
 
+    <section id="leaderboard" class="leaderboard-section">
+        <h2>游戏排行榜</h2>
+        <div class="lb-grid" id="lbGrid">
+            <p class="lb-placeholder">加载中…</p>
+        </div>
+    </section>
+
+    <div class="quote-marquee" id="qm3">
+        <div class="quote-track" id="qt3"></div>
+    </div>
+
     <section id="contact" class="contact">
         <h2>联系我</h2>
         <p class="contact-intro">欢迎交流，一起成长</p>
@@ -87,6 +106,10 @@
         <p class="thanks-note">致谢：感谢 DeepSeek 大模型，让一个连程序怎么运行都不知道的文科生也能做出个人网页。</p>
     </section>
 
+    <div class="quote-marquee" id="qm4">
+        <div class="quote-track" id="qt4"></div>
+    </div>
+
     <footer>
         <p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
         <p style="text-align:center;color:var(--text-light);font-size:0.85rem;margin-top:1rem;" id="visitCount">正在加载访问量...</p>
@@ -95,6 +118,117 @@
     <script src="theme.js"></script>
     <script src="stats.js"></script>
     <script>
+// ---- Quotes Pool ----
+var _quotes = [
+  "雪沫乳花浮午盏，蓼茸蒿笋试春盘","长风破浪会有时，直挂云帆济沧海",
+  "千磨万击还坚劲，任尔东西南北风","纸上得来终觉浅，绝知此事要躬行",
+  "不畏浮云遮望眼，自缘身在最高层","山重水复疑无路，柳暗花明又一村",
+  "博观而约取，厚积而薄发","莫愁前路无知己，天下谁人不识君",
+  "今朝有酒今朝醉，明日愁来明日愁","因过竹院逢僧话，偷得浮生半日闲",
+  "我醉欲眠卿且去，明朝有意抱琴来","不如意事常八九，可与语人无二三",
+  "有心栽花花不开，无心插柳柳成荫","世人结交须黄金，黄金不多交不深",
+  "万事不如身手好，一生须惜少年时","陶尽门前土，屋上无片瓦。十指不沾泥，鳞鳞居大厦",
+  "生年不满百，常怀千岁忧。昼短苦夜长，何不秉烛游","结庐在人境，而无车马喧。问君何能尔，心远地自偏",
+  "我醉君复乐，陶然共忘机","人生到处知何似，应似飞鸿踏雪泥",
+  "囊空恐羞涩，留得一钱看","蹉跎莫遣韶光老，人生唯有读书好",
+  "月儿弯弯照九州，几家欢乐几家愁","若将容易得，便作等闲看",
+  "有约不来过夜半，闲敲棋子落灯花","人生得意须尽欢，莫使金樽空对月",
+  "采得百花成蜜后，为谁辛苦为谁甜","公道世间唯白发，贵人头上不曾饶",
+  "同是天涯沦落人，相逢何必曾相识","而今识尽愁滋味，欲说还休。欲说还休，却道天凉好个秋",
+  "命里有时终须有，命里无时莫强求","长恨此身非我有，何时忘却营营",
+  "不知腐鼠成滋味，猜意鹓雏竟未休","多病所须唯药物，微躯此外更何求",
+  "遍身罗绮者，不是养蚕人","我生待明日，万事成蹉跎",
+  "凭君莫话封侯事，一将功成万骨枯","日啖荔枝三百颗，不辞长作岭南人",
+  "解衣欲睡，月色入户，欣然起行","吾家洗砚池头树，朵朵花开淡墨痕",
+  "绿蚁新醅酒，红泥小火炉。晚来天欲雪，能饮一杯无","无丝竹之乱耳，无案牍之劳形",
+  "相看两不厌，只有敬亭山","侯门一入深如海，从此萧郎是路人",
+  "书生事业真堪笑，忍冻孤吟笔退尖","溪柴火软蛮毡暖，我与狸奴不出门",
+  "三杯两盏淡酒，怎敌他、晚来风急","闻君有两意，故来相决绝",
+  "朱门酒肉臭，路有冻死骨","安得广厦千万间，大庇天下寒士俱欢颜",
+  "故人具鸡黍，邀我至田家","只恐夜深花睡去，故烧高烛照红妆",
+  "读书不作儒生酸，要挽银河洗甲兵","得成比目何辞死，愿作鸳鸯不羡仙",
+  "却将万字平戎策，换得东家种树书","人言快意难得时，世间乐事须生悲",
+  "去年今日此门中，人面桃花相映红。人面不知何处去，桃花依旧笑春风","门虽设而常关",
+  "清风明月不用一钱买","邻曲时时来，抗言谈在昔。奇文共欣赏，疑义相与析",
+  "谁道人生无再少？门前流水尚能西","山中何事？松花酿酒，春水煎茶",
+  "青山一道同云雨，明月何曾是两乡","云想衣裳花想容",
+  "不能手提天下往，何忍身去游其间","流水落花春去也，天上人间",
+  "问君能有几多愁，恰似一江春水向东流"
+];
+
+function _shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function _initQuotes() {
+  var shuffled = _shuffle(_quotes);
+  var n = 4; // number of marquees
+  var per = Math.floor(shuffled.length / n);
+  for (var m = 0; m < n; m++) {
+    var track = document.getElementById('qt' + (m + 1));
+    var chunk = shuffled.slice(m * per, m === n - 1 ? shuffled.length : (m + 1) * per);
+    var html = '';
+    for (var q = 0; q < chunk.length; q++) {
+      html += '<span class="quote-item">' + chunk[q] + '</span>';
+      html += '<span class="quote-sep">✦</span>';
+    }
+    track.innerHTML = html + html; // duplicate for seamless loop
+  }
+}
+
+// ---- Leaderboard ----
+async function _initLeaderboard() {
+  var grid = document.getElementById('lbGrid');
+  try {
+    var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+type:issue&per_page=10', {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    });
+    var data = await r.json();
+    if (!data.items || !data.items.length) {
+      grid.innerHTML = '<p class="lb-placeholder">暂无排行数据，去<a href="games.html">小游戏</a>玩一局吧</p>';
+      return;
+    }
+    var games = {};
+    data.items.forEach(function(issue) {
+      var gameName = issue.title.replace('-排行榜', '').trim();
+      var scores = {};
+      var lines = issue.body.split('\n');
+      lines.forEach(function(line) {
+        var m = line.match(/(\d+)分[：:]\s*(.+)/);
+        if (m) {
+          var name = m[2].trim();
+          var sc = parseInt(m[1]);
+          if (!scores[name] || scores[name] < sc) scores[name] = sc;
+        }
+      });
+      var entries = Object.entries(scores).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 5);
+      if (entries.length) games[gameName] = entries;
+    });
+    if (!Object.keys(games).length) {
+      grid.innerHTML = '<p class="lb-placeholder">暂无排行数据，去<a href="games.html">小游戏</a>玩一局吧</p>';
+      return;
+    }
+    var html = '';
+    Object.entries(games).forEach(function(g) {
+      html += '<div class="lb-card"><h3 class="lb-game-title">' + g[0] + '</h3><ol class="lb-list">';
+      g[1].forEach(function(e, i) {
+        html += '<li class="lb-row"><span class="lb-rank">' + (i + 1) + '</span><span class="lb-name">' + e[0] + '</span><span class="lb-score">' + e[1] + '分</span></li>';
+      });
+      html += '</ol></div>';
+    });
+    grid.innerHTML = html;
+  } catch(e) {
+    grid.innerHTML = '<p class="lb-placeholder">排行榜加载失败</p>';
+  }
+}
+
+_initQuotes();
+_initLeaderboard();
 _trackVisit();
 _fetchStats().then(function(s) {
   document.getElementById('visitCount').textContent = '累计访问：'+s.hits+' 次';
