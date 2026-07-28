@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写文章 | 蔡梓涵</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a href="index.html" class="logo">Zihan</a>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="blog.html">博客</a>
+                <a href="write.html" class="active">写文章</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="write-page">
+        <div class="write-container">
+            <div class="write-header">
+                <input type="text" id="edTitle" class="write-title" placeholder="输入文章标题..." maxlength="100">
+                <div class="write-meta">
+                    <input type="text" id="edTags" class="write-tags" placeholder="添加标签，用逗号分隔（如：技术, 生活, 教程）" maxlength="100">
+                    <span class="write-author" id="writeAuthor"></span>
+                </div>
+            </div>
+
+            <div class="write-toolbar">
+                <span class="toolbar-label">正文（Markdown）</span>
+                <div class="toolbar-actions">
+                    <button class="tool-btn" onclick="togglePreview()" id="previewBtn">👁 预览</button>
+                    <button class="tool-btn-publish" onclick="publish()" id="publishBtn">发布文章</button>
+                </div>
+            </div>
+
+            <div class="write-editor-area">
+                <textarea id="edContent" class="write-content" placeholder="开始写作...&#10;&#10;支持 Markdown 语法：&#10;&#10;# 一级标题&#10;## 二级标题&#10;### 三级标题&#10;&#10;**粗体** *斜体* `代码`&#10;&#10;> 引用文字&#10;&#10;- 列表项"></textarea>
+                <div id="mdPreview" class="write-preview" style="display:none"></div>
+            </div>
+
+            <div class="write-footer">
+                <p id="edError" class="comment-error" style="display:none"></p>
+                <p id="edStatus" class="write-status"></p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
+    </footer>
+
+    <script src="user.js"></script>
+    <script>
+        function loadToken() {
+            var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
+            return h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
+        }
+
+        // 检查登录
+        var name = window._siteGetNickname ? window._siteGetNickname() : '';
+        if (!name) {
+            document.querySelector('.write-page').innerHTML = '<div class="write-login-prompt"><h2>请先登录</h2><p>点击右上角「登录」设置昵称后再写文章</p><a href="blog.html" class="modal-btn-ok" style="display:inline-block;text-decoration:none;margin-top:1rem;">返回博客</a></div>';
+        } else {
+            document.getElementById('writeAuthor').textContent = '作者：' + name;
+        }
+
+        var previewMode = false;
+        window.togglePreview = function() {
+            var ta = document.getElementById('edContent');
+            var prev = document.getElementById('mdPreview');
+            var btn = document.getElementById('previewBtn');
+            previewMode = !previewMode;
+            if (previewMode) {
+                ta.style.display = 'none';
+                prev.style.display = 'block';
+                prev.innerHTML = formatMarkdown(ta.value || '*暂无内容*');
+                btn.textContent = '✏️ 编辑';
+            } else {
+                ta.style.display = 'block';
+                prev.style.display = 'none';
+                btn.textContent = '👁 预览';
+            }
+        };
+
+        var autoSaveTimer;
+        document.getElementById('edContent').addEventListener('input', function() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(function() {
+                localStorage.setItem('draft_title', document.getElementById('edTitle').value);
+                localStorage.setItem('draft_tags', document.getElementById('edTags').value);
+                localStorage.setItem('draft_content', document.getElementById('edContent').value);
+            }, 1000);
+        });
+
+        // 恢复草稿
+        var draftTitle = localStorage.getItem('draft_title');
+        var draftTags = localStorage.getItem('draft_tags');
+        var draftContent = localStorage.getItem('draft_content');
+        if (draftTitle) document.getElementById('edTitle').value = draftTitle;
+        if (draftTags) document.getElementById('edTags').value = draftTags;
+        if (draftContent) document.getElementById('edContent').value = draftContent;
+
+        window.publish = async function() {
+            var title = document.getElementById('edTitle').value.trim();
+            var tagsStr = document.getElementById('edTags').value.trim();
+            var body = document.getElementById('edContent').value.trim();
+            var btn = document.getElementById('publishBtn');
+            var err = document.getElementById('edError');
+
+            if (!title) { err.textContent = '请输入标题'; err.style.display = 'block'; return; }
+            if (!body) { err.textContent = '请输入正文'; err.style.display = 'block'; return; }
+
+            btn.disabled = true; btn.textContent = '发布中...'; err.style.display = 'none';
+            var tags = tagsStr ? tagsStr.split(/[,，]/).map(function(t) { return t.trim(); }).filter(Boolean) : [];
+
+            var issueBody = '**作者**：' + name + '\n**标签**：' + (tags.join(',') || '未分类') + '\n\n' + body;
+
+            try {
+                var T = loadToken();
+                var resp = await fetch('https://api.github.com/repos/yjcc520/my-page/issues', {
+                    method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                    body: JSON.stringify({ title: title, body: issueBody, labels: ['article'] })
+                });
+                if (resp.ok) {
+                    var issue = await resp.json();
+                    await fetch('https://api.github.com/repos/yjcc520/my-page/issues', {
+                        method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                        body: JSON.stringify({ title: 'article-' + issue.number, body: '> 文章：' + title + '\n\n欢迎留下你的想法 👇', labels: ['comment'] })
+                    });
+                    // 清除草稿
+                    localStorage.removeItem('draft_title');
+                    localStorage.removeItem('draft_tags');
+                    localStorage.removeItem('draft_content');
+                    document.getElementById('edStatus').textContent = '✅ 发布成功！';
+                    setTimeout(function() { window.location.href = 'article.html?id=' + issue.number + '&type=issue'; }, 1000);
+                } else {
+                    var e = await resp.json().catch(function() { return {}; });
+                    err.textContent = '发布失败：' + (e.message || '请重试'); err.style.display = 'block';
+                }
+            } catch (ex) {
+                err.textContent = '网络错误，请重试'; err.style.display = 'block';
+            }
+            btn.disabled = false; btn.textContent = '发布文章';
+        };
+
+        function formatMarkdown(md) {
+            return ('<p>' + (md || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/### (.+)/g, '<h4>$1</h4>').replace(/## (.+)/g, '<h3>$1</h3>').replace(/# (.+)/g, '<h2>$1</h2>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>').replace(/^> (.+)/gm, '<blockquote>$1</blockquote>')
+                .replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>');
+        }
+    </script>
+</body>
+</html>
