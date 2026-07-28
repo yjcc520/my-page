@@ -164,8 +164,15 @@
                 btn.disabled = true;
                 btn.textContent = '发送中...';
                 errorEl.style.display = 'none';
+                textInput.value = '';
+                localStorage.setItem('comment_name', name);
 
-                if (!ghToken) { errorEl.textContent = '评论服务暂不可用，请稍后重试'; errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = '发表评论'; return; }
+                if (!ghToken) { errorEl.textContent = '评论服务暂不可用'; errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = '发表评论'; return; }
+
+                // 乐观更新：立刻显示评论
+                const fakeId = 'opt-' + Date.now();
+                prependComment({ id: fakeId, user: { login: name, avatar_url: '' }, created_at: new Date().toISOString(), body: body, pending: true });
+                scrollToList();
 
                 try {
                     const commentBody = '**' + name + '**：' + body;
@@ -180,21 +187,55 @@
                         body: JSON.stringify({ body: commentBody })
                     });
                     if (resp.ok) {
-                        textInput.value = '';
-                        localStorage.setItem('comment_name', name);
-                        await loadCommentList();
+                        // 替换占位评论为真实评论
+                        removeComment(fakeId);
+                        const real = await resp.json();
+                        prependComment({ id: real.id, user: real.user, created_at: real.created_at, body: real.body, pending: false });
                     } else {
+                        removeComment(fakeId);
                         const err = await resp.json().catch(() => ({}));
                         errorEl.textContent = '发送失败：' + (err.message || '请重试');
                         errorEl.style.display = 'block';
                     }
                 } catch (e) {
+                    removeComment(fakeId);
                     errorEl.textContent = '网络错误，请刷新后重试';
                     errorEl.style.display = 'block';
                 }
                 btn.disabled = false;
                 btn.textContent = '发表评论';
             };
+
+            function prependComment(c) {
+                const el = document.createElement('div');
+                el.className = 'comment-item' + (c.pending ? ' comment-pending' : '');
+                el.id = 'c-' + c.id;
+                el.innerHTML = `
+                    <div class="comment-header">
+                        <img class="comment-avatar" src="${c.user.avatar_url || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 36 36%22><rect fill=%22%23e2e8f0%22 width=%2236%22 height=%2236%22 rx=%2218%22/></svg>'}" alt="" width="36" height="36">
+                        <div>
+                            <span class="comment-author-name">${escapeHtml(c.user.login)}</span>
+                            <span class="comment-time">${c.pending ? '发送中...' : new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
+                        </div>
+                    </div>
+                    <div class="comment-body">${formatCommentBody(c.body)}</div>
+                `;
+                const list = document.getElementById('comments-list');
+                if (list.firstChild) {
+                    list.insertBefore(el, list.firstChild);
+                } else {
+                    list.appendChild(el);
+                }
+            }
+
+            function removeComment(id) {
+                const el = document.getElementById('c-' + id);
+                if (el) el.remove();
+            }
+
+            function scrollToList() {
+                document.getElementById('comments').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
 
             // 加载评论列表
             async function loadCommentList() {
