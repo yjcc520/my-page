@@ -65,8 +65,10 @@
 <script>
 var allArticles = [];
 
-// Load preset
+// Load preset (filter deleted)
+var deletedPreset = JSON.parse(localStorage.getItem('deleted_preset_articles') || '[]');
 articles.forEach(function(a) {
+  if (deletedPreset.indexOf('preset-' + a.id) >= 0) return;
   allArticles.push({ id: a.id, title: a.title, date: a.date, summary: a.summary, tags: a.tags, issueId: false });
 });
 
