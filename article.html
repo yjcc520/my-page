@@ -144,13 +144,18 @@
                 const script = document.createElement('script');
                 script.src = 'https://utteranc.es/client.js';
                 script.setAttribute('repo', 'yjcc520/my-page');
-                script.setAttribute('issue-term', article.title);
+                script.setAttribute('issue-term', 'article-' + articleId);
+                script.setAttribute('label', 'comment');
                 script.setAttribute('theme', 'github-light');
                 script.setAttribute('crossorigin', 'anonymous');
                 script.async = true;
 
                 script.onload = function() {
                     document.getElementById('commentsLoading').style.display = 'none';
+                };
+
+                script.onerror = function() {
+                    document.getElementById('commentsLoading').innerHTML = '<p style="color:#e53e3e;">评论区加载失败，请确认已安装 <a href="https://github.com/apps/utterances" target="_blank">utterances</a> 到仓库 yjcc520/my-page</p>';
                 };
 
                 commentsDiv.appendChild(script);
