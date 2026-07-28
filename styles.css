@@ -7,7 +7,49 @@
     --bg-alt: #f8fafc;
     --border: #e2e8f0;
     --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    --switch-bg: #e2e8f0;
+    --switch-dot: #fff;
+    --switch-icon: '☀️';
 }
+body.dark {
+    --primary: #818cf8;
+    --primary-light: #a5b4fc;
+    --text: #e2e8f0;
+    --text-light: #94a3b8;
+    --bg: #0f172a;
+    --bg-alt: #1e293b;
+    --border: #334155;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.4);
+    --switch-bg: #334155;
+    --switch-dot: #818cf8;
+    --switch-icon: '🌙';
+}
+/* Dark mode overrides */
+body.dark { background: var(--bg); color: var(--text); }
+body.dark nav { background: rgba(15,23,42,0.92); }
+body.dark .hero { background: linear-gradient(135deg, #0f172a, #1e1b4b, #0f172a); }
+body.dark .hero h1 { -webkit-text-fill-color: #a5b4fc; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text; }
+body.dark .about-card, body.dark .skill-card, body.dark .blog-card, body.dark .game-card, body.dark .comment-item, body.dark .comment-form-wrap { background: var(--bg-alt); }
+body.dark .comment-input, body.dark .comment-submit-btn, body.dark .editor-content, body.dark .editor-title, body.dark .editor-tags {
+    background: var(--bg); color: var(--text); border-color: var(--border);
+}
+body.dark .modal-box, body.dark .crop-box { background: var(--bg-alt); }
+body.dark .comment-body code { background: #1e293b; color: #e2e8f0; }
+body.dark .game-card { background: var(--bg-alt); }
+body.dark footer { border-color: var(--border); }
+body.dark .comments-section { color: var(--text); }
+body.dark .blog-write-btn { background: var(--primary); }
+body.dark .tag { background: rgba(129,140,248,0.15); color: #a5b4fc; }
+body.dark .blog-card-summary { color: var(--text-light); }
+body.dark input, body.dark textarea { color: var(--text); }
+body.dark input::placeholder, body.dark textarea::placeholder { color: #475569; }
+/* Theme toggle */
+.theme-toggle {
+    background: none; border: none; font-size: 1.1rem; cursor: pointer;
+    padding: 4px 8px; border-radius: 6px; transition: background 0.15s;
+    margin-left: 0.5rem; line-height: 1;
+}
+.theme-toggle:hover { background: var(--bg-alt); }
 
 * {
     margin: 0;
