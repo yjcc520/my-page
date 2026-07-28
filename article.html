@@ -40,7 +40,6 @@
         <!-- 评论表单 -->
         <div class="comment-form-wrap" id="commentFormWrap">
             <div class="comment-form-row">
-                <input type="text" id="commentName" class="comment-name-input" placeholder="你的昵称" maxlength="30">
                 <textarea id="commentInput" class="comment-input" placeholder="写下你的评论...（支持 Markdown）" rows="3"></textarea>
                 <div class="comment-form-footer">
                     <span class="comment-md-hint">支持 **粗体** *斜体* `代码`</span>
@@ -65,6 +64,7 @@
     </footer>
 
     <script src="blog-data.js"></script>
+    <script src="user.js"></script>
     <script>
         // 获取文章 ID
         const params = new URLSearchParams(window.location.search);
@@ -151,21 +151,24 @@
 
             // 提交评论
             window.submitComment = async function() {
-                const nameInput = document.getElementById('commentName');
+                var name = window._siteGetNickname ? window._siteGetNickname() : '';
+                if (!name) {
+                    if (window._siteShowRegister) window._siteShowRegister();
+                    else alert('请先设置昵称');
+                    return;
+                }
                 const textInput = document.getElementById('commentInput');
                 const errorEl = document.getElementById('commentError');
                 const btn = document.getElementById('submitBtn');
-                const name = nameInput.value.trim();
                 const body = textInput.value.trim();
 
-                if (!name) { errorEl.textContent = '请输入昵称'; errorEl.style.display = 'block'; return; }
-                if (!body) { errorEl.textContent = '请输入评论内容'; errorEl.style.display = 'block'; return; }
+                if (!name) { errorEl.textContent = '请先设置昵称'; errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = '发表评论'; return; }
+                if (!body) { errorEl.textContent = '请输入评论内容'; errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = '发表评论'; return; }
 
                 btn.disabled = true;
                 btn.textContent = '发送中...';
                 errorEl.style.display = 'none';
                 textInput.value = '';
-                localStorage.setItem('comment_name', name);
 
                 if (!ghToken) { errorEl.textContent = '评论服务暂不可用'; errorEl.style.display = 'block'; btn.disabled = false; btn.textContent = '发表评论'; return; }
 
@@ -306,10 +309,6 @@
 
                 loadingEl.style.display = 'none';
                 await loadCommentList();
-
-                // 恢复昵称
-                const savedName = localStorage.getItem('comment_name');
-                if (savedName) document.getElementById('commentName').value = savedName;
             })();
         }
     </script>
