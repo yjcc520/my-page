@@ -220,8 +220,11 @@
             }
 
             function renderAvatar(name) {
+                var curName = window._siteGetNickname ? window._siteGetNickname() : '';
                 var avt = window._siteGetAvatar ? window._siteGetAvatar() : '';
-                if (avt) return '<img class="comment-avatar" src="' + avt + '" alt="" width="36" height="36">';
+                if (curName && name === curName && avt) {
+                    return '<img class="comment-avatar" src="' + avt + '" alt="" width="36" height="36">';
+                }
                 return '<div class="comment-avatar-icon">' + name[0].toUpperCase() + '</div>';
             }
 
@@ -276,7 +279,7 @@
                             return `
                                 <div class="comment-item">
                                     <div class="comment-header">
-                                        <div class="comment-avatar-icon">${p.name[0].toUpperCase()}</div>
+                                        ${renderAvatar(p.name)}
                                         <div>
                                             <span class="comment-author-name">${escapeHtml(p.name)}</span>
                                             <span class="comment-time">${new Date(p.time).toLocaleDateString('zh-CN')}</span>
