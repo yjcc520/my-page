@@ -268,67 +268,90 @@
             };
 
             function renderAll(comments) {
-                // 分组：顶级评论和回复
-                var topLevel = [], replies = {};
+                // 构建评论树
+                var map = {}, roots = [];
                 comments.forEach(function(c) {
                     var p = parseComment(c);
-                    if (p.parentId) {
-                        if (!replies[p.parentId]) replies[p.parentId] = [];
-                        replies[p.parentId].push(p);
-                    } else {
-                        topLevel.push(p);
+                    map[p.id] = { data: p, children: [] };
+                });
+                comments.forEach(function(c) {
+                    var node = map[c.id];
+                    var pid = node.data.parentId;
+                    if (pid && map[pid]) {
+                        map[pid].children.push(node);
+                    } else if (node) {
+                        roots.push(node);
                     }
                 });
 
                 var html = '';
-                if (topLevel.length === 0) {
+                if (roots.length === 0) {
                     html = '<p class="comments-empty">暂无评论，来做第一个评论的人吧 👇</p>';
                 }
-                topLevel.forEach(function(p) {
-                    var rlist = replies[p.id] || [];
-                    // 按点赞数排序
-                    rlist.sort(function(a, b) { return getCommentLike(b.id).count - getCommentLike(a.id).count; });
-                    var topReply = rlist[0];
-                    var moreReplies = rlist.slice(1);
-
-                    html += '<div class="comment-item' + (p.pending ? ' comment-pending' : '') + '" id="c-' + p.id + '">';
-                    html += renderCommentHtml(p);
-
-                    // 回复区
-                    if (rlist.length > 0) {
-                        html += '<div class="comment-replies">';
-                        // 最热回复
-                        html += '<div class="comment-reply-item">';
-                        html += getAvatarHtml(topReply.name);
-                        html += '<div class="comment-reply-content"><span class="comment-author-name">' + escapeHtml(topReply.name) + '</span> ' + formatCommentBody(topReply.body) + '</div>';
-                        html += '<div class="comment-reply-actions"><button class="comment-action-btn ' + (getCommentLike(topReply.id).liked ? 'liked' : '') + '" onclick="toggleCLike(' + topReply.id + ', this)">👍 <span>' + getCommentLike(topReply.id).count + '</span></button></div>';
-                        html += '</div>';
-                        // 更多回复
-                        if (moreReplies.length > 0) {
-                            html += '<div class="comment-replies-more" onclick="toggleReplies(this)">展开 ' + moreReplies.length + ' 条回复 ▾</div>';
-                            html += '<div class="comment-replies-all" style="display:none">';
-                            moreReplies.forEach(function(r) {
-                                html += '<div class="comment-reply-item">';
-                                html += getAvatarHtml(r.name);
-                                html += '<div class="comment-reply-content"><span class="comment-author-name">' + escapeHtml(r.name) + '</span> ' + formatCommentBody(r.body) + '</div>';
-                                html += '<div class="comment-reply-actions"><button class="comment-action-btn ' + (getCommentLike(r.id).liked ? 'liked' : '') + '" onclick="toggleCLike(' + r.id + ', this)">👍 <span>' + getCommentLike(r.id).count + '</span></button></div>';
-                                html += '</div>';
-                            });
-                            html += '</div>';
-                        }
-                        html += '</div>';
-                    }
-                    html += '</div>';
+                roots.forEach(function(node) {
+                    html += renderNode(node, 0);
                 });
                 listEl.innerHTML = html;
                 listEl.style.display = 'block';
             }
 
+            function renderNode(node, level) {
+                var p = node.data;
+                var html = '';
+                if (level === 0) {
+                    html += '<div class="comment-item' + (p.pending ? ' comment-pending' : '') + '" id="c-' + p.id + '">';
+                    html += renderCommentHtml(p);
+                } else {
+                    var lk = getCommentLike(p.id);
+                    html += '<div class="comment-reply-item" id="c-' + p.id + '">';
+                    html += getAvatarHtml(p.name);
+                    html += '<div class="comment-reply-content"><span class="comment-author-name">' + escapeHtml(p.name) + '</span> ' + formatCommentBody(p.body);
+                    html += '<div class="comment-reply-actions-inline">';
+                    html += '<button class="comment-action-btn ' + (lk.liked ? 'liked' : '') + '" onclick="toggleCLike(' + p.id + ', this)">👍 <span>' + lk.count + '</span></button>';
+                    html += '<button class="comment-action-btn" onclick="showReplyForm(' + p.id + ')">💬 回复</button>';
+                    html += '</div>';
+                    html += '<div class="comment-reply-form" id="replyForm-' + p.id + '" style="display:none">';
+                    html += '<textarea id="replyInput-' + p.id + '" class="comment-input comment-input-sm" placeholder="回复 ' + escapeHtml(p.name) + '..." rows="2"></textarea>';
+                    html += '<button id="replyBtn-' + p.id + '" class="comment-submit-btn comment-submit-sm" onclick="submitComment(' + p.id + ')">回复</button>';
+                    html += '</div>';
+                }
+
+                // 子回复（嵌套在父评论内）
+                var children = node.children || [];
+                if (children.length > 0) {
+                    children.sort(function(a, b) { return getCommentLike(b.data.id).count - getCommentLike(a.data.id).count; });
+                    html += '<div class="comment-replies">';
+                    html += renderNode(children[0], level + 1);
+                    if (children.length > 1) {
+                        var count = children.length - 1;
+                        var gid = 'replies-' + p.id;
+                        html += '<div class="comment-replies-more" onclick="toggleReplies(this)" data-group="' + gid + '">展开 ' + count + ' 条回复 ▾</div>';
+                        html += '<div class="comment-replies-all" id="' + gid + '" style="display:none">';
+                        for (var i = 1; i < children.length; i++) {
+                            html += renderNode(children[i], level + 1);
+                        }
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                }
+
+                if (level === 0) {
+                    html += '</div>';
+                } else {
+                    html += '</div>'; // close comment-reply-content
+                    html += '</div>'; // close comment-reply-item
+                }
+                return html;
+            }
+
             window.toggleReplies = function(btn) {
-                var all = btn.nextElementSibling;
+                var groupId = btn.getAttribute('data-group');
+                var all = document.getElementById(groupId);
+                if (!all) return;
                 var visible = all.style.display !== 'none';
                 all.style.display = visible ? 'none' : 'block';
-                btn.textContent = visible ? ('展开 ' + (all.children.length) + ' 条回复 ▾') : '收起 ▴';
+                var count = all.children.length;
+                btn.textContent = visible ? ('展开 ' + count + ' 条回复 ▾') : '收起 ▴';
             };
 
             function scrollToList() {
