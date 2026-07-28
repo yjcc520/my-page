@@ -185,7 +185,6 @@
                 // 乐观更新
                 var fakeId = 'opt-' + Date.now();
                 renderAll([{ id: fakeId, user: { login: name }, created_at: new Date().toISOString(), body: commentBody, pending: true }].concat(allComments));
-                scrollToList();
 
                 try {
                     var apiUrl = 'https://api.github.com/repos/' + REPO + '/issues/' + issueNumber + '/comments';
@@ -288,6 +287,12 @@
                 if (roots.length === 0) {
                     html = '<p class="comments-empty">暂无评论，来做第一个评论的人吧 👇</p>';
                 }
+                // 按点赞数降序，相同则按时间降序
+                roots.sort(function(a, b) {
+                    var la = getCommentLike(a.data.id).count, lb = getCommentLike(b.data.id).count;
+                    if (la !== lb) return lb - la;
+                    return new Date(b.data.time) - new Date(a.data.time);
+                });
                 roots.forEach(function(node) {
                     html += renderNode(node, 0);
                 });
