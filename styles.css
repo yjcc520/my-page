@@ -308,7 +308,7 @@ nav {
 .quote-track {
     display: inline-block;
     padding: 0.6rem 0 0.6rem 5.5rem;
-    animation: marquee-scroll 91s linear infinite;
+    animation: marquee-scroll 130s linear infinite;
 }
 .quote-item {
     color: var(--text-light);
