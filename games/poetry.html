@@ -6,22 +6,32 @@
 <title>诗词挑战 | 蔡梓涵</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#eee;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden}
-.container{text-align:center;width:90%;max-width:600px}
-h1{font-size:2rem;margin-bottom:0.5rem;color:#e2c488}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#eee;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.container{text-align:center;width:90%;max-width:560px}
+h1{font-size:2rem;margin-bottom:0.3rem;color:#e2c488}
 .sub{color:#8ab4f8;margin-bottom:1.5rem;font-size:0.9rem}
-.poem-display{font-size:1.6rem;margin:1.5rem 0;min-height:3rem;color:#fff;letter-spacing:0.1em;text-shadow:0 0 10px rgba(226,196,136,0.3)}
-#input{width:100%;max-width:400px;padding:0.8rem 1rem;font-size:1.1rem;border:none;border-radius:8px;background:rgba(255,255,255,0.1);color:#fff;text-align:center;outline:none;border:2px solid rgba(226,196,136,0.3)}
-#input:focus{border-color:#e2c488}
+.question-area{min-height:180px;display:flex;flex-direction:column;justify-content:center}
+.round-info{color:#667;font-size:0.85rem;margin-bottom:0.8rem}
+.poem-first{font-size:1.5rem;color:#fff;margin-bottom:1.5rem;letter-spacing:0.08em;line-height:1.6}
+.poem-hint{color:#8ab4f8;font-size:0.85rem;margin-bottom:0.5rem}
+.options{display:grid;gap:0.6rem;margin-bottom:1rem}
+.opt-btn{display:block;width:100%;padding:0.9rem 1.2rem;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.12);border-radius:8px;color:#ddd;font-size:1.05rem;cursor:pointer;text-align:center;transition:all 0.2s;letter-spacing:0.05em}
+.opt-btn:hover{background:rgba(255,255,255,0.15);border-color:rgba(226,196,136,0.4)}
+.opt-btn.correct-answer{background:rgba(74,222,128,0.2);border-color:#4ade80;color:#4ade80}
+.opt-btn.wrong-answer{background:rgba(239,68,68,0.2);border-color:#ef4444;color:#ef4444}
+.opt-btn:disabled{pointer-events:none}
 .score-row{display:flex;justify-content:center;gap:2rem;margin:1rem 0;font-size:0.95rem;color:#aaa}
 .score-row span{color:#e2c488;font-weight:700}
-.btn{display:inline-block;padding:0.6rem 2rem;background:#e2c488;color:#1a1a2e;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600;transition:opacity 0.2s;margin:0.3rem}
+.combo{color:#4ade80;font-size:1rem;min-height:1.5rem;font-weight:700}
+.feedback{font-size:1.1rem;min-height:1.8rem;margin:0.5rem 0}
+.btn-row{display:flex;gap:0.5rem;justify-content:center;margin-top:1rem}
+.btn{display:inline-block;padding:0.6rem 2rem;background:#e2c488;color:#1a1a2e;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600;transition:opacity 0.2s}
 .btn:hover{opacity:0.85}
-.btn-sm{padding:0.4rem 1rem;font-size:0.85rem}
-.result{font-size:1.2rem;margin-top:1rem;min-height:1.5rem}
-.correct{color:#4ade80}.wrong{color:#ef4444}
-.combo{color:#e2c488;font-size:0.85rem;margin-top:0.3rem;min-height:1.2rem}
-/* Leaderboard */
+.btn-sm{padding:0.5rem 1.2rem;font-size:0.85rem;background:rgba(255,255,255,0.12);color:#ccc}
+.end-screen h2{font-size:1.5rem;color:#e2c488;margin-bottom:0.5rem}
+.end-screen .final-score{font-size:2.5rem;font-weight:700;color:#4ade80;margin:0.5rem 0}
+.end-screen .stat{color:#aaa;font-size:0.9rem;margin:0.3rem 0}
+/* LB */
 .lb-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;justify-content:center;align-items:center;z-index:100}
 .lb-overlay.show{display:flex}
 .lb-panel{background:#1a1a2e;border:1px solid rgba(226,196,136,0.3);border-radius:12px;width:90%;max-width:380px;max-height:80vh;overflow-y:auto;padding:1.5rem}
@@ -39,15 +49,20 @@ h1{font-size:2rem;margin-bottom:0.5rem;color:#e2c488}
 <body>
 <div class="container">
   <h1>诗词挑战</h1>
-  <p class="sub">在诗句消失前，把它敲出来</p>
-  <div class="poem-display" id="poem"></div>
-  <input type="text" id="input" placeholder="在这里输入..." autocomplete="off">
-  <div class="score-row">得分: <span id="score">0</span> | 最高: <span id="best">0</span></div>
-  <div class="combo" id="combo"></div>
-  <div class="result" id="result"></div>
-  <div>
-    <button class="btn" id="startBtn" onclick="start()">开始游戏</button>
-    <button class="btn btn-sm" onclick="showLB()">🏆 排行</button>
+  <p class="sub" id="subText">给出上句，选出正确的下句</p>
+  <div id="gameArea">
+    <div class="question-area">
+      <div class="round-info" id="roundInfo"></div>
+      <div class="poem-first" id="question"></div>
+      <div class="options" id="options"></div>
+      <div class="combo" id="combo"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="score-row">得分: <span id="score">0</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="startBtn" onclick="start()">开始游戏 (10题)</button>
+      <button class="btn btn-sm" onclick="showLB()">🏆 排行</button>
+    </div>
   </div>
 </div>
 <div class="lb-overlay" id="lbOverlay">
@@ -60,56 +75,113 @@ h1{font-size:2rem;margin-bottom:0.5rem;color:#e2c488}
 <script src="../user.js"></script>
 <script>
 var GAME='诗词挑战-排行榜';
-var poems=[
-  "雪沫乳花浮午盏，蓼茸蒿笋试春盘","长风破浪会有时，直挂云帆济沧海",
-  "千磨万击还坚劲，任尔东西南北风","纸上得来终觉浅，绝知此事要躬行",
-  "不畏浮云遮望眼，自缘身在最高层","山重水复疑无路，柳暗花明又一村",
-  "莫愁前路无知己，天下谁人不识君","人生得意须尽欢，莫使金樽空对月",
-  "同是天涯沦落人，相逢何必曾相识","门虽设而常关",
-  "采得百花成蜜后，为谁辛苦为谁甜","相看两不厌，只有敬亭山",
-  "只恐夜深花睡去，故烧高烛照红妆","绿蚁新醅酒，红泥小火炉",
-  "安得广厦千万间，大庇天下寒士俱欢颜","问君能有几多愁，恰似一江春水向东流"
+var pairs=[
+  ["雪沫乳花浮午盏","蓼茸蒿笋试春盘"],["长风破浪会有时","直挂云帆济沧海"],
+  ["千磨万击还坚劲","任尔东西南北风"],["纸上得来终觉浅","绝知此事要躬行"],
+  ["不畏浮云遮望眼","自缘身在最高层"],["山重水复疑无路","柳暗花明又一村"],
+  ["博观而约取","厚积而薄发"],["莫愁前路无知己","天下谁人不识君"],
+  ["今朝有酒今朝醉","明日愁来明日愁"],["因过竹院逢僧话","偷得浮生半日闲"],
+  ["我醉欲眠卿且去","明朝有意抱琴来"],["不如意事常八九","可与语人无二三"],
+  ["有心栽花花不开","无心插柳柳成荫"],["万事不如身手好","一生须惜少年时"],
+  ["人生到处知何似","应似飞鸿踏雪泥"],["若将容易得","便作等闲看"],
+  ["有约不来过夜半","闲敲棋子落灯花"],["人生得意须尽欢","莫使金樽空对月"],
+  ["采得百花成蜜后","为谁辛苦为谁甜"],["公道世间唯白发","贵人头上不曾饶"],
+  ["同是天涯沦落人","相逢何必曾相识"],["命里有时终须有","命里无时莫强求"],
+  ["遍身罗绮者","不是养蚕人"],["我生待明日","万事成蹉跎"],
+  ["凭君莫话封侯事","一将功成万骨枯"],["日啖荔枝三百颗","不辞长作岭南人"],
+  ["相看两不厌","只有敬亭山"],["侯门一入深如海","从此萧郎是路人"],
+  ["安得广厦千万间","大庇天下寒士俱欢颜"],["故人具鸡黍","邀我至田家"],
+  ["只恐夜深花睡去","故烧高烛照红妆"],["得成比目何辞死","愿作鸳鸯不羡仙"],
+  ["却将万字平戎策","换得东家种树书"],["流水落花春去也","天上人间"],
+  ["问君能有几多愁","恰似一江春水向东流"],["谁道人生无再少","门前流水尚能西"],
+  ["青山一道同云雨","明月何曾是两乡"],["不能手提天下往","何忍身去游其间"],
+  ["月儿弯弯照九州","几家欢乐几家愁"],["读书不作儒生酸","要挽银河洗甲兵"]
 ];
-var score=0,best=0,combo=0,timer=null,timeLeft=0,current="";
-var input=document.getElementById('input'),poemEl=document.getElementById('poem');
-var scoreEl=document.getElementById('score'),bestEl=document.getElementById('best');
-var resultEl=document.getElementById('result'),comboEl=document.getElementById('combo');
-var startBtn=document.getElementById('startBtn');
-best=parseInt(localStorage.getItem('poetryBest')||'0');bestEl.textContent=best;
+var TOTAL=10;
+var score=0,best=0,combo=0,round=0,correctCount=0,answered=false;
+best=parseInt(localStorage.getItem('poetryBest')||'0');
+
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a}
 
 function start(){
-  score=0;combo=0;scoreEl.textContent='0';comboEl.textContent='';
-  resultEl.textContent='';startBtn.style.display='none';
-  input.disabled=false;input.focus();nextRound();
+  score=0;combo=0;round=0;correctCount=0;answered=false;
+  document.getElementById('score').textContent='0';
+  document.getElementById('combo').textContent='';
+  document.getElementById('feedback').textContent='';
+  document.getElementById('startBtn').style.display='none';
+  document.getElementById('subText').textContent='给出上句，选出正确的下句';
+  document.getElementById('score').parentElement.style.display='';
+  nextRound();
 }
+
 function nextRound(){
-  clearInterval(timer);
-  current=poems[Math.floor(Math.random()*poems.length)];
-  poemEl.textContent=current;timeLeft=current.length*1.5;
-  input.value='';
-  timer=setInterval(function(){
-    timeLeft-=0.1;
-    poemEl.style.opacity=Math.max(0.2,timeLeft/current.length);
-    if(timeLeft<=0){clearInterval(timer);gameOver('超时了');}
-  },100);
-}
-input.addEventListener('input',function(){
-  if(input.value===current){
-    clearInterval(timer);combo++;
-    var pts=Math.ceil(timeLeft*10);
-    score+=pts;scoreEl.textContent=score;
-    resultEl.innerHTML='<span class="correct">+'+pts+'分</span>';
-    comboEl.textContent=combo>1?'连击 x'+combo:'';
-    poemEl.style.opacity='1';
-    setTimeout(nextRound,500);
+  if(round>=TOTAL){endGame();return}
+  answered=false;round++;
+  document.getElementById('roundInfo').textContent='第 '+round+' / '+TOTAL+' 题';
+  
+  // Pick a random pair and generate options
+  var correct=pairs[Math.floor(Math.random()*pairs.length)];
+  document.getElementById('question').textContent=correct[0];
+  
+  // Generate 4 options (1 correct + 3 wrong)
+  var wrongs=[];
+  while(wrongs.length<3){
+    var w=pairs[Math.floor(Math.random()*pairs.length)];
+    if(w[1]!==correct[1]&&wrongs.indexOf(w[1])<0)wrongs.push(w[1]);
   }
-});
-async function gameOver(msg){
-  input.disabled=true;clearInterval(timer);
-  resultEl.innerHTML='<span class="wrong">'+msg+'</span>';
-  comboEl.textContent='';poemEl.textContent='游戏结束';
-  poemEl.style.opacity='1';startBtn.style.display='inline-block';
-  if(score>best){best=score;localStorage.setItem('poetryBest',best);bestEl.textContent=best}
+  var opts=[correct[1],...wrongs];
+  shuffle(opts);
+  
+  var html='';
+  opts.forEach(function(o){
+    html+='<button class="opt-btn" onclick="answer(\''+o.replace(/'/g,"\\'")+'\',\''+correct[1].replace(/'/g,"\\'")+'\')">'+o+'</button>';
+  });
+  document.getElementById('options').innerHTML=html;
+}
+
+function answer(chosen,correct){
+  if(answered)return;answered=true;
+  var btns=document.querySelectorAll('.opt-btn');
+  btns.forEach(function(b){
+    b.disabled=true;
+    if(b.textContent===correct)b.classList.add('correct-answer');
+    if(b.textContent===chosen&&chosen!==correct)b.classList.add('wrong-answer');
+  });
+  
+  if(chosen===correct){
+    combo++;correctCount++;
+    var pts=10+combo*2;
+    score+=pts;
+    document.getElementById('score').textContent=score;
+    document.getElementById('feedback').innerHTML='<span style="color:#4ade80">✓ 正确！+'+pts+'分</span>';
+    document.getElementById('combo').textContent=combo>1?'连击 x'+combo:'';
+  }else{
+    combo=0;
+    document.getElementById('feedback').innerHTML='<span style="color:#ef4444">✗ 正确答案是：'+correct+'</span>';
+    document.getElementById('combo').textContent='';
+  }
+  setTimeout(nextRound,1500);
+}
+
+async function endGame(){
+  document.getElementById('roundInfo').textContent='';
+  document.getElementById('question').textContent='';
+  document.getElementById('options').innerHTML='';
+  document.getElementById('feedback').textContent='';
+  document.getElementById('combo').textContent='';
+  document.getElementById('score').parentElement.style.display='none';
+  document.getElementById('subText').textContent='';
+  
+  var area=document.getElementById('gameArea');
+  area.innerHTML='<div class="end-screen">'+
+    '<h2>挑战结束</h2>'+
+    '<div class="final-score">'+score+' 分</div>'+
+    '<div class="stat">答对 '+correctCount+' / '+TOTAL+' 题</div>'+
+    '<div class="stat">正确率 '+Math.round(correctCount/TOTAL*100)+'%</div>'+
+    '<div class="btn-row"><button class="btn" onclick="location.reload()">再来一局</button><button class="btn btn-sm" onclick="showLB()">🏆 排行</button></div>'+
+  '</div>';
+  
+  if(score>best){best=score;localStorage.setItem('poetryBest',best)}
   await submitScore(score);
 }
 
@@ -118,31 +190,22 @@ function _token(){var h='6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534
 function _name(){return (typeof _siteGetNickname==='function')?_siteGetNickname()||'匿名玩家':'匿名玩家'}
 function showLB(){document.getElementById('lbOverlay').classList.add('show');loadLB()}
 function hideLB(){document.getElementById('lbOverlay').classList.remove('show')}
-
 async function submitScore(sc){
-  if(!sc)return;
-  var T=_token(),name=_name();
+  if(!sc)return;var T=_token(),name=_name();
   try{
     var r=await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME)+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});
     var d=await r.json();var num,body='';
     if(d.items&&d.items.length){num=d.items[0].number;body=d.items[0].body||''}
-    else{
-      var r2=await fetch('https://api.github.com/repos/yjcc520/my-page/issues',{method:'POST',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({title:GAME,body:'游戏排行榜',labels:['leaderboard']})});
-      var issue=await r2.json();num=issue.number;body=issue.body||''
-    }
-    // Parse existing, keep best per player
+    else{var r2=await fetch('https://api.github.com/repos/yjcc520/my-page/issues',{method:'POST',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({title:GAME,body:'游戏排行榜',labels:['leaderboard']})});var issue=await r2.json();num=issue.number;body=issue.body||''}
     var scores={};body.split('\n').forEach(function(l){var m=l.match(/^(\d+)分[：:]\s*(.+)/);if(m){var n=m[2].trim(),s=parseInt(m[1]);if(!scores[n]||scores[n]<s)scores[n]=s}});
     if(!scores[name]||scores[name]<sc)scores[name]=sc;
     var newBody=Object.entries(scores).sort(function(a,b){return b[1]-a[1]}).map(function(e){return e[1]+'分：'+e[0]}).join('\n');
     await fetch('https://api.github.com/repos/yjcc520/my-page/issues/'+num,{method:'PATCH',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({body:newBody})});
   }catch(e){}
 }
-
 async function loadLB(){
   var list=document.getElementById('lbList');list.innerHTML='<p class="lb-placeholder">加载中...</p>';
-  try{
-    var r=await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME)+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});
-    var d=await r.json();
+  try{var r=await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME)+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});var d=await r.json();
     if(!d.items||!d.items.length){list.innerHTML='<p class="lb-placeholder">暂无排行数据</p>';return}
     var scores={};d.items[0].body.split('\n').forEach(function(l){var m=l.match(/^(\d+)分[：:]\s*(.+)/);if(m){var n=m[2].trim(),s=parseInt(m[1]);if(!scores[n]||scores[n]<s)scores[n]=s}});
     var entries=Object.entries(scores).sort(function(a,b){return b[1]-a[1]}).slice(0,10);
