@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>射爆邓宸铭</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #game-container {
+      position: relative;
+      width: min(720px, 98vw);
+      aspect-ratio: 3 / 4;
+      max-height: 98vh;
+      border: 2px solid #4fc3f7;
+      background: #000;
+      overflow: hidden;
+      touch-action: none;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(#001122, #000);
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: none;
+    }
+    #ticker {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 28px;
+      background: rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      z-index: 10;
+    }
+    #ticker-text {
+      display: inline-block;
+      padding-left: 100%;
+      white-space: nowrap;
+      color: #a4e8ff;
+      font-size: 14px;
+      line-height: 28px;
+      animation: marquee 18s linear infinite;
+    }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-100%); }
+    }
+    #info {
+      position: absolute;
+      left: 10px;
+      top: 38px;
+      font-size: 16px;
+      color: #fff;
+      text-shadow: 0 0 6px rgba(0,255,255,0.5);
+    }
+    #overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-size: 28px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.7);
+      visibility: hidden;
+    }
+    #overlay button {
+      margin-top: 16px;
+      padding: 10px 18px;
+      border: none;
+      background: #4fc3f7;
+      color: #000;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    #controls {
+      position: absolute;
+      right: 12px;
+      bottom: 14px;
+      display: flex;
+      justify-content: center;
+      pointer-events: auto;
+      z-index: 12;
+    }
+    #fireBtn {
+      position: relative;
+      pointer-events: auto;
+      width: 92px;
+      height: 56px;
+      border-radius: 28px;
+      background: rgba(255, 80, 80, 0.95);
+      color: #fff;
+      font-size: 16px;
+      border: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+    #settingsBtn {
+      position: absolute;
+      right: 12px;
+      top: 38px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(120, 120, 120, 0.95);
+      color: transparent;
+      font-size: 0;
+      border: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      pointer-events: auto;
+      touch-action: manipulation;
+      cursor: pointer;
+      z-index: 12;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #settingsBtn::before {
+      content: '⚙';
+      color: #f0f0f0;
+      font-size: 20px;
+      line-height: 1;
+    }
+    #settingsPanel {
+      position: absolute;
+      inset: 0;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0,0,0,0.75);
+      z-index: 20;
+      padding: 16px;
+    }
+    #settingsPanel.active {
+      display: flex;
+    }
+    #settingsContent {
+      width: min(360px, 90vw);
+      background: rgba(15, 20, 35, 0.98);
+      border: 1px solid rgba(111, 222, 255, 0.25);
+      border-radius: 16px;
+      padding: 18px;
+      color: #fff;
+      text-align: center;
+    }
+    #settingsContent h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+    #skinList {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .skin-option {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .skin-option.active {
+      border-color: #ffffff;
+      transform: scale(1.05);
+    }
+    .skin-option span {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+    }
+    #settingsClose {
+      margin-top: 10px;
+      padding: 10px 16px;
+      background: #4fc3f7;
+      border: none;
+      border-radius: 10px;
+      color: #000;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="ticker"><div id="ticker-text">西地那非：先白弹三路穿透，后2秒红弹双轮6路散射；杜蕾斯：免伤护盾，撞敌秒杀；枸杞：回复1点血量。</div></div>
+    <canvas id="gameCanvas" width="480" height="640"></canvas>
+    <div id="info">分数: <span id="score">0</span> 最高分: <span id="best-score">0</span> 生命: <span id="hp">3</span><span id="effect-info"></span><span id="honor-info"></span></div>
+    <div id="overlay">
+      <div>
+        <div id="overlay-text">按空格开始</div>
+        <button id="restartBtn">重新开始</button>
+      </div>
+    </div>
+    <div id="controls"><button id="fireBtn">开火</button></div>
+    <button id="settingsBtn">设</button>
+    <div id="settingsPanel">
+      <div id="settingsContent">
+        <h2>飞机皮肤</h2>
+        <div id="skinList"></div>
+        <button id="settingsClose">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const bestScoreEl = document.getElementById('best-score');
+    const hpEl = document.getElementById('hp');
+    const effectEl = document.getElementById('effect-info');
+    const honorEl = document.getElementById('honor-info');
+    const overlay = document.getElementById('overlay');
+    const overlayText = document.getElementById('overlay-text');
+    const restartBtn = document.getElementById('restartBtn');
+    const fireBtn = document.getElementById('fireBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const settingsClose = document.getElementById('settingsClose');
+    const skinList = document.getElementById('skinList');
+
+    const WIDTH = canvas.width;
+    const HEIGHT = canvas.height;
+
+    let score = 0;
+    const highScoreKey = '射爆邓宸铭最高分';
+    let highScore = 0;
+    let keys = {};
+    let bullets = [];
+    let enemies = [];
+    let enemyBullets = [];
+    let powerUps = [];
+    let lastFire = 0;
+    let lastSpawn = 0;
+    let lastPowerUp = 0;
+    let gameOver = false;
+    let started = false;
+    let firing = false;
+
+    const POWER_UP_BEHAVIORS = {
+      sildenafil: {
+        color: '#3fb3ff',
+        title: '西地那非',
+        description: '先白弹三路穿透，后2秒红弹双轮散射，持续8秒，再扣1HP',
+        duration: 8000
+      },
+      condom: {
+        color: '#f7f7f7',
+        title: '杜蕾斯',
+        description: '免伤护盾，无法开火，持续8秒',
+        duration: 8000
+      },
+      goji: {
+        color: '#d72e24',
+        title: '枸杞',
+        description: '吃下回复1点血量',
+        duration: 0
+      }
+    };
+
+    const ENEMY_IMAGE_SOURCES = [
+      '83ff2cf30b497fb11adf5cac9556ae1f.jpg',
+      '8a2621912866642d0ca615b268f321d3.jpg',
+      'c1e4d2f31f203a20bb2399c3a912c8d6.jpg'
+    ];
+    const ENEMY_IMAGES = ENEMY_IMAGE_SOURCES.map(src => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
+
+    let gameTime = 0;
+    let difficultyMultiplier = 1;
+
+    const SKIN_KEY = '射爆邓宸铭飞机皮肤';
+    const SKINS = [
+      { name: '天蓝', type: 'color', value: '#2dd8ff' },
+      { name: '烈焰', type: 'color', value: '#ff4f4f' },
+      { name: '翠绿', type: 'color', value: '#3ce36d' },
+      { name: '亮紫', type: 'color', value: '#cb77ff' },
+      { name: '金黄', type: 'color', value: '#ffcc33' },
+      { name: '冰白', type: 'color', value: '#ffffff' },
+      { name: '钢灰', type: 'color', value: '#999999' },
+      { name: '橙光', type: 'color', value: '#ff9a33' },
+      { name: '薄荷', type: 'color', value: '#74f2b5' },
+      { name: '樱粉', type: 'color', value: '#ffaad1' },
+      { name: '海军', type: 'pattern', value: 'stripe' },
+      { name: '格纹', type: 'pattern', value: 'grid' },
+      { name: '波纹', type: 'pattern', value: 'wave' },
+      { name: '点阵', type: 'pattern', value: 'dot' },
+      { name: '菱形', type: 'pattern', value: 'diamond' }
+    ];
+    let enemySpawnInterval = 700;
+    let powerUpInterval = 10000;
+
+    const player = {
+      x: WIDTH / 2,
+      y: HEIGHT - 70,
+      w: 36,
+      h: 42,
+      baseW: 36,
+      baseH: 42,
+      speed: 6,
+      color: '#2dd8ff',
+      health: 3,
+      effect: null,
+      effectTime: 0,
+      sildenafilMode: null,
+      invincible: false,
+      hasCondom: false
+    };
+
+    // for mobile feel: smoothing and recoil/shake
+    player.shakeX = 0;
+    player.shakeY = 0;
+
+    let mousePos = { x: WIDTH / 2, y: HEIGHT - 70 };
+
+    function resetGame() {
+      loadHighScore();
+      score = 0;
+      bullets = [];
+      enemies = [];
+      powerUps = [];
+      lastFire = 0;
+      lastSpawn = 0;
+      lastPowerUp = 0;
+      gameTime = 0;
+      difficultyMultiplier = 1;
+      enemySpawnInterval = 700;
+      gameOver = false;
+      started = false;
+      player.x = WIDTH / 2;
+      player.y = HEIGHT - 70;
+      player.w = player.baseW;
+      player.h = player.baseH;
+      player.color = player.skin && player.skin.type === 'color' ? player.skin.value : '#ffffff';
+      player.health = 3;
+      player.fireDelay = 120;
+      player.effect = null;
+      player.effectTime = 0;
+      player.sildenafilMode = null;
+      player.invincible = false;
+      player.hasCondom = false;
+      firing = false;
+      mousePos.x = WIDTH / 2;
+      mousePos.y = HEIGHT - 70;
+      updateInfo();
+      showOverlay('移动鼠标开始');
+    }
+
+    function loadSkin() {
+      const stored = localStorage.getItem(SKIN_KEY);
+      let skin = SKINS[0];
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.type && parsed.value) {
+            skin = SKINS.find(s => s.type === parsed.type && s.value === parsed.value) || skin;
+          } else if (typeof parsed === 'string') {
+            skin = SKINS.find(s => s.type === 'color' && s.value === parsed) || skin;
+          }
+        } catch (e) {
+          skin = SKINS.find(s => s.type === 'color' && s.value === stored) || skin;
+        }
+      }
+      player.skin = skin;
+      if (!player.effect) {
+        player.color = skin.type === 'color' ? skin.value : '#ffffff';
+      }
+      renderSkinOptions();
+    }
+
+    function saveSkin(skin) {
+      localStorage.setItem(SKIN_KEY, JSON.stringify({ type: skin.type, value: skin.value }));
+    }
+
+    function applyPlayerSkin(skin) {
+      player.skin = skin;
+      if (!player.effect) {
+        player.color = skin.type === 'color' ? skin.value : '#ffffff';
+      }
+      saveSkin(skin);
+      renderSkinOptions();
+      updateInfo();
+    }
+
+    function renderSkinOptions() {
+      skinList.innerHTML = SKINS.map(skin => {
+        const active = player.skin && player.skin.type === skin.type && player.skin.value === skin.value ? ' active' : '';
+        const style = skin.type === 'color'
+          ? `background:${skin.value}`
+          : skin.value === 'stripe'
+            ? 'background: linear-gradient(45deg, #ffffff 0%, #ffffff 25%, #cccccc 25%, #cccccc 50%, #ffffff 50%, #ffffff 75%, #cccccc 75%, #cccccc 100%); background-size: 14px 14px;'
+            : skin.value === 'grid'
+              ? 'background: linear-gradient(0deg, #ffffff 0%, #ffffff 50%, #cccccc 50%, #cccccc 100%); background-size: 14px 14px, 14px 14px; background-position: 0 0, 7px 7px;'
+              : skin.value === 'wave'
+                ? 'background: radial-gradient(circle at 25% 30%, #ffffff 15%, transparent 16%), radial-gradient(circle at 75% 70%, #ffffff 15%, transparent 16%), #cccccc; background-size: 18px 18px;'
+                : skin.value === 'dot'
+                  ? 'background: radial-gradient(circle, #ffffff 20%, transparent 20%) #cccccc; background-size: 16px 16px;'
+                  : 'background: linear-gradient(135deg, #ffffff 25%, transparent 25%) -7px 0 / 14px 14px, linear-gradient(225deg, #ffffff 25%, transparent 25%) -7px 0 / 14px 14px, #cccccc;';
+        return `
+        <div class="skin-option${active}" data-type="${skin.type}" data-value="${skin.value}" title="${skin.name}">
+          <span style="${style}"></span>
+        </div>
+      `;
+      }).join('');
+    }
+
+    function loadHighScore() {
+      const stored = localStorage.getItem(highScoreKey);
+      highScore = stored ? Math.max(0, parseInt(stored, 10)) : 0;
+    }
+
+    function saveHighScore() {
+      localStorage.setItem(highScoreKey, highScore);
+    }
+
+    function addScore(amount) {
+      score = Math.max(0, score + amount);
+      if (score > highScore) {
+        highScore = score;
+        saveHighScore();
+      }
+      updateInfo();
+    }
+
+    function showOverlay(text) {
+      overlayText.textContent = text;
+      overlay.style.visibility = 'visible';
+    }
+
+    function updateInfo() {
+      scoreEl.textContent = score;
+      bestScoreEl.textContent = highScore;
+      hpEl.textContent = '❤'.repeat(Math.max(0, player.health));
+      if (player.effect) {
+        const seconds = Math.max(0, Math.ceil(player.effectTime / 16) / 1);
+        effectEl.textContent = ` | ${POWER_UP_BEHAVIORS[player.effect].title} 持续 ${seconds.toFixed(1)}s`;
+      } else {
+        effectEl.textContent = '';
+      }
+      if (score >= 500) {
+        honorEl.textContent = '  荣誉：铭铭射爆者';
+      } else {
+        honorEl.textContent = '';
+      }
+    }
+
+    function hideOverlay() {
+      overlay.style.visibility = 'hidden';
+    }
+
+    function openSettings() {
+      settingsPanel.classList.add('active');
+    }
+
+    function closeSettings() {
+      settingsPanel.classList.remove('active');
+    }
+
+    function getSkinFill() {
+      if (!player.skin || player.skin.type === 'color') {
+        return player.skin ? player.skin.value : player.color;
+      }
+      const temp = document.createElement('canvas');
+      temp.width = 16;
+      temp.height = 16;
+      const tctx = temp.getContext('2d');
+      tctx.fillStyle = '#ffffff';
+      tctx.fillRect(0, 0, 16, 16);
+      if (player.skin.value === 'stripe') {
+        tctx.fillStyle = '#cccccc';
+        tctx.beginPath();
+        tctx.moveTo(0, 8);
+        tctx.lineTo(8, 0);
+        tctx.lineTo(16, 8);
+        tctx.lineTo(8, 16);
+        tctx.closePath();
+        tctx.fill();
+      } else if (player.skin.value === 'grid') {
+        tctx.fillStyle = '#cccccc';
+        tctx.fillRect(0, 0, 8, 8);
+        tctx.fillRect(8, 8, 8, 8);
+      } else if (player.skin.value === 'wave') {
+        tctx.strokeStyle = '#cccccc';
+        tctx.lineWidth = 3;
+        tctx.beginPath();
+        tctx.moveTo(0, 10);
+        tctx.quadraticCurveTo(4, 4, 8, 10);
+        tctx.quadraticCurveTo(12, 16, 16, 10);
+        tctx.stroke();
+      } else if (player.skin.value === 'dot') {
+        tctx.fillStyle = '#cccccc';
+        tctx.beginPath();
+        tctx.arc(5, 5, 2.5, 0, Math.PI * 2);
+        tctx.arc(11, 11, 2.5, 0, Math.PI * 2);
+        tctx.fill();
+      } else if (player.skin.value === 'diamond') {
+        tctx.fillStyle = '#cccccc';
+        tctx.beginPath();
+        tctx.moveTo(8, 2);
+        tctx.lineTo(14, 8);
+        tctx.lineTo(8, 14);
+        tctx.lineTo(2, 8);
+        tctx.closePath();
+        tctx.fill();
+      }
+      return ctx.createPattern(temp, 'repeat');
+    }
+
+    function drawPlayer() {
+      const ox = player.shakeX || 0;
+      const oy = player.shakeY || 0;
+      const px = player.x + ox;
+      const py = player.y + oy;
+
+      if (player.invincible) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(px, py - 18, player.w * 0.9, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (player.effect === 'sildenafil') {
+        ctx.strokeStyle = 'rgba(255,80,80,0.6)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(px, py - 18, player.w * 0.9, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = getSkinFill();
+      ctx.beginPath();
+      ctx.moveTo(px - 12, py + 12);
+      ctx.lineTo(px - 12, py - 18);
+      ctx.quadraticCurveTo(px - 12, py - 34, px, py - 42);
+      ctx.quadraticCurveTo(px + 12, py - 34, px + 12, py - 18);
+      ctx.lineTo(px + 12, py + 12);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(px, py - 42, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(px - 14, py + 16, 10, 0, Math.PI * 2);
+      ctx.arc(px + 14, py + 16, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px - 6, py - 10, 12, 12);
+    }
+
+    function drawBullet(bullet) {
+      ctx.fillStyle = bullet.color || '#ffffff';
+      ctx.fillRect(bullet.x - 3, bullet.y - 10, 6, 12);
+    }
+
+    function drawEnemy(enemy) {
+      if (enemy.img && enemy.img.complete) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(enemy.img, enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.lineWidth = Math.max(3, enemy.r * 0.08);
+        ctx.strokeStyle = enemy.dead ? 'rgba(255, 0, 0, 0.8)' : 'rgba(255,255,255,0.45)';
+        ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = enemy.dead ? '#ffb3b3' : '#ffda4d';
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const eyeOffset = enemy.r * 0.4;
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.arc(enemy.x - eyeOffset, enemy.y - eyeOffset * 0.4, enemy.r * 0.12, 0, Math.PI * 2);
+      ctx.arc(enemy.x + eyeOffset, enemy.y - eyeOffset * 0.4, enemy.r * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (enemy.dead) {
+        ctx.fillStyle = '#ff8b8b';
+        ctx.beginPath();
+        ctx.arc(enemy.x - eyeOffset * 0.8, enemy.y + eyeOffset * 0.2, enemy.r * 0.16, 0, Math.PI * 2);
+        ctx.arc(enemy.x + eyeOffset * 0.8, enemy.y + eyeOffset * 0.2, enemy.r * 0.16, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#551a1a';
+        ctx.beginPath();
+        ctx.ellipse(enemy.x, enemy.y + enemy.r * 0.4, enemy.r * 0.16, enemy.r * 0.12, 0, 0, Math.PI);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.lineWidth = Math.max(2, enemy.r * 0.08);
+        ctx.strokeStyle = '#333';
+        ctx.arc(enemy.x, enemy.y + enemy.r * 0.1, enemy.r * 0.45, 0.2 * Math.PI, 0.8 * Math.PI);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#333';
+      ctx.font = `${Math.max(10, enemy.r * 0.45)}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('邓宸铭', enemy.x, enemy.y + enemy.r * 0.55);
+      ctx.lineWidth = 1;
+    }
+
+    function updatePlayer() {
+      // smooth toward target position (reduces jitter/drift on touch)
+      const targetX = Math.max(player.w / 2, Math.min(WIDTH - player.w / 2, mousePos.x));
+      const targetY = Math.max(player.h / 2, Math.min(HEIGHT - player.h / 2, mousePos.y));
+      const smoothing = 0.6; // higher = snappier
+      player.x += (targetX - player.x) * smoothing;
+      player.y += (targetY - player.y) * smoothing;
+
+      // apply and decay shake/recoil
+      player.shakeX *= 0.7;
+      player.shakeY *= 0.6;
+    }
+
+    function updateBullets(delta) {
+      bullets = bullets.filter(bullet => {
+        bullet.x += (bullet.vx || 0) * delta * 8;
+        bullet.y -= bullet.vy * delta;
+        return bullet.y + 12 > 0 && bullet.x + 6 > 0 && bullet.x - 6 < WIDTH;
+      });
+    }
+
+    function updateEnemies(delta) {
+      enemies = enemies.filter(enemy => {
+        if (enemy.dead) {
+          enemy.deadTimer -= delta * 16;
+          return enemy.deadTimer > 0;
+        }
+        enemy.y += enemy.speed * delta * difficultyMultiplier;
+        if (enemy.canShoot) {
+          enemy.shootTimer -= delta * 16;
+          if (enemy.shootTimer <= 0) {
+            enemyBullets.push({ x: enemy.x, y: enemy.y + enemy.r + 8, w: 4, h: 10, speed: 4 + difficultyMultiplier * 0.8 });
+            enemy.shootTimer = Math.max(400, Math.random() * 1200 + 900 - difficultyMultiplier * 120);
+          }
+        }
+        if (enemy.y - enemy.r > HEIGHT) {
+          if (!player.hasCondom) {
+            score = Math.max(0, score - 5);
+            updateInfo();
+          }
+          return false;
+        }
+        return true;
+      });
+    }
+
+    function updateEnemyBullets(delta) {
+      enemyBullets = enemyBullets.filter(bullet => {
+        bullet.y += bullet.speed * delta;
+        return bullet.y - bullet.h < HEIGHT;
+      });
+    }
+
+    function spawnEnemy() {
+      const radius = Math.random() * 16 + 18;
+      const x = Math.random() * (WIDTH - radius * 2) + radius;
+      enemies.push({
+        x,
+        y: -radius,
+        r: radius,
+        speed: Math.random() * 1.4 + 1.8,
+        canShoot: Math.random() < 0.35,
+        shootTimer: Math.random() * 1200 + 800,
+        dead: false,
+        deadTimer: 0,
+        img: ENEMY_IMAGES[Math.floor(Math.random() * ENEMY_IMAGES.length)]
+      });
+    }
+
+    function spawnPowerUp() {
+      const types = ['sildenafil', 'condom', 'goji'];
+      const type = types[Math.floor(Math.random() * types.length)];
+      const size = type === 'goji' ? 14 : 18;
+      powerUps.push({
+        x: Math.random() * (WIDTH - size * 2) + size,
+        y: -size,
+        r: size,
+        type,
+        speed: 1.2 + Math.random() * 0.6,
+        life: 10000
+      });
+    }
+
+    function drawPowerUp(powerUp) {
+      const behavior = POWER_UP_BEHAVIORS[powerUp.type];
+      ctx.fillStyle = behavior.color;
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+
+      if (powerUp.type === 'sildenafil') {
+        ctx.beginPath();
+        ctx.ellipse(powerUp.x, powerUp.y, powerUp.r * 1.2, powerUp.r * 0.75, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(powerUp.x - powerUp.r * 0.75, powerUp.y);
+        ctx.lineTo(powerUp.x + powerUp.r * 0.75, powerUp.y);
+        ctx.stroke();
+      } else if (powerUp.type === 'condom') {
+        ctx.beginPath();
+        ctx.ellipse(powerUp.x, powerUp.y + 2, powerUp.r * 0.75, powerUp.r * 1.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.ellipse(powerUp.x, powerUp.y - 2, powerUp.r * 0.35, powerUp.r * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.arc(powerUp.x, powerUp.y, powerUp.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#000';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('枸', powerUp.x, powerUp.y - 1);
+        return;
+      }
+
+      ctx.fillStyle = '#000';
+      ctx.font = '14px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (powerUp.type === 'sildenafil') {
+        ctx.fillText('¥', powerUp.x, powerUp.y);
+      } else if (powerUp.type === 'condom') {
+        ctx.fillText('D', powerUp.x, powerUp.y + 4);
+      }
+    }
+
+    function updatePowerUps(delta) {
+      powerUps = powerUps.filter(powerUp => {
+        powerUp.y += powerUp.speed * delta * 0.8;
+        powerUp.life -= delta * 16;
+        return powerUp.life > 0 && powerUp.y - powerUp.r < HEIGHT;
+      });
+    }
+
+    function applyPowerUp(powerUp) {
+      if (powerUp.type === 'goji') {
+        player.health = Math.min(5, player.health + 1);
+        updateInfo();
+        return;
+      }
+      const behavior = POWER_UP_BEHAVIORS[powerUp.type];
+      player.effect = powerUp.type;
+      player.effectTime = behavior.duration;
+      if (powerUp.type === 'sildenafil') {
+        player.color = '#ff4b4b';
+        player.w = player.baseW * 1.5;
+        player.h = player.baseH * 1.5;
+        player.fireDelay = 60;
+        player.sildenafilMode = 'white';
+      } else if (powerUp.type === 'condom') {
+        player.invincible = true;
+        player.hasCondom = true;
+        player.color = '#f9f9f9';
+        player.fireDelay = 999999;
+      }
+    }
+
+    function restorePlayerState() {
+      player.effect = null;
+      player.effectTime = 0;
+      player.sildenafilMode = null;
+      player.color = player.skin && player.skin.type === 'color' ? player.skin.value : '#ffffff';
+      player.w = player.baseW;
+      player.h = player.baseH;
+      player.fireDelay = 120;
+      player.invincible = false;
+      player.hasCondom = false;
+    }
+
+    function fireBullet() {
+      if (player.hasCondom) return;
+      const now = Date.now();
+      if (now - lastFire < player.fireDelay) return;
+      lastFire = now;
+      const createBullet = (vx = 0, color = '#ffffff', piercing = false) => {
+        bullets.push({
+          x: player.x + vx * 10,
+          y: player.y - player.h / 2 - 10,
+          vx,
+          vy: 10,
+          color,
+          piercing
+        });
+      };
+      if (player.effect === 'sildenafil') {
+        if (player.sildenafilMode === 'white') {
+          const spread = [-0.8, 0, 0.8];
+          for (let i = 0; i < 3; i++) {
+            createBullet(spread[i], '#ffffff', true);
+          }
+        } else {
+          const spread = [-1.2, -0.8, -0.4, 0.4, 0.8, 1.2];
+          for (let round = 0; round < 2; round++) {
+            for (let i = 0; i < spread.length; i++) {
+              const offsetY = round * 8;
+              bullets.push({
+                x: player.x + spread[i] * 10,
+                y: player.y - player.h / 2 - 10 - offsetY,
+                vx: spread[i],
+                vy: 10,
+                color: '#ff4b4b',
+                piercing: true
+              });
+            }
+          }
+        }
+      } else {
+        createBullet(0);
+      }
+      player.shakeY = -8;
+      player.shakeX = (Math.random() - 0.5) * 6;
+    }
+
+    function rectsOverlap(a, b) {
+      return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y > b.y + b.h);
+    }
+
+    function circleRectCollide(circle, rect) {
+      const distX = Math.abs(circle.x - rect.x - rect.w / 2);
+      const distY = Math.abs(circle.y - rect.y - rect.h / 2);
+      if (distX > rect.w / 2 + circle.r) return false;
+      if (distY > rect.h / 2 + circle.r) return false;
+      if (distX <= rect.w / 2 || distY <= rect.h / 2) return true;
+      const dx = distX - rect.w / 2;
+      const dy = distY - rect.h / 2;
+      return dx * dx + dy * dy <= circle.r * circle.r;
+    }
+
+    function checkCollisions() {
+      const playerRect = { x: player.x - player.w / 2, y: player.y - player.h / 2, w: player.w, h: player.h };
+      for (const enemy of enemies) {
+        if (!enemy.dead && circleRectCollide(enemy, playerRect)) {
+          if (player.invincible) {
+            enemy.dead = true;
+            enemy.deadTimer = 200;
+            enemy.canShoot = false;
+            addScore(10);
+          } else {
+            player.health -= 1;
+            updateInfo();
+            enemy.dead = true;
+            enemy.deadTimer = 200;
+            enemy.canShoot = false;
+            if (player.health <= 0) {
+              endGame();
+              return;
+            }
+          }
+        }
+      }
+
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const bullet = bullets[i];
+        for (let j = enemies.length - 1; j >= 0; j--) {
+          const enemy = enemies[j];
+          const bulletRect = { x: bullet.x - 3, y: bullet.y - 10, w: 6, h: 12 };
+          if (circleRectCollide(enemy, bulletRect) && !enemy.dead) {
+            if (!bullet.piercing) {
+              bullets.splice(i, 1);
+            }
+            enemy.dead = true;
+            enemy.deadTimer = 300;
+            enemy.canShoot = false;
+            addScore(10);
+            if (!bullet.piercing) break;
+          }
+        }
+      }
+
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const bullet = enemyBullets[i];
+        const bulletRect = { x: bullet.x - bullet.w / 2, y: bullet.y - bullet.h / 2, w: bullet.w, h: bullet.h };
+        if (rectsOverlap(bulletRect, playerRect)) {
+          enemyBullets.splice(i, 1);
+          if (!player.invincible) {
+            player.health -= 1;
+            updateInfo();
+            if (player.health <= 0) {
+              endGame();
+              return;
+            }
+          }
+        }
+      }
+
+      for (let i = powerUps.length - 1; i >= 0; i--) {
+        const powerUp = powerUps[i];
+        const powerUpRect = { x: powerUp.x - powerUp.r, y: powerUp.y - powerUp.r, w: powerUp.r * 2, h: powerUp.r * 2 };
+        if (rectsOverlap(powerUpRect, playerRect)) {
+          applyPowerUp(powerUp);
+          powerUps.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    function drawEnemyBullet(bullet) {
+      ctx.fillStyle = '#ffcc33';
+      ctx.fillRect(bullet.x - bullet.w / 2, bullet.y - bullet.h / 2, bullet.w, bullet.h);
+    }
+
+    function endGame() {
+      gameOver = true;
+      overlayText.textContent = '游戏结束，自动重启中...';
+      overlay.style.visibility = 'visible';
+      overlay.style.pointerEvents = 'none';
+      setTimeout(() => {
+        overlay.style.pointerEvents = 'auto';
+        resetGame();
+        hideOverlay();
+      }, 1200);
+    }
+
+    let lastTime = 0;
+    function loop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const delta = Math.min(1, (timestamp - lastTime) / 16);
+      lastTime = timestamp;
+
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      ctx.fillStyle = '#001122';
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      if (started && !gameOver) {
+        gameTime += delta * 16;
+        difficultyMultiplier = 1 + Math.min(2, gameTime / 30000);
+        enemySpawnInterval = Math.max(320, 700 - gameTime * 0.35);
+
+        if (firing) {
+          fireBullet();
+        }
+        updatePlayer();
+        updateBullets(delta);
+        updateEnemies(delta);
+        updateEnemyBullets(delta);
+        updatePowerUps(delta);
+        checkCollisions();
+
+        if (timestamp - lastSpawn > enemySpawnInterval) {
+          spawnEnemy();
+          lastSpawn = timestamp;
+        }
+        if (timestamp - lastPowerUp > powerUpInterval) {
+          spawnPowerUp();
+          lastPowerUp = timestamp;
+        }
+
+        updateInfo();
+
+        if (player.effect) {
+          player.effectTime -= delta * 16;
+          if (player.effect === 'sildenafil' && player.sildenafilMode === 'white' && player.effectTime <= 2000) {
+            player.sildenafilMode = 'red';
+            player.color = '#ff2a2a';
+            player.w = player.baseW * 1.65;
+            player.h = player.baseH * 1.65;
+          }
+          if (player.effectTime <= 0) {
+            if (player.effect === 'sildenafil') {
+              player.health = Math.max(0, player.health - 1);
+              updateInfo();
+              if (player.health <= 0) {
+                endGame();
+              }
+            }
+            restorePlayerState();
+          }
+        }
+      }
+
+      drawPlayer();
+      bullets.forEach(drawBullet);
+      enemies.forEach(drawEnemy);
+      enemyBullets.forEach(drawEnemyBullet);
+      powerUps.forEach(drawPowerUp);
+
+      if (gameOver) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        ctx.fillStyle = '#fff';
+        ctx.font = '32px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('游戏结束', WIDTH / 2, HEIGHT / 2 - 20);
+        ctx.font = '20px Arial';
+        ctx.fillText('按按钮重新开始', WIDTH / 2, HEIGHT / 2 + 20);
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      // account for CSS scaling: map client coords to canvas internal resolution
+      mousePos.x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      mousePos.y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      if (!started && !gameOver) {
+        started = true;
+        hideOverlay();
+      }
+    });
+
+    // Touch support for mobile: move with touch, prevent page scroll
+    canvas.addEventListener('touchstart', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches[0];
+      mousePos.x = (t.clientX - rect.left) * (canvas.width / rect.width);
+      mousePos.y = (t.clientY - rect.top) * (canvas.height / rect.height);
+      e.preventDefault();
+      if (!started && !gameOver) {
+        started = true;
+        hideOverlay();
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches[0];
+      mousePos.x = (t.clientX - rect.left) * (canvas.width / rect.width);
+      mousePos.y = (t.clientY - rect.top) * (canvas.height / rect.height);
+      e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+    }, { passive: false });
+
+    // Fire button: touch or click to shoot while held
+    if (fireBtn) {
+      const beginFiring = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        firing = true;
+        if (!started && !gameOver) {
+          started = true;
+          hideOverlay();
+        }
+      };
+      const stopFiring = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        firing = false;
+      };
+      fireBtn.addEventListener('pointerdown', beginFiring);
+      fireBtn.addEventListener('pointerup', stopFiring);
+      fireBtn.addEventListener('pointercancel', stopFiring);
+      fireBtn.addEventListener('pointerleave', stopFiring);
+      fireBtn.addEventListener('touchstart', beginFiring, { passive: false });
+      fireBtn.addEventListener('touchend', stopFiring, { passive: false });
+      fireBtn.addEventListener('touchcancel', stopFiring, { passive: false });
+    }
+
+    window.addEventListener('keydown', (e) => {
+      keys[e.key] = true;
+      if (e.key === ' ' && !gameOver) {
+        e.preventDefault();
+        if (!started) {
+          started = true;
+          hideOverlay();
+        }
+        firing = true;
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.key] = false;
+      if (e.key === ' ') {
+        firing = false;
+      }
+    });
+
+    restartBtn.addEventListener('click', () => {
+      resetGame();
+    });
+
+    overlay.addEventListener('click', () => {
+      if (!started && !gameOver) {
+        started = true;
+        hideOverlay();
+      }
+    });
+
+    const beginSettings = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      openSettings();
+    };
+    settingsBtn.addEventListener('click', beginSettings);
+    settingsBtn.addEventListener('pointerdown', beginSettings);
+    settingsClose.addEventListener('click', closeSettings);
+    settingsPanel.addEventListener('click', (e) => {
+      if (e.target === settingsPanel) {
+        closeSettings();
+      }
+    });
+    skinList.addEventListener('click', (e) => {
+      const option = e.target.closest('.skin-option');
+      if (!option) return;
+      const type = option.dataset.type;
+      const value = option.dataset.value;
+      if (!type || !value) return;
+      const skin = SKINS.find(s => s.type === type && s.value === value);
+      if (skin) {
+        applyPlayerSkin(skin);
+      }
+    });
+
+    resetGame();
+    loadSkin();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
