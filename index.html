@@ -13,12 +13,11 @@
             <span class="logo">Zihan</span>
             <div class="nav-links">
                 <a href="index.html">首页</a>
-                <a href="#about">关于我</a>
-                <a href="#skills">技能</a>
+                <a href="index.html#about">关于我</a>
                 <a href="blog.html">博客</a>
-                <a href="write.html">写文章</a>
+                <a href="tags.html">标签</a>
+                <a href="gallery.html">画廊</a>
                 <a href="games.html">小游戏</a>
-                <a href="#contact">联系</a>
                 <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
             </div>
         </div>
@@ -90,8 +89,17 @@
 
     <footer>
         <p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
+        <p style="text-align:center;color:var(--text-light);font-size:0.85rem;margin-top:1rem;" id="visitCount">正在加载访问量...</p>
     </footer>
     <script src="user.js"></script>
     <script src="theme.js"></script>
+    <script src="stats.js"></script>
+    <script>
+_trackVisit();
+_fetchStats().then(function(s) {
+  document.getElementById('visitCount').textContent = '累计访问：'+s.hits+' 次';
+});
+</script>
+    <script src="music.js"></script>
 </body>
 </html>
