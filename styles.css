@@ -521,6 +521,89 @@ footer {
 
 .comments-section h2 {
     font-size: 1.4rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     color: var(--text);
+}
+
+/* 评论输入框 */
+.comment-form-box {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1.2rem;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-alt);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.comment-form-box:hover {
+    border-color: var(--primary);
+    background: #eef2ff;
+}
+
+.comment-form-box::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 120px;
+    background: linear-gradient(90deg, transparent, var(--primary));
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.comment-avatar-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.comment-input-hint {
+    flex: 1;
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+.comment-login-tip {
+    font-size: 0.8rem;
+    color: var(--primary);
+    white-space: nowrap;
+    padding: 0.3rem 0.8rem;
+    background: #eef2ff;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+/* 加载中 */
+.comments-loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-light);
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 提示文字 */
+.comments-note {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 1rem;
+    opacity: 0.7;
 }
