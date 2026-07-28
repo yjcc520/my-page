@@ -205,17 +205,24 @@ async function _initLeaderboard() {
     data.items.forEach(function(issue) {
       var gameName = issue.title.replace('-排行榜', '').trim();
       var scores = {};
+      var unit = '分';
       var lines = issue.body.split('\n');
       lines.forEach(function(line) {
-        var m = line.match(/(\d+)分[：:]\s*(.+)/);
+        var m = line.match(/(\d+)(分|步|ms|秒)[：:]\s*(.+)/);
         if (m) {
-          var name = m[2].trim();
+          var name = m[3].trim();
           var sc = parseInt(m[1]);
-          if (!scores[name] || scores[name] < sc) scores[name] = sc;
+          if (m[2] === '步' || m[2] === 'ms' || m[2] === '秒') {
+            unit = m[2];
+            if (!scores[name] || scores[name] > sc) scores[name] = sc;
+          } else {
+            if (!scores[name] || scores[name] < sc) scores[name] = sc;
+          }
         }
       });
-      var entries = Object.entries(scores).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 5);
-      if (entries.length) games[gameName] = entries;
+      var lowerBetter = (unit === '步' || unit === 'ms' || unit === '秒');
+      var entries = Object.entries(scores).sort(function(a, b) { return lowerBetter ? a[1] - b[1] : b[1] - a[1]; }).slice(0, 5);
+      if (entries.length) games[gameName] = { entries: entries, unit: unit };
     });
     if (!Object.keys(games).length) {
       grid.innerHTML = '<p class="lb-placeholder">暂无排行数据，去<a href="games.html">小游戏</a>玩一局吧</p>';
@@ -224,8 +231,8 @@ async function _initLeaderboard() {
     var html = '';
     Object.entries(games).forEach(function(g) {
       html += '<div class="lb-card"><h3 class="lb-game-title">' + g[0] + '</h3><ol class="lb-list">';
-      g[1].forEach(function(e, i) {
-        html += '<li class="lb-row"><span class="lb-rank">' + (i + 1) + '</span><span class="lb-name">' + e[0] + '</span><span class="lb-score">' + e[1] + '分</span></li>';
+      g[1].entries.forEach(function(e, i) {
+        html += '<li class="lb-row"><span class="lb-rank">' + (i + 1) + '</span><span class="lb-name">' + e[0] + '</span><span class="lb-score">' + e[1] + g[1].unit + '</span></li>';
       });
       html += '</ol></div>';
     });
