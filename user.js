@@ -33,30 +33,29 @@
     nav.appendChild(menu);
   }
 
-  // 注册/编辑弹窗
   function showRegister() {
     var existing = document.getElementById('registerModal');
     if (existing) existing.remove();
 
     var curName = nickname || '';
     var curAvt = avatar || '';
-    var avtPreview = curAvt ? '<img class="avt-preview has-avt" src="' + curAvt + '" alt="">' : '<div class="avt-preview">' + (curName ? curName[0].toUpperCase() : '?') + '</div>';
+    var avtPreview = curAvt ? '<img class="avt-preview-img" src="' + curAvt + '" alt="">' : '<span class="avt-preview-text">' + (curName ? curName[0].toUpperCase() : '?') + '</span>';
 
     var modal = document.createElement('div');
     modal.id = 'registerModal';
     modal.className = 'modal-overlay';
-    modal.innerHTML = '<div class="modal-box">' +
+    modal.innerHTML = '<div class="modal-box reg-modal-box">' +
       '<h3>' + (nickname ? '编辑资料' : '设置你的昵称') + '</h3>' +
       '<div class="modal-avt-row">' +
-        avtPreview +
-        '<div>' +
+        '<div class="avt-preview" id="avtPreview">' + avtPreview + '</div>' +
+        '<div class="modal-avt-actions">' +
           '<p class="modal-hint">点击上传头像（可选）</p>' +
           '<input type="file" id="regAvtInput" accept="image/*" style="display:none">' +
           '<button class="modal-avt-btn" id="regAvtBtn">选择图片</button>' +
           (curAvt ? '<button class="modal-avt-del" id="regAvtDel">移除头像</button>' : '') +
         '</div>' +
       '</div>' +
-      '<input type="text" id="regNameInput" class="modal-input" placeholder="输入昵称" maxlength="20" value="' + curName.replace(/"/g, '&quot;') + '" autofocus>' +
+      '<input type="text" id="regNameInput" class="modal-input" placeholder="输入昵称" maxlength="20" value="' + curName.replace(/"/g, '&quot;') + '">' +
       '<p id="regError" class="comment-error" style="display:none"></p>' +
       '<div class="modal-btns">' +
         '<button class="modal-btn-cancel" onclick="document.getElementById(\'registerModal\').remove()">取消</button>' +
@@ -68,7 +67,7 @@
     var input = document.getElementById('regNameInput');
     var avtInput = document.getElementById('regAvtInput');
     var avtBtn = document.getElementById('regAvtBtn');
-    var avtPreviewEl = modal.querySelector('.avt-preview');
+    var avtPreviewEl = document.getElementById('avtPreview');
     var avtDel = document.getElementById('regAvtDel');
 
     avtBtn.onclick = function() { avtInput.click(); };
@@ -78,40 +77,26 @@
       if (!file) return;
       var reader = new FileReader();
       reader.onload = function(e) {
-        var dataUrl = e.target.result;
-        // 压缩到大尺寸
-        var img = new Image();
-        img.onload = function() {
-          var canvas = document.createElement('canvas');
-          var size = Math.min(img.width, img.height, 200);
-          canvas.width = size;
-          canvas.height = size;
-          var ctx = canvas.getContext('2d');
-          var sx = (img.width - size) / 2, sy = (img.height - size) / 2;
-          ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
-          var compressed = canvas.toDataURL('image/jpeg', 0.8);
-          curAvt = compressed;
-          avtPreviewEl.className = 'avt-preview has-avt';
-          avtPreviewEl.innerHTML = '';
-          var imgEl = document.createElement('img');
-          imgEl.src = compressed;
-          imgEl.alt = '';
-          avtPreviewEl.appendChild(imgEl);
-          if (avtDel) avtDel.style.display = 'inline-block';
-          else {
+        showCropDialog(e.target.result, function(croppedDataUrl) {
+          curAvt = croppedDataUrl;
+          avtPreviewEl.innerHTML = '<img class="avt-preview-img" src="' + croppedDataUrl + '" alt="">';
+          if (!avtDel) {
             var delBtn = document.createElement('button');
             delBtn.className = 'modal-avt-del';
+            delBtn.id = 'regAvtDel';
             delBtn.textContent = '移除头像';
-            delBtn.onclick = function() { curAvt = ''; avtPreviewEl.className = 'avt-preview'; avtPreviewEl.innerHTML = (input.value.trim() || '?')[0].toUpperCase(); delBtn.remove(); };
+            delBtn.onclick = function() { curAvt = ''; avtPreviewEl.innerHTML = '<span class="avt-preview-text">' + (input.value.trim() || '?')[0].toUpperCase() + '</span>'; delBtn.remove(); };
             avtBtn.parentNode.appendChild(delBtn);
+            avtDel = delBtn;
           }
-        };
-        img.src = dataUrl;
+          avtDel.style.display = 'inline-block';
+          avtInput.value = '';
+        });
       };
       reader.readAsDataURL(file);
     };
 
-    if (avtDel) avtDel.onclick = function() { curAvt = ''; avtPreviewEl.className = 'avt-preview'; avtPreviewEl.innerHTML = (input.value.trim() || '?')[0].toUpperCase(); avtDel.remove(); };
+    if (avtDel) avtDel.onclick = function() { curAvt = ''; avtPreviewEl.innerHTML = '<span class="avt-preview-text">' + (input.value.trim() || '?')[0].toUpperCase() + '</span>'; avtDel.remove(); avtDel = null; };
 
     document.getElementById('regSubmit').onclick = function() {
       var name = input.value.trim();
@@ -128,6 +113,125 @@
       if (e.key === 'Enter') document.getElementById('regSubmit').click();
     };
     setTimeout(function() { input.focus(); }, 100);
+  }
+
+  // 裁剪对话框
+  function showCropDialog(imageSrc, callback) {
+    var existing = document.getElementById('cropDialog');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'cropDialog';
+    overlay.className = 'crop-overlay';
+    overlay.innerHTML =
+      '<div class="crop-box">' +
+        '<h3>拖动图片调整裁剪区域</h3>' +
+        '<div class="crop-area" id="cropArea">' +
+          '<canvas id="cropCanvas"></canvas>' +
+          '<div class="crop-mask"></div>' +
+        '</div>' +
+        '<div class="modal-btns crop-btns">' +
+          '<button class="modal-btn-cancel" id="cropCancel">取消</button>' +
+          '<button class="modal-btn-ok" id="cropConfirm">确认裁剪</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    var img = new Image();
+    img.onload = function() {
+      var area = document.getElementById('cropArea');
+      var canvas = document.getElementById('cropCanvas');
+      var ctx = canvas.getContext('2d');
+
+      var cropSize = 200; // 裁剪结果尺寸
+      var areaW = area.clientWidth;
+      var areaH = area.clientHeight;
+
+      // 缩放图片使其至少覆盖裁剪区域
+      var scale = Math.max(cropSize / img.width, cropSize / img.height, areaW / img.width, areaH / img.height);
+      var imgW = img.width * scale;
+      var imgH = img.height * scale;
+
+      canvas.width = areaW;
+      canvas.height = areaH;
+      canvas.style.width = areaW + 'px';
+      canvas.style.height = areaH + 'px';
+
+      // 初始位置：居中
+      var offsetX = (areaW - imgW) / 2;
+      var offsetY = (areaH - imgH) / 2;
+      var dragging = false, startX, startY, startOffX, startOffY;
+
+      function draw() {
+        ctx.clearRect(0, 0, areaW, areaH);
+        ctx.save();
+        // 裁剪为圆形区域
+        ctx.beginPath();
+        ctx.arc(areaW/2, areaH/2, areaW/2 - 2, 0, Math.PI*2);
+        ctx.clip();
+        ctx.drawImage(img, offsetX, offsetY, imgW, imgH);
+        ctx.restore();
+
+        // 边框
+        ctx.beginPath();
+        ctx.arc(areaW/2, areaH/2, areaW/2 - 2, 0, Math.PI*2);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      draw();
+
+      // 拖拽
+      area.onmousedown = function(e) { dragging = true; startX = e.clientX; startY = e.clientY; startOffX = offsetX; startOffY = offsetY; e.preventDefault(); };
+      area.ontouchstart = function(e) { dragging = true; startX = e.touches[0].clientX; startY = e.touches[0].clientY; startOffX = offsetX; startOffY = offsetY; };
+      window.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        offsetX = startOffX + (e.clientX - startX);
+        offsetY = startOffY + (e.clientY - startY);
+        draw();
+      });
+      window.addEventListener('touchmove', function(e) {
+        if (!dragging) return;
+        offsetX = startOffX + (e.touches[0].clientX - startX);
+        offsetY = startOffY + (e.touches[0].clientY - startY);
+        draw();
+      });
+      window.addEventListener('mouseup', function() { dragging = false; });
+      window.addEventListener('touchend', function() { dragging = false; });
+
+      // 确认裁剪
+      document.getElementById('cropConfirm').onclick = function() {
+        var resultCanvas = document.createElement('canvas');
+        resultCanvas.width = cropSize;
+        resultCanvas.height = cropSize;
+        var rctx = resultCanvas.getContext('2d');
+
+        // 圆角裁剪
+        rctx.beginPath();
+        rctx.arc(cropSize/2, cropSize/2, cropSize/2, 0, Math.PI*2);
+        rctx.clip();
+
+        // 计算图片上的裁剪区域
+        var cx = areaW / 2;
+        var cy = areaH / 2;
+        var r = areaW / 2;
+        var sx = (cx - r - offsetX) * (img.width / imgW);
+        var sy = (cy - r - offsetY) * (img.height / imgH);
+        var sw = (r * 2) * (img.width / imgW);
+        var sh = (r * 2) * (img.height / imgH);
+
+        rctx.drawImage(img, sx, sy, sw, sh, 0, 0, cropSize, cropSize);
+        callback(resultCanvas.toDataURL('image/jpeg', 0.85));
+        overlay.remove();
+      };
+
+      document.getElementById('cropCancel').onclick = function() { overlay.remove(); };
+    };
+    img.src = imageSrc;
   }
 
   window._siteLogout = function() { saveProfile('', ''); };
