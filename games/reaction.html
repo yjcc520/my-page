@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>反应速度 | 蔡梓涵</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;touch-action:manipulation;user-select:none}
+#screen{width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background 0.1s;cursor:pointer}
+.waiting{background:#2d4a7a;color:#fff}
+.ready{background:#c0392b;color:#fff}
+.go{background:#27ae60;color:#fff}
+.clicked{background:#f39c12}
+h1{font-size:2.5rem;margin-bottom:0.5rem}
+p{font-size:1.1rem;opacity:0.8}
+.result{font-size:2rem;margin-top:0.5rem;font-weight:700}
+.stats{display:flex;gap:2rem;margin-top:1.5rem;font-size:1rem}
+.stat-box{text-align:center;background:rgba(255,255,255,0.15);padding:0.8rem 1.5rem;border-radius:10px}
+.stat-box .val{font-size:1.8rem;font-weight:700;display:block}
+.stat-box .label{font-size:0.8rem;opacity:0.7}
+.history{display:flex;gap:0.4rem;margin-top:1rem;flex-wrap:wrap;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%}
+.dot.fast{background:#4ade80}.dot.mid{background:#fbbf24}.dot.slow{background:#ef4444}
+.tip{margin-top:2rem;font-size:0.85rem;opacity:0.5}
+</style>
+</head>
+<body>
+<div id="screen" class="waiting" onclick="handleClick()">
+  <h1 id="title">反应速度测试</h1>
+  <p id="hint">看到绿色就点击</p>
+  <div class="result" id="result"></div>
+  <div class="stats">
+    <div class="stat-box"><span class="val" id="last">--</span><span class="label">上次 (ms)</span></div>
+    <div class="stat-box"><span class="val" id="best">--</span><span class="label">最快 (ms)</span></div>
+    <div class="stat-box"><span class="val" id="avg">--</span><span class="label">平均 (ms)</span></div>
+  </div>
+  <div class="history" id="history"></div>
+  <div class="tip">点击任意位置开始</div>
+</div>
+<script>
+var screen=document.getElementById('screen'),title=document.getElementById('title');
+var hint=document.getElementById('hint'),result=document.getElementById('result');
+var state='idle',startTime=0,timer=null,times=[],best=Infinity;
+
+function setClass(c){screen.className=c}
+function handleClick(){
+  if(state==='idle'){startRound();return}
+  if(state==='waiting'){setClass('ready');state='idle';title.textContent='别急！等绿色';hint.textContent='绿色出现后再点击';clearTimeout(timer);setTimeout(resetIdle,1500);return}
+  if(state==='ready'){
+    var rt=Date.now()-startTime;times.push(rt);
+    setClass('clicked');state='idle';title.textContent=rt+' ms';
+    hint.textContent='点击继续下一轮';
+    if(rt<best){best=rt;document.getElementById('best').textContent=best}
+    document.getElementById('last').textContent=rt;
+    var avg=Math.round(times.reduce((a,b)=>a+b)/times.length);
+    document.getElementById('avg').textContent=avg;
+    updateDots();updateResult(rt);
+    setTimeout(resetIdle,1200);
+  }
+}
+function startRound(){
+  setClass('waiting');state='waiting';
+  title.textContent='等待...';hint.textContent='绿色出现时尽快点击';
+  result.textContent='';
+  var delay=800+Math.random()*2500;
+  timer=setTimeout(()=>{
+    setClass('go');state='ready';startTime=Date.now();
+    title.textContent='点！';hint.textContent='';
+  },delay);
+}
+function resetIdle(){setClass('waiting');state='idle';title.textContent='反应速度测试';hint.textContent='看到绿色就点击'}
+function updateDots(){
+  var h=document.getElementById('history');h.innerHTML='';
+  times.slice(-20).forEach(t=>{
+    var d=document.createElement('div');d.className='dot '+(t<250?'fast':t<400?'mid':'slow');h.appendChild(d);
+  });
+}
+function updateResult(rt){
+  var msg='';
+  if(rt<200)msg='⚡ 闪电般！';
+  else if(rt<280)msg='🔥 很快！';
+  else if(rt<350)msg='👍 不错';
+  else if(rt<450)msg='😐 一般';
+  else msg='🐢 再练练';
+  result.textContent=msg;
+}
+resetIdle();
+</script>
+</body>
+</html>
