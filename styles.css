@@ -376,6 +376,17 @@ footer {
     gap: 1.5rem;
 }
 
+.blog-del-btn {
+    position: absolute; top: 10px; right: 10px; width: 26px; height: 26px;
+    border-radius: 50%; background: rgba(229,62,62,0.12); color: #e53e3e;
+    border: none; font-size: 13px; cursor: pointer; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+}
+.blog-del-btn:hover { background: rgba(229,62,62,0.25); }
+.blog-card { position: relative; }
+.blog-card-user { border-left: 3px solid var(--primary); }
+
 .blog-card {
     background: var(--bg-alt);
     border: 1px solid var(--border);
