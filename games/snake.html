@@ -162,7 +162,7 @@ const endMsg = document.getElementById('endMsg');
 const restartBtn = document.getElementById('restartBtn');
 const startBtn = document.getElementById('startBtn');
 
-let snake, food, dir, nextDir, score, best, running, speed, timer, particles;
+let snake, food, dir, score, best, running, speed, timer, particles, dirQueue;
 
 // Token
 function loadToken() {
@@ -281,10 +281,10 @@ function initGame() {
     { x: startX - 2, y: startY }
   ];
   dir = { x: 1, y: 0 };
-  nextDir = { x: 1, y: 0 };
   score = 0;
-  speed = 120;
+  speed = 100;
   particles = [];
+  dirQueue = [];
   placeFood();
   scoreEl.textContent = '0';
   bestEl.textContent = best;
@@ -315,7 +315,14 @@ function gameOver() {
 }
 
 function tick() {
-  dir = { x: nextDir.x, y: nextDir.y };
+  // Dequeue buffered direction
+  if (dirQueue.length > 0) {
+    var nd = dirQueue.shift();
+    // Validate against current heading
+    if (!(nd.x !== 0 && dir.x === -nd.x) && !(nd.y !== 0 && dir.y === -nd.y)) {
+      dir = nd;
+    }
+  }
   var head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
   // Wrap around
@@ -327,21 +334,18 @@ function tick() {
   // Self collision (skip tail which will move)
   for (var i = 0; i < snake.length - 1; i++) {
     if (snake[i].x === head.x && snake[i].y === head.y) {
-      // Hit self
       gameOver();
       return;
     }
   }
 
   snake.unshift(head);
-  var ate = false;
   if (head.x === food.x && head.y === food.y) {
     score += 10;
     scoreEl.textContent = score;
-    ate = true;
     placeFood();
     createParticles(food.x * cellW + cellW/2, food.y * cellH + cellH/2, '#4ade80');
-    if (speed > 50) speed -= 2;
+    if (speed > 35) speed -= 3;
     clearInterval(timer);
     timer = setInterval(tick, speed);
   } else {
@@ -464,10 +468,16 @@ function startGame() {
 // Controls
 function setDir(dx, dy) {
   if (!running) return;
-  if (dx !== 0 && dir.x === -dx) return;
-  if (dy !== 0 && dir.y === -dy) return;
   if (dx === 0 && dy === 0) return;
-  nextDir = { x: dx, y: dy };
+  // Check against the LAST queued direction (or current if empty)
+  var last = dirQueue.length > 0 ? dirQueue[dirQueue.length - 1] : dir;
+  if (dx !== 0 && last.x === -dx) return;
+  if (dy !== 0 && last.y === -dy) return;
+  // Avoid duplicate consecutive same direction
+  if (dx === last.x && dy === last.y) return;
+  // Limit queue to 2 pending
+  if (dirQueue.length >= 2) dirQueue.shift();
+  dirQueue.push({ x: dx, y: dy });
 }
 
 document.addEventListener('keydown', function(e) {
@@ -491,7 +501,7 @@ c.addEventListener('touchend', function(e) {
   if (!running) return;
   var dx = (e.changedTouches[0] || e.touches[0]).clientX - touchStartX;
   var dy = (e.changedTouches[0] || e.touches[0]).clientY - touchStartY;
-  if (Math.abs(dx) < 15 && Math.abs(dy) < 15) return;
+  if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
   if (Math.abs(dx) > Math.abs(dy)) {
     setDir(dx > 0 ? 1 : -1, 0);
   } else {
