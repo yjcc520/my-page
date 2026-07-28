@@ -15,7 +15,9 @@
                 <a href="index.html">首页</a>
                 <a href="index.html#about">关于我</a>
                 <a href="blog.html" class="active">博客</a>
-                <a href="index.html#contact">联系</a>
+                <a href="tags.html">标签</a>
+                <a href="gallery.html">画廊</a>
+                <a href="games.html">小游戏</a>
                 <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
             </div>
         </div>
@@ -53,6 +55,7 @@
 
     <script src="blog-data.js"></script>
     <script src="user.js"></script>
+    <script src="stats.js"></script>
     <script>
         function loadToken() {
             var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
@@ -218,10 +221,27 @@
             } catch (e) {}
 
             list.innerHTML = all.length ? all.map(renderArticleCard).join('') : '<p class="comments-empty">还没有文章</p>';
+
+            // 加载阅读统计
+            _fetchStats().then(function(s) {
+              document.querySelectorAll('.blog-card').forEach(function(card) {
+                var link = card.querySelector('h2 a');
+                if (!link) return;
+                var href = link.getAttribute('href');
+                var m = href.match(/id=(\d+)/);
+                if (!m) return;
+                var reads = s.reads[m[1]] || 0;
+                if (reads > 0) {
+                  var meta = card.querySelector('.blog-meta');
+                  if (meta) meta.innerHTML += '<span class="blog-reads">👁 '+reads+'</span>';
+                }
+              });
+            });
         }
 
         loadArticles();
     </script>
     <script src="theme.js"></script>
+    <script src="music.js"></script>
 </body>
 </html>
