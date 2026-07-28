@@ -151,6 +151,16 @@ function initComments(id){
 
 function fm(md){ return ('<p>'+(md||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/### (.+)/g,'<h4>$1</h4>').replace(/## (.+)/g,'<h3>$1</h3>').replace(/# (.+)/g,'<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/^> (.+)/gm,'<blockquote>$1</blockquote>').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')+'</p>'); }
 
+window.deleteArticle=async function(id){
+    if(!confirm('确定删除这篇文章吗？'))return;
+    var T=loadToken();
+    try{
+        var resp=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+id,{method:'PATCH',headers:{'Authorization':'token '+T,'Content-Type':'application/json'},body:JSON.stringify({state:'closed'})});
+        if(resp.ok){alert('已删除');window.location.href='blog.html';}
+        else{alert('删除失败');}
+    }catch(e){alert('网络错误');}
+};
+
 // ===== 文章加载 =====
 var params=new URLSearchParams(window.location.search),aid=parseInt(params.get('id')),isIssue=params.get('type')==='issue';
 
@@ -164,7 +174,8 @@ if(isIssue){
             var tags=[],tm=body.match(/\*\*标签\*\*[：:]\s*(.+)/);
             if(tm)tags=tm[1].split(/[,，]/).map(function(t){return t.trim();}).filter(Boolean);
             document.title=issue.title+' | 蔡梓涵';
-            document.getElementById('articleContent').innerHTML='<header class="article-header"><div class="article-tags">'+tags.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</div><h1>'+issue.title+'</h1><time>'+issue.created_at.split('T')[0]+'</time></header><div class="article-body">'+fm(content)+'</div><div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
+            var delBtn=window._siteGetNickname&&window._siteGetNickname()?'<button class="article-del-btn" onclick="deleteArticle('+aid+')" title="删除文章">🗑</button>':'';
+            document.getElementById('articleContent').innerHTML='<header class="article-header"><div class="article-tags">'+tags.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</div><h1>'+issue.title+'</h1><time>'+issue.created_at.split('T')[0]+'</time>'+delBtn+'</header><div class="article-body">'+fm(content)+'</div><div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
             document.getElementById('interactions').style.display='none';
             initComments(aid);
         }catch(e){ document.getElementById('articleContent').innerHTML='<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>'; }
