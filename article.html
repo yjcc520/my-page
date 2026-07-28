@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章 | 蔡梓涵</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <a href="index.html" class="logo">Zihan</a>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="index.html#about">关于我</a>
+                <a href="blog.html">博客</a>
+                <a href="index.html#contact">联系</a>
+            </div>
+        </div>
+    </nav>
+
+    <article class="article-page" id="articleContent">
+        <!-- JS 动态生成 -->
+    </article>
+
+    <section class="article-interactions" id="interactions">
+        <!-- 点赞 -->
+        <div class="like-section">
+            <button id="likeBtn" class="like-btn" onclick="toggleLike()">
+                <span class="like-icon">👍</span>
+                <span class="like-text">点赞</span>
+                <span class="like-count" id="likeCount">0</span>
+            </button>
+        </div>
+    </section>
+
+    <section class="comments-section" id="comments">
+        <h2>评论</h2>
+        <div id="utterances-comments"></div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p>
+    </footer>
+
+    <script src="blog-data.js"></script>
+    <script>
+        // 获取文章 ID
+        const params = new URLSearchParams(window.location.search);
+        const articleId = parseInt(params.get('id'));
+
+        // 查找文章
+        const article = articles.find(a => a.id === articleId);
+
+        if (!article) {
+            document.getElementById('articleContent').innerHTML = `
+                <div class="article-not-found">
+                    <h1>文章不存在</h1>
+                    <p><a href="blog.html">← 返回博客列表</a></p>
+                </div>
+            `;
+        } else {
+            // 设置标题
+            document.title = `${article.title} | 蔡梓涵`;
+            document.querySelector('meta[name="description"]')?.setAttribute('content', article.summary);
+
+            // 渲染文章
+            document.getElementById('articleContent').innerHTML = `
+                <header class="article-header">
+                    <div class="article-tags">
+                        ${article.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+                    </div>
+                    <h1>${article.title}</h1>
+                    <time>${article.date}</time>
+                </header>
+                <div class="article-body">
+                    ${article.content}
+                </div>
+                <div class="article-back">
+                    <a href="blog.html">← 返回博客列表</a>
+                </div>
+            `;
+
+            // 点赞系统
+            const storageKey = `likes_${articleId}`;
+            let liked = localStorage.getItem(`${storageKey}_liked`) === 'true';
+            let count = parseInt(localStorage.getItem(storageKey) || '0');
+
+            function updateLikeUI() {
+                document.getElementById('likeCount').textContent = count;
+                const btn = document.getElementById('likeBtn');
+                if (liked) {
+                    btn.classList.add('liked');
+                    btn.querySelector('.like-text').textContent = '已赞';
+                } else {
+                    btn.classList.remove('liked');
+                    btn.querySelector('.like-text').textContent = '点赞';
+                }
+            }
+
+            window.toggleLike = function() {
+                if (liked) {
+                    count = Math.max(0, count - 1);
+                    liked = false;
+                } else {
+                    count++;
+                    liked = true;
+                }
+                localStorage.setItem(storageKey, count);
+                localStorage.setItem(`${storageKey}_liked`, liked);
+                updateLikeUI();
+            };
+
+            updateLikeUI();
+
+            // 加载 utterances 评论
+            const commentsDiv = document.getElementById('utterances-comments');
+            const script = document.createElement('script');
+            script.src = 'https://utteranc.es/client.js';
+            script.setAttribute('repo', 'yjcc520/my-page');
+            script.setAttribute('issue-term', article.title);
+            script.setAttribute('theme', 'github-light');
+            script.setAttribute('crossorigin', 'anonymous');
+            script.async = true;
+            commentsDiv.appendChild(script);
+        }
+    </script>
+</body>
+</html>
