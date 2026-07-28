@@ -37,23 +37,22 @@
     <section class="comments-section" id="comments">
         <h2>评论</h2>
 
-        <!-- 评论输入框引导 -->
-        <div class="comment-form-box" id="commentFormBox" onclick="loadComments()">
-            <div class="comment-avatar-icon">💬</div>
-            <div class="comment-input-hint">写下你的评论...</div>
-            <span class="comment-login-tip">使用 GitHub 账号登录后评论</span>
-        </div>
-
         <!-- 加载中 -->
-        <div class="comments-loading" id="commentsLoading" style="display:none">
+        <div class="comments-loading" id="commentsLoading">
             <div class="loading-spinner"></div>
-            <p>正在加载评论区...</p>
+            <p>正在加载评论...</p>
         </div>
 
-        <!-- utterances 容器 -->
-        <div id="utterances-comments"></div>
+        <!-- 评论列表 -->
+        <div id="comments-list" style="display:none"></div>
 
-        <p class="comments-note">评论将自动创建一条 GitHub Issue，所有人可见</p>
+        <!-- 写评论按钮 -->
+        <div class="comment-action" id="commentAction" style="display:none">
+            <a id="commentLink" href="#" target="_blank" class="comment-action-btn">
+                💬 在 GitHub 上评论
+            </a>
+            <p class="comments-note">评论需要 GitHub 账号，会保存在 GitHub Issue 中</p>
+        </div>
     </section>
 
     <footer>
@@ -130,36 +129,83 @@
 
             updateLikeUI();
 
-            // 评论区
-            let commentsLoaded = false;
+            // 评论区 - 通过 GitHub Issues API 直接加载
+            (async function loadComments() {
+                const issueTerm = 'article-' + articleId;
+                const loadingEl = document.getElementById('commentsLoading');
+                const listEl = document.getElementById('comments-list');
+                const actionEl = document.getElementById('commentAction');
+                const linkEl = document.getElementById('commentLink');
 
-            window.loadComments = function() {
-                if (commentsLoaded) return;
-                commentsLoaded = true;
+                try {
+                    // 搜索对应 Issue
+                    const searchUrl = `https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:comment+${encodeURIComponent(issueTerm)}+in:title+type:issue&sort=created&order=desc`;
+                    const searchResp = await fetch(searchUrl, {
+                        headers: { 'Accept': 'application/vnd.github.v3+json' }
+                    });
+                    const searchData = await searchResp.json();
 
-                document.getElementById('commentFormBox').style.display = 'none';
-                document.getElementById('commentsLoading').style.display = 'block';
+                    let issueNumber = null;
+                    if (searchData.items && searchData.items.length > 0) {
+                        issueNumber = searchData.items[0].number;
+                    }
 
-                const commentsDiv = document.getElementById('utterances-comments');
-                const script = document.createElement('script');
-                script.src = 'https://utteranc.es/client.js';
-                script.setAttribute('repo', 'yjcc520/my-page');
-                script.setAttribute('issue-term', 'article-' + articleId);
-                script.setAttribute('label', 'comment');
-                script.setAttribute('theme', 'github-light');
-                script.setAttribute('crossorigin', 'anonymous');
-                script.async = true;
+                    if (issueNumber) {
+                        // 加载评论
+                        const commentsResp = await fetch(
+                            `https://api.github.com/repos/yjcc520/my-page/issues/${issueNumber}/comments`,
+                            { headers: { 'Accept': 'application/vnd.github.v3+json' } }
+                        );
+                        const comments = await commentsResp.json();
 
-                script.onload = function() {
-                    document.getElementById('commentsLoading').style.display = 'none';
-                };
+                        loadingEl.style.display = 'none';
 
-                script.onerror = function() {
-                    document.getElementById('commentsLoading').innerHTML = '<p style="color:#e53e3e;">评论区加载失败，请确认已安装 <a href="https://github.com/apps/utterances" target="_blank">utterances</a> 到仓库 yjcc520/my-page</p>';
-                };
+                        if (comments.length === 0) {
+                            listEl.innerHTML = '<p class="comments-empty">暂无评论，来做第一个评论的人吧 👇</p>';
+                        } else {
+                            listEl.innerHTML = comments.map(c => `
+                                <div class="comment-item">
+                                    <div class="comment-header">
+                                        <img class="comment-avatar" src="${c.user.avatar_url}" alt="" width="36" height="36">
+                                        <div>
+                                            <a class="comment-author" href="${c.user.html_url}" target="_blank">${c.user.login}</a>
+                                            <span class="comment-time">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
+                                        </div>
+                                    </div>
+                                    <div class="comment-body">${formatCommentBody(c.body)}</div>
+                                </div>
+                            `).join('');
+                        }
 
-                commentsDiv.appendChild(script);
-            };
+                        linkEl.href = searchData.items[0].html_url;
+                        linkEl.textContent = `💬 在 GitHub 上评论（${comments.length} 条评论）`;
+                        actionEl.style.display = 'block';
+                        listEl.style.display = 'block';
+                    } else {
+                        // 没有 Issue，显示引导创建
+                        loadingEl.style.display = 'none';
+                        listEl.innerHTML = '<p class="comments-empty">还没有评论</p>';
+                        linkEl.href = `https://github.com/yjcc520/my-page/issues/new?title=${encodeURIComponent(issueTerm)}&labels=comment&body=${encodeURIComponent('> 本文：' + window.location.href + '\n\n欢迎留下你的想法 👇')}`;
+                        linkEl.textContent = '💬 成为第一个评论的人';
+                        actionEl.style.display = 'block';
+                        listEl.style.display = 'block';
+                    }
+                } catch (e) {
+                    loadingEl.innerHTML = '<p class="comments-error">评论加载失败，请刷新重试</p>';
+                }
+            })();
+
+            function formatCommentBody(body) {
+                // 简单 Markdown 转 HTML
+                return body
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/`([^`]+)`/g, '<code>$1</code>')
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br>');
+            }
         }
     </script>
 </body>
