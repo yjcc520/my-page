@@ -167,8 +167,8 @@
 
                 try {
                     const commentBody = '**' + name + '**：' + body;
-                    const resp = await fetch(
-                        'https://api.github.com/repos/' + REPO + '/issues/' + issueNumber + '/comments', {
+                    const apiUrl = 'https://api.github.com/repos/' + REPO + '/issues/' + issueNumber + '/comments';
+                    const resp = await fetch('https://corsproxy.io/?' + encodeURIComponent(apiUrl), {
                         method: 'POST',
                         headers: {
                             'Authorization': 'token ' + ghToken,
