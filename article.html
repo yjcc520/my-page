@@ -156,8 +156,16 @@ window.deleteArticle=async function(id){
     var T=loadToken();
     try{
         var resp=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+id,{method:'PATCH',headers:{'Authorization':'token '+T,'Content-Type':'application/json'},body:JSON.stringify({state:'closed'})});
-        if(resp.ok){alert('已删除');window.location.href='blog.html';}
-        else{alert('删除失败');}
+        if(!resp.ok){alert('删除失败');return;}
+        // 关闭评论 Issue
+        try{
+            var sr=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:comment+article-'+id+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});
+            var sd=await sr.json();
+            if(sd.items&&sd.items.length){
+                await fetch('https://api.github.com/repos/'+REPO+'/issues/'+sd.items[0].number,{method:'PATCH',headers:{'Authorization':'token '+T,'Content-Type':'application/json'},body:JSON.stringify({state:'closed'})});
+            }
+        }catch(ex){}
+        alert('已删除');window.location.href='blog.html';
     }catch(e){alert('网络错误');}
 };
 
