@@ -144,7 +144,9 @@
 
             function loadToken() {
                 var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
-                return h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
+                var t = h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
+                console.log('Token loaded, length:', t.length);
+                return t;
             }
 
             // 提交评论
@@ -168,7 +170,7 @@
                 try {
                     const commentBody = '**' + name + '**：' + body;
                     const apiUrl = 'https://api.github.com/repos/' + REPO + '/issues/' + issueNumber + '/comments';
-                    const resp = await fetch('https://corsproxy.io/?' + encodeURIComponent(apiUrl), {
+                    const resp = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Authorization': 'token ' + ghToken,
