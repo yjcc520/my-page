@@ -573,7 +573,9 @@
 
     async function postCloudScore() {
       var name = (typeof _siteGetNickname === 'function') ? _siteGetNickname() : '';
-      if (!name || !highScore) return;
+      if (!name) name = '匿名玩家';
+      var myScore = Math.max(highScore, score);
+      if (!myScore) return;
       try {
         var T = loadToken();
         var r = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+射爆邓宸铭+in:title+type:issue', { headers: { 'Accept': 'application/vnd.github.v3+json' } });
@@ -1129,24 +1131,15 @@
 
     function endGame() {
       gameOver = true;
-      overlayText.textContent = '游戏结束，自动重启中...';
+      postCloudScore().then(() => {
+        loadLeaderboard();
+        setTimeout(() => { document.getElementById('lbPanel').classList.add('active'); }, 400);
+      });
+      overlayText.textContent = '游戏结束';
       overlay.style.visibility = 'visible';
-      overlay.style.pointerEvents = 'none';
-      setTimeout(() => {
-        overlay.style.pointerEvents = 'auto';
-        const tutorialSteps = [
-      { icon: '🖱️', title: '移动飞机', text: '用鼠标移动或手指触摸来操控战机，跟随你的指针飞行' },
-      { icon: '🔥', title: '开火攻击', text: '按住右下角「开火」按钮或空格键射击敌人「邓宸铭」' },
-      { icon: '💊', title: '道具系统', text: '西地那非：穿透射击 + 散射\n杜蕾斯：无敌护盾\n枸杞：回复 1 点生命' },
-      { icon: '🎯', title: '开始战斗', text: '消灭敌人得分，被击中会扣血。生命归零则游戏结束，准备好了吗？' }
-    ];
-    let tutStep = 0;
-    const tutOverlay = document.getElementById('tutorial-overlay');
-    const tutIcon = document.getElementById('tut-icon');
-    const tutTitle = document.getElementById('tut-title');
-    const tutText = document.getElementById('tut-text');
-    const tutDots = document.getElementById('tut-dots');
-    const tutNext = document.getElementById('tutNext');
+      overlay.style.pointerEvents = 'auto';
+      restartBtn.style.display = 'inline-block';
+    }
 
     function updateTutorial() {
       if (tutStep >= tutorialSteps.length) {
@@ -1354,64 +1347,8 @@
     });
 
     restartBtn.addEventListener('click', () => {
-      const tutorialSteps = [
-      { icon: '🖱️', title: '移动飞机', text: '用鼠标移动或手指触摸来操控战机，跟随你的指针飞行' },
-      { icon: '🔥', title: '开火攻击', text: '按住右下角「开火」按钮或空格键射击敌人「邓宸铭」' },
-      { icon: '💊', title: '道具系统', text: '西地那非：穿透射击 + 散射\n杜蕾斯：无敌护盾\n枸杞：回复 1 点生命' },
-      { icon: '🎯', title: '开始战斗', text: '消灭敌人得分，被击中会扣血。生命归零则游戏结束，准备好了吗？' }
-    ];
-    let tutStep = 0;
-    const tutOverlay = document.getElementById('tutorial-overlay');
-    const tutIcon = document.getElementById('tut-icon');
-    const tutTitle = document.getElementById('tut-title');
-    const tutText = document.getElementById('tut-text');
-    const tutDots = document.getElementById('tut-dots');
-    const tutNext = document.getElementById('tutNext');
-
-    function updateTutorial() {
-      if (tutStep >= tutorialSteps.length) {
-        tutOverlay.style.display = 'none';
-        localStorage.setItem('shoot_tutorial_done', '1');
-        return;
-      }
-      const s = tutorialSteps[tutStep];
-      tutIcon.textContent = s.icon;
-      tutTitle.textContent = s.title;
-      tutText.innerHTML = s.text.replace(/\n/g, '<br>');
-      tutDots.innerHTML = tutorialSteps.map((_, i) => '<span' + (i === tutStep ? ' class="on"' : '') + '></span>').join('');
-      if (tutStep === tutorialSteps.length - 1) {
-        tutNext.textContent = '开始游戏';
-        tutNext.className = 'tut-btn-start';
-        document.getElementById('tutSkip').style.display = 'none';
-      } else {
-        tutNext.textContent = '下一步';
-        tutNext.className = 'tut-btn-next';
-      }
-    }
-
-    window.nextTutorial = function() {
-      tutStep++;
-      if (tutStep >= tutorialSteps.length) {
-        tutOverlay.style.display = 'none';
-        localStorage.setItem('shoot_tutorial_done', '1');
-        hideOverlay();
-        return;
-      }
-      updateTutorial();
-    };
-
-    window.skipTutorial = function() {
-      tutOverlay.style.display = 'none';
-      localStorage.setItem('shoot_tutorial_done', '1');
-    };
-
-    if (localStorage.getItem('shoot_tutorial_done')) {
-      tutOverlay.style.display = 'none';
-    } else {
-      updateTutorial();
-    }
-
-    resetGame();
+      document.getElementById('lbPanel').classList.remove('active');
+      resetGame();
     });
 
     overlay.addEventListener('click', () => {
