@@ -602,7 +602,7 @@
         }
         await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + num + '/comments', {
           method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-          body: JSON.stringify({ body: highScore + '分：' + name })
+          body: JSON.stringify({ body: myScore + '分：' + name })
         });
       } catch(e) {}
     }
@@ -1140,10 +1140,7 @@
 
     function endGame() {
       gameOver = true;
-      postCloudScore().then(() => {
-        loadLeaderboard();
-        setTimeout(() => { document.getElementById('lbPanel').classList.add('active'); }, 400);
-      });
+      postCloudScore();
       overlayText.textContent = '游戏结束';
       overlay.style.visibility = 'visible';
       overlay.style.pointerEvents = 'auto';
