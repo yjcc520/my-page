@@ -219,14 +219,22 @@
                 };
             }
 
+            function renderAvatar(name) {
+                var avt = window._siteGetAvatar ? window._siteGetAvatar() : '';
+                if (avt) return '<img class="comment-avatar" src="' + avt + '" alt="" width="36" height="36">';
+                return '<div class="comment-avatar-icon">' + name[0].toUpperCase() + '</div>';
+            }
+
             function prependComment(c) {
                 var p = parseComment(c);
                 var el = document.createElement('div');
                 el.className = 'comment-item' + (p.pending ? ' comment-pending' : '');
                 el.id = 'c-' + c.id;
+                // 用当前登录用户的头像
+                var avtHtml = p.pending ? renderAvatar(p.name) : ('<div class="comment-avatar-icon">' + p.name[0].toUpperCase() + '</div>');
                 el.innerHTML = `
                     <div class="comment-header">
-                        <div class="comment-avatar-icon">${p.name[0].toUpperCase()}</div>
+                        ${avtHtml}
                         <div>
                             <span class="comment-author-name">${escapeHtml(p.name)}</span>
                             <span class="comment-time">${p.pending ? '发送中...' : new Date(p.time).toLocaleDateString('zh-CN')}</span>
