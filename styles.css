@@ -309,7 +309,7 @@ nav {
     white-space: nowrap;
     padding: 0.6rem 0.5rem 0.6rem 1rem;
     display: inline-block;
-    animation: marquee-scroll 80s linear infinite;
+    animation: marquee-scroll 45s linear infinite;
 }
 .quote-item {
     color: var(--text-light);
