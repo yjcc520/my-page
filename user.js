@@ -125,7 +125,7 @@
     overlay.className = 'crop-overlay';
     overlay.innerHTML =
       '<div class="crop-box">' +
-        '<h3>拖动图片调整裁剪区域</h3>' +
+        '<h3>拖动移动 · 滚轮缩放</h3>' +
         '<div class="crop-area" id="cropArea">' +
           '<canvas id="cropCanvas"></canvas>' +
           '<div class="crop-mask"></div>' +
@@ -143,35 +143,43 @@
       var canvas = document.getElementById('cropCanvas');
       var ctx = canvas.getContext('2d');
 
-      var cropSize = 200; // 裁剪结果尺寸
+      var cropSize = 200;
       var areaW = area.clientWidth;
       var areaH = area.clientHeight;
 
-      // 缩放图片使其至少覆盖裁剪区域
-      var scale = Math.max(cropSize / img.width, cropSize / img.height, areaW / img.width, areaH / img.height);
-      var imgW = img.width * scale;
-      var imgH = img.height * scale;
+      var MIN_SCALE = Math.max(cropSize / img.width, cropSize / img.height, areaW / img.width, areaH / img.height);
+      var MAX_SCALE = MIN_SCALE * 4;
+      var scale = MIN_SCALE;
+      var imgW, imgH;
+      var offsetX, offsetY;
+      var dragging = false, startX, startY, startOffX, startOffY;
+
+      function updateSizes() {
+        imgW = img.width * scale;
+        imgH = img.height * scale;
+        // 保持图片不超出太多
+        offsetX = Math.max(areaW - imgW, Math.min(0, offsetX));
+        offsetY = Math.max(areaH - imgH, Math.min(0, offsetY));
+      }
+
+      // 初始
+      offsetX = (areaW - img.width * scale) / 2;
+      offsetY = (areaH - img.height * scale) / 2;
+      updateSizes();
 
       canvas.width = areaW;
       canvas.height = areaH;
       canvas.style.width = areaW + 'px';
       canvas.style.height = areaH + 'px';
 
-      // 初始位置：居中
-      var offsetX = (areaW - imgW) / 2;
-      var offsetY = (areaH - imgH) / 2;
-      var dragging = false, startX, startY, startOffX, startOffY;
-
       function draw() {
         ctx.clearRect(0, 0, areaW, areaH);
         ctx.save();
-        // 裁剪为圆形区域
         ctx.beginPath();
         ctx.arc(areaW/2, areaH/2, areaW/2 - 2, 0, Math.PI*2);
         ctx.clip();
         ctx.drawImage(img, offsetX, offsetY, imgW, imgH);
         ctx.restore();
-
         // 边框
         ctx.beginPath();
         ctx.arc(areaW/2, areaH/2, areaW/2 - 2, 0, Math.PI*2);
@@ -192,38 +200,50 @@
         if (!dragging) return;
         offsetX = startOffX + (e.clientX - startX);
         offsetY = startOffY + (e.clientY - startY);
+        updateSizes();
         draw();
       });
       window.addEventListener('touchmove', function(e) {
         if (!dragging) return;
         offsetX = startOffX + (e.touches[0].clientX - startX);
         offsetY = startOffY + (e.touches[0].clientY - startY);
+        updateSizes();
         draw();
       });
       window.addEventListener('mouseup', function() { dragging = false; });
       window.addEventListener('touchend', function() { dragging = false; });
 
-      // 确认裁剪
+      // 滚轮缩放
+      area.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        var oldScale = scale;
+        scale *= (e.deltaY < 0) ? 1.1 : 0.9;
+        scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+        // 以鼠标位置为中心缩放
+        var rect = area.getBoundingClientRect();
+        var mx = e.clientX - rect.left;
+        var my = e.clientY - rect.top;
+        var ratio = scale / oldScale;
+        offsetX = mx - (mx - offsetX) * ratio;
+        offsetY = my - (my - offsetY) * ratio;
+        updateSizes();
+        draw();
+      });
+
+      // 确认
       document.getElementById('cropConfirm').onclick = function() {
         var resultCanvas = document.createElement('canvas');
         resultCanvas.width = cropSize;
         resultCanvas.height = cropSize;
         var rctx = resultCanvas.getContext('2d');
-
-        // 圆角裁剪
         rctx.beginPath();
         rctx.arc(cropSize/2, cropSize/2, cropSize/2, 0, Math.PI*2);
         rctx.clip();
-
-        // 计算图片上的裁剪区域
-        var cx = areaW / 2;
-        var cy = areaH / 2;
-        var r = areaW / 2;
+        var cx = areaW / 2, cy = areaH / 2, r = areaW / 2;
         var sx = (cx - r - offsetX) * (img.width / imgW);
         var sy = (cy - r - offsetY) * (img.height / imgH);
         var sw = (r * 2) * (img.width / imgW);
         var sh = (r * 2) * (img.height / imgH);
-
         rctx.drawImage(img, sx, sy, sw, sh, 0, 0, cropSize, cropSize);
         callback(resultCanvas.toDataURL('image/jpeg', 0.85));
         overlay.remove();
