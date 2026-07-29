@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>留言墙 | 蔡梓涵</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.wall-page { padding: 6rem 2rem 4rem; max-width: 900px; margin: 0 auto; min-height: 80vh; }
+.wall-header { text-align: center; margin-bottom: 2rem; }
+.wall-header h1 { font-size: 2rem; margin-bottom: 0.3rem; }
+.wall-header p { color: var(--text-light); font-size: 0.95rem; }
+
+/* Posting form */
+.wall-form-wrap {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.2rem 1.5rem;
+  margin-bottom: 2rem; box-shadow: var(--shadow-sm);
+}
+.wall-form-top { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.wall-nick { font-size: 0.85rem; color: var(--text); font-weight: 600; flex-shrink: 0; }
+.wall-anon { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--text-light); cursor: pointer; user-select: none; }
+.wall-textarea { width: 100%; padding: 0.7rem 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.95rem; font-family: inherit; resize: vertical; min-height: 70px; transition: border-color 0.2s; background: var(--bg); color: var(--text); }
+.wall-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+.wall-form-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; }
+.wall-char-count { font-size: 0.78rem; color: var(--text-light); }
+.wall-submit { padding: 0.45rem 1.5rem; background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.9rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 14px rgba(79,70,229,0.3); }
+.wall-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); }
+.wall-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Sticky notes grid */
+.wall-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+.wall-note {
+  position: relative; padding: 1.2rem 1rem 1rem;
+  border-radius: 2px 2px 12px 2px;
+  box-shadow: 2px 3px 8px rgba(0,0,0,0.08);
+  font-size: 0.9rem; line-height: 1.6; word-break: break-word;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-height: 80px;
+}
+.wall-note:hover { transform: rotate(0deg) scale(1.02) !important; box-shadow: 2px 4px 16px rgba(0,0,0,0.12); }
+.wall-note-body { color: #333; }
+.wall-note-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; font-size: 0.75rem; color: rgba(0,0,0,0.45); }
+.wall-note-name { font-weight: 600; }
+.wall-note-del { background: none; border: none; color: rgba(0,0,0,0.25); cursor: pointer; font-size: 0.7rem; padding: 2px 4px; }
+.wall-note-del:hover { color: #e53e3e; }
+
+/* Note colors */
+.note-yellow { background: #fef9e7; }
+.note-pink { background: #fdeded; }
+.note-blue { background: #eaf2f8; }
+.note-green { background: #eafaf1; }
+.note-lavender { background: #f4ecf7; }
+.note-peach { background: #fdf2e9; }
+
+body.dark .note-yellow { background: #2d2a1a; }
+body.dark .note-pink { background: #2d1f1f; }
+body.dark .note-blue { background: #1a2330; }
+body.dark .note-green { background: #1a2d20; }
+body.dark .note-lavender { background: #231f2d; }
+body.dark .note-peach { background: #2d231a; }
+body.dark .wall-note-body { color: #e2e8f0; }
+body.dark .wall-note-meta { color: rgba(255,255,255,0.35); }
+body.dark .wall-note-del { color: rgba(255,255,255,0.25); }
+body.dark .wall-note-del:hover { color: #f87171; }
+body.dark .wall-textarea { background: var(--bg-alt); }
+
+.wall-loading { text-align: center; padding: 3rem; color: var(--text-light); }
+.wall-empty { text-align: center; padding: 3rem; color: var(--text-light); font-size: 0.95rem; }
+.wall-error { text-align: center; padding: 1rem; color: #e53e3e; font-size: 0.85rem; }
+
+@media (max-width: 768px) {
+  .wall-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+  .wall-note { padding: 1rem 0.8rem 0.8rem; font-size: 0.85rem; }
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Zihan</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="blog.html">博客</a>
+      <a href="tags.html">标签</a>
+      <a href="gallery.html">画廊</a>
+      <a href="games.html">小游戏</a>
+      <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
+    </div>
+  </div>
+</nav>
+
+<div class="wall-page">
+  <div class="wall-header">
+    <h1>留言墙</h1>
+    <p>贴一张便签，说点什么吧</p>
+  </div>
+
+  <div class="wall-form-wrap">
+    <div class="wall-form-top">
+      <span class="wall-nick" id="wallNick">匿名</span>
+      <label class="wall-anon"><input type="checkbox" id="wallAnon"> 使用匿名</label>
+    </div>
+    <textarea id="wallMsg" class="wall-textarea" placeholder="写点什么……" rows="2" maxlength="200"></textarea>
+    <div class="wall-form-foot">
+      <span class="wall-char-count" id="wallCount">0 / 200</span>
+      <button class="wall-submit" id="wallSubmit" onclick="postNote()">贴上去 ✉</button>
+    </div>
+    <p id="wallError" class="wall-error" style="display:none"></p>
+  </div>
+
+  <div class="wall-grid" id="wallGrid">
+    <p class="wall-loading">正在加载便签...</p>
+  </div>
+</div>
+
+<footer><p>&copy; 2026 蔡梓涵</p></footer>
+
+<script src="user.js"></script>
+<script src="theme.js"></script>
+<script src="music.js"></script>
+<script src="ux.js"></script>
+<script>
+var REPO = 'yjcc520/my-page';
+var WALL_ISSUE = null;
+var notes = [];
+
+function loadToken() {
+  var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
+  return h.match(/.{1,2}/g).map(function(b){return String.fromCharCode(parseInt(b,16));}).join('');
+}
+
+// Nickname setup
+var curName = window._siteGetNickname ? window._siteGetNickname() : '';
+var isAnon = true;
+
+function updateNickDisplay() {
+  var anon = document.getElementById('wallAnon').checked;
+  isAnon = anon || !curName;
+  document.getElementById('wallNick').textContent = isAnon ? '匿名' : curName;
+  document.getElementById('wallAnon').checked = isAnon;
+  if (!curName) {
+    document.getElementById('wallAnon').checked = true;
+    document.getElementById('wallAnon').disabled = true;
+    document.getElementById('wallNick').textContent = '匿名（设置昵称后可用真名）';
+  }
+}
+updateNickDisplay();
+
+document.getElementById('wallAnon').addEventListener('change', updateNickDisplay);
+
+// Char count
+document.getElementById('wallMsg').addEventListener('input', function() {
+  document.getElementById('wallCount').textContent = this.value.length + ' / 200';
+});
+
+// Find or create wall issue
+async function getWallIssue() {
+  try {
+    var r = await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:wall+in:title+type:issue', {
+      headers: {'Accept':'application/vnd.github.v3+json'}
+    });
+    var d = await r.json();
+    if (d.items && d.items.length) { WALL_ISSUE = d.items[0].number; return; }
+    var T = loadToken();
+    var r2 = await fetch('https://api.github.com/repos/'+REPO+'/issues', {
+      method:'POST', headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+      body: JSON.stringify({title:'留言墙',body:'留言墙数据存储',labels:['wall']})
+    });
+    var issue = await r2.json();
+    WALL_ISSUE = issue.number;
+  } catch(e) {}
+}
+
+// Load notes
+async function loadNotes() {
+  if (!WALL_ISSUE) await getWallIssue();
+  if (!WALL_ISSUE) {
+    document.getElementById('wallGrid').innerHTML = '<p class="wall-error">加载失败</p>';
+    return;
+  }
+  try {
+    var r = await fetch('https://api.github.com/repos/'+REPO+'/issues/'+WALL_ISSUE+'/comments?per_page=100', {
+      headers:{'Accept':'application/vnd.github.v3+json'}
+    });
+    notes = await r.json();
+    renderNotes();
+  } catch(e) {
+    document.getElementById('wallGrid').innerHTML = '<p class="wall-error">加载失败</p>';
+  }
+}
+
+var NOTE_COLORS = ['yellow','pink','blue','green','lavender','peach'];
+function renderNotes() {
+  var grid = document.getElementById('wallGrid');
+  if (!notes.length) {
+    grid.innerHTML = '<p class="wall-empty">还没有便签，来做第一个贴纸条的人吧 📝</p>';
+    return;
+  }
+  grid.innerHTML = notes.map(function(n, i) {
+    var body = n.body || '';
+    var name = '匿名', msg = body;
+    var nm = body.match(/^\*\*(.+?)\*\*[：:]\s*([\s\S]*)$/);
+    if (nm) { name = nm[1]; msg = nm[2]; }
+    var color = NOTE_COLORS[i % NOTE_COLORS.length];
+    var rot = ((i * 3 + 1) % 5 - 2) * 0.8;
+    var time = new Date(n.created_at).toLocaleDateString('zh-CN');
+    var canDel = curName && name === curName;
+    var delBtn = canDel ? '<button class="wall-note-del" onclick="deleteNote('+n.id+',this)" title="撕掉">✕</button>' : '';
+    return '<div class="wall-note note-'+color+'" style="transform:rotate('+rot+'deg)">'+
+      '<div class="wall-note-body">'+eHtml(msg)+'</div>'+
+      '<div class="wall-note-meta"><span class="wall-note-name">'+eHtml(name)+'</span><span>'+time+'</span>'+delBtn+'</div>'+
+      '</div>';
+  }).join('');
+  setTimeout(function() { if (window._uxObserve) window._uxObserve(grid); }, 50);
+}
+
+function eHtml(s) { var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// Post a note
+window.postNote = async function() {
+  var msg = document.getElementById('wallMsg').value.trim();
+  if (!msg) { document.getElementById('wallError').textContent='写点什么再贴吧'; document.getElementById('wallError').style.display='block'; return; }
+  var btn = document.getElementById('wallSubmit');
+  btn.disabled = true; btn.textContent = '贴上中...';
+  document.getElementById('wallError').style.display = 'none';
+
+  if (!WALL_ISSUE) await getWallIssue();
+  var name = isAnon ? '匿名' : curName;
+  var body = '**' + name + '**：' + msg;
+
+  try {
+    var T = loadToken();
+    var resp = await fetch('https://api.github.com/repos/'+REPO+'/issues/'+WALL_ISSUE+'/comments', {
+      method:'POST', headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+      body: JSON.stringify({body: body})
+    });
+    if (resp.ok) {
+      document.getElementById('wallMsg').value = '';
+      document.getElementById('wallCount').textContent = '0 / 200';
+      loadNotes();
+    } else {
+      var e = await resp.json().catch(function(){return{};});
+      document.getElementById('wallError').textContent = '贴失败了：' + (e.message || '请重试');
+      document.getElementById('wallError').style.display = 'block';
+    }
+  } catch(ex) {
+    document.getElementById('wallError').textContent = '网络错误';
+    document.getElementById('wallError').style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = '贴上去 ✉';
+};
+
+// Delete note
+window.deleteNote = function(id, el) {
+  window._showConfirm('确定撕掉这张便签吗？', async function() {
+    try {
+      var T = loadToken();
+      await fetch('https://api.github.com/repos/'+REPO+'/issues/comments/'+id, {
+        method:'DELETE', headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}
+      });
+      var note = el.closest('.wall-note');
+      if (note) { note.style.opacity='0'; setTimeout(function(){ note.remove(); }, 200); }
+    } catch(e) {}
+  });
+};
+
+getWallIssue().then(loadNotes);
+</script>
+</body>
+</html>
