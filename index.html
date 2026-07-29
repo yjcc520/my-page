@@ -243,6 +243,7 @@ function _renderLB(games) {
     html += '</ol></div>';
   });
   grid.innerHTML = html;
+  setTimeout(function() { if (window._uxObserve) window._uxObserve(grid); }, 50);
 }
 
 async function _initLeaderboard() {
@@ -274,5 +275,6 @@ _fetchStats().then(function(s) {
 window._applyI18n();
 </script>
     <script src="music.js"></script>
+    <script src="ux.js"></script>
 </body>
 </html>
