@@ -115,6 +115,7 @@ function renderAll(comments){
     roots.sort(function(a,b){var la=gLike(a.data.id).count,lb=gLike(b.data.id).count;if(la!==lb)return lb-la;return new Date(b.data.time)-new Date(a.data.time);});
     var h=roots.length===0?'<p class="comments-empty">暂无评论，来做第一个评论的人吧 👇</p>':roots.map(function(n){return rNode(n,0);}).join('');
     listEl.innerHTML=h;listEl.style.display='block';
+    setTimeout(function(){ if(window._uxObserve) window._uxObserve(listEl); },50);
 }
 
 window.submitComment=async function(pid){
@@ -153,13 +154,12 @@ function initComments(id){
 
 function fm(md){ return ('<p>'+(md||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/### (.+)/g,'<h4>$1</h4>').replace(/## (.+)/g,'<h3>$1</h3>').replace(/# (.+)/g,'<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/^> (.+)/gm,'<blockquote>$1</blockquote>').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')+'</p>'); }
 
-window.deleteArticle=async function(id){
-    if(!confirm('确定删除这篇文章吗？'))return;
+window.deleteArticle=function(id){
+    window._showConfirm('确定删除这篇文章吗？', async function(){
     var T=loadToken();
     try{
         var resp=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+id,{method:'PATCH',headers:{'Authorization':'token '+T,'Content-Type':'application/json'},body:JSON.stringify({state:'closed'})});
         if(!resp.ok){alert('删除失败');return;}
-        // 关闭评论 Issue
         try{
             var sr=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:comment+article-'+id+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});
             var sd=await sr.json();
@@ -169,6 +169,7 @@ window.deleteArticle=async function(id){
         }catch(ex){}
         alert('已删除');window.location.href='blog.html';
     }catch(e){alert('网络错误');}
+    }); // end _showConfirm
 };
 
 // ===== 文章加载 =====
@@ -208,5 +209,6 @@ if(isIssue){
     </script>
     <script src="theme.js"></script>
     <script src="music.js"></script>
+    <script src="ux.js"></script>
 </body>
 </html>
