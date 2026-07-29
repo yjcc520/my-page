@@ -198,11 +198,20 @@ if(isIssue){
         document.getElementById('articleContent').innerHTML='<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
     }else{
         document.title=article.title+' | 蔡梓涵';
-        document.getElementById('articleContent').innerHTML='<header class="article-header"><div class="article-tags">'+article.tags.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</div><h1>'+article.title+'</h1><time>'+article.date+'</time></header><div class="article-body">'+article.content+'</div><div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
+        var preDelBtn=window._siteGetNickname&&window._siteGetNickname()?'<button class="article-del-btn" onclick="deletePreset('+aid+')" title="删除文章">🗑</button>':'';
+        document.getElementById('articleContent').innerHTML='<header class="article-header"><div class="article-tags">'+article.tags.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</div><h1>'+article.title+'</h1><time>'+article.date+'</time>'+preDelBtn+'</header><div class="article-body">'+article.content+'</div><div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
         var sk='likes_'+aid,liked=localStorage.getItem(sk+'_liked')==='true',count=parseInt(localStorage.getItem(sk)||'0');
         function ul(){document.getElementById('likeCount').textContent=count;var b=document.getElementById('likeBtn');if(liked){b.classList.add('liked');b.querySelector('.like-text').textContent='已赞';}else{b.classList.remove('liked');b.querySelector('.like-text').textContent='点赞';}}
         window.toggleLike=function(){if(liked){count=Math.max(0,count-1);liked=false;}else{count++;liked=true;}localStorage.setItem(sk,count);localStorage.setItem(sk+'_liked',liked);ul();};
         ul();
+        window.deletePreset=function(id){
+          window._showConfirm('确定删除这篇文章吗？', function(){
+            var deleted=JSON.parse(localStorage.getItem('deleted_preset_articles')||'[]');
+            deleted.push('preset-'+id);
+            localStorage.setItem('deleted_preset_articles',JSON.stringify(deleted));
+            window.location.href='blog.html';
+          });
+        };
         initComments(aid);
     }
 }
