@@ -155,13 +155,28 @@ async function loadGallery() {
 }
 
 // Lightbox
+var _lbImages = [];
 window.openLightbox = function(src) {
   document.getElementById('lightboxImg').src = src;
   document.getElementById('lightbox').classList.add('active');
+  // Collect current images for keyboard nav
+  _lbImages = Array.from(document.querySelectorAll('.gallery-item img')).map(function(el) { return el.src; });
 };
 window.closeLightbox = function() {
   document.getElementById('lightbox').classList.remove('active');
 };
+// Keyboard nav for lightbox
+document.addEventListener('keydown', function(e) {
+  var lb = document.getElementById('lightbox');
+  if (!lb.classList.contains('active')) return;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.stopPropagation();
+    var cur = _lbImages.indexOf(document.getElementById('lightboxImg').src);
+    if (cur < 0) return;
+    var next = e.key === 'ArrowRight' ? (cur + 1) % _lbImages.length : (cur - 1 + _lbImages.length) % _lbImages.length;
+    document.getElementById('lightboxImg').src = _lbImages[next];
+  }
+});
 
 // Upload
 var upName = window._siteGetNickname ? window._siteGetNickname() : '';
@@ -237,5 +252,6 @@ window.doUpload = async function() {
 // Init
 getGalleryIssue().then(loadGallery);
 </script>
+<script src="ux.js"></script>
 </body>
 </html>
