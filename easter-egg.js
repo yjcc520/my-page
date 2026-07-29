@@ -135,41 +135,38 @@
     }
   });
 
-  // ---------- 3. 赛博 HUD 时钟 ----------
+  // ---------- 2. 赛博时钟 ----------
   var clockEl = document.createElement('div');
   clockEl.id = 'hudClock';
-  clockEl.innerHTML = '<span id="hudTime"></span><span id="hudDate"></span>';
+  clockEl.innerHTML = '<span id="hudTime"></span>';
   clockEl.style.cssText =
-    'position:fixed;top:18px;right:20px;z-index:101;font-family:"Courier New",monospace;' +
-    'text-align:right;pointer-events:none;' +
-    'background:rgba(15,23,42,0.6);backdrop-filter:blur(8px);' +
-    'border:1px solid rgba(79,70,229,0.4);border-radius:8px;padding:6px 14px;' +
-    'color:#a5b4fc;font-size:13px;line-height:1.5;letter-spacing:0.05em;' +
-    'box-shadow:0 0 12px rgba(79,70,229,0.2),inset 0 0 6px rgba(79,70,229,0.1);' +
+    'position:fixed;top:18px;right:20px;z-index:101;' +
+    'font-family:"SF Mono","Cascadia Code","Courier New",monospace;' +
+    'text-align:center;pointer-events:none;' +
+    'background:rgba(10,15,30,0.5);backdrop-filter:blur(12px) saturate(1.4);' +
+    'border:1px solid rgba(129,140,248,0.3);border-radius:10px;padding:6px 18px;' +
+    'color:#e0e7ff;font-size:17px;font-weight:500;letter-spacing:0.12em;' +
+    'line-height:1.4;' +
+    'box-shadow:0 0 24px rgba(79,70,229,0.18),inset 0 0 10px rgba(79,70,229,0.04);' +
     'transition:opacity 0.5s ease;';
 
   document.body.appendChild(clockEl);
 
+  var colonOn = true;
   function updateClock() {
     var now = new Date();
     var h = String(now.getHours()).padStart(2, '0');
     var m = String(now.getMinutes()).padStart(2, '0');
     var s = String(now.getSeconds()).padStart(2, '0');
-    var y = now.getFullYear();
-    var mo = String(now.getMonth() + 1).padStart(2, '0');
-    var d = String(now.getDate()).padStart(2, '0');
-    var days = ['日','一','二','三','四','五','六'];
-    var wd = days[now.getDay()];
-
-    document.getElementById('hudTime').innerHTML = h + '<blink>:</blink>' + m + '<blink>:</blink>' + s;
-    document.getElementById('hudDate').innerHTML =
-      y + '.' + mo + '.' + d + ' 星期' + wd;
+    colonOn = !colonOn;
+    var c = colonOn ? ':' : '<span style="opacity:0.25">:</span>';
+    document.getElementById('hudTime').innerHTML = h + c + m + c + s;
   }
 
   updateClock();
   setInterval(updateClock, 1000);
 
-  // Hide clock when scrolling near footer
+  // Hide near footer
   var clockTicking = false;
   window.addEventListener('scroll', function() {
     if (clockTicking) return;
@@ -182,13 +179,12 @@
     });
   }, { passive: true });
 
-  // Dark mode adaptation for clock
+  // Dark mode
   var clockObserver = new MutationObserver(function() {
     var isDark = document.body.classList.contains('dark');
     clockEl.style.background = isDark
-      ? 'rgba(30,41,59,0.7)'
-      : 'rgba(15,23,42,0.6)';
-    clockEl.style.color = isDark ? '#a5b4fc' : '#a5b4fc';
+      ? 'rgba(30,41,59,0.45)'
+      : 'rgba(10,15,30,0.5)';
   });
   clockObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 })();
