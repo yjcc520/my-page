@@ -148,7 +148,7 @@
 
         // 删除文章
         window.deleteBlog = async function(delId, btn) {
-            if (!confirm('确定删除这篇文章吗？')) return;
+            window._showConfirm('确定删除这篇文章吗？', async function() {
             // delId format: "issue-123" or "preset-1"
             if (delId.indexOf('preset-') === 0) {
                 // 预置文章用 localStorage 标记删除
@@ -185,6 +185,7 @@
                 var card = btn.closest('.blog-card');
                 if (card) { card.style.opacity = '0'; setTimeout(function() { card.remove(); }, 300); }
             } catch (ex) { alert('网络错误'); }
+            }); // end _showConfirm callback
         };
 
         async function loadArticles() {
@@ -222,6 +223,9 @@
 
             list.innerHTML = all.length ? all.map(renderArticleCard).join('') : '<p class="comments-empty">还没有文章</p>';
 
+            // 为动态卡片启用入场动画
+            setTimeout(function() { if (window._uxObserve) window._uxObserve(list); }, 50);
+
             // 加载阅读统计
             _fetchStats().then(function(s) {
               document.querySelectorAll('.blog-card').forEach(function(card) {
@@ -243,5 +247,6 @@
     </script>
     <script src="theme.js"></script>
     <script src="music.js"></script>
+    <script src="ux.js"></script>
 </body>
 </html>
