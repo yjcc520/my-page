@@ -205,7 +205,7 @@ function renderNotes() {
     var color = NOTE_COLORS[i % NOTE_COLORS.length];
     var rot = ((i * 3 + 1) % 5 - 2) * 0.8;
     var time = new Date(n.created_at).toLocaleDateString('zh-CN');
-    var canDel = curName && name === curName;
+    var canDel = curName && (name === curName || name === '匿名');
     var delBtn = canDel ? '<button class="wall-note-del" onclick="deleteNote('+n.id+',this)" title="撕掉">✕</button>' : '';
     return '<div class="wall-note note-'+color+'" style="transform:rotate('+rot+'deg)">'+
       '<div class="wall-note-body">'+eHtml(msg)+'</div>'+
