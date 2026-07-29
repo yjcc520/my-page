@@ -7,55 +7,130 @@
 <link rel="stylesheet" href="styles.css">
 <style>
 .gomoku-page { padding: 5rem 2rem 3rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+
+/* Start Screen */
+.start-screen { text-align: center; padding: 3rem 2rem; }
+.start-screen h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+.start-screen h1 span { display: inline-block; }
+.start-screen .sub { color: var(--text-light); font-size: 1rem; margin-bottom: 2rem; }
+.start-btn { display: inline-block; padding: 0.8rem 3rem; font-size: 1.1rem; font-weight: 700; font-family: inherit;
+  background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; border: none; border-radius: var(--radius);
+  cursor: pointer; box-shadow: 0 6px 24px rgba(79,70,229,0.35); transition: transform 0.2s, box-shadow 0.2s; }
+.start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,70,229,0.5); }
+.start-rules { margin-top: 2rem; color: var(--text-light); font-size: 0.85rem; line-height: 1.8; }
+
+/* Game Area */
+.game-area { display: none; flex-direction: column; align-items: center; }
+.game-area.active { display: flex; }
+
 .gomoku-header { text-align: center; margin-bottom: 1.5rem; }
-.gomoku-header h1 { font-size: 2rem; margin-bottom: 0.3rem; }
-.gomoku-header p { color: var(--text-light); font-size: 0.95rem; }
+.gomoku-header h1 { font-size: 1.6rem; margin-bottom: 0.2rem; font-weight: 800; }
+.gomoku-header p { color: var(--text-light); font-size: 0.85rem; }
 
-.game-wrap { display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
-.board-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; box-shadow: var(--shadow-lg); }
-.board { display: grid; grid-template-columns: repeat(15, 32px); grid-template-rows: repeat(15, 32px); gap: 0; background: #dcb35c; border-radius: 4px; padding: 2px; position: relative; }
-.cell { width: 32px; height: 32px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.cell::before { content: ''; position: absolute; width: 3px; height: 3px; background: rgba(0,0,0,0.3); border-radius: 50%; }
-.cell:hover::after { content: ''; position: absolute; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,0.1); }
-.cell.black::before { width: 28px; height: 28px; background: radial-gradient(circle at 35% 35%, #555, #111); box-shadow: 2px 2px 4px rgba(0,0,0,0.4); }
-.cell.white::before { width: 28px; height: 28px; background: radial-gradient(circle at 35% 35%, #fff, #ddd); box-shadow: 2px 2px 4px rgba(0,0,0,0.3); border: 1px solid #bbb; }
-.cell.win::after { content: ''; position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #e53e3e; z-index: 2; }
-.cell.last-move::after { content: ''; position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; z-index: 1; }
+.game-wrap { display: flex; gap: 2rem; align-items: stretch; flex-wrap: wrap; justify-content: center; }
 
-.panel { display: flex; flex-direction: column; gap: 1.2rem; min-width: 180px; }
-.status-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; text-align: center; box-shadow: var(--shadow-sm); }
-.turn-indicator { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
-.turn-dot { display: inline-block; width: 16px; height: 16px; border-radius: 50%; vertical-align: middle; margin-right: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-.turn-dot.black { background: radial-gradient(circle at 35% 35%, #555, #111); }
-.turn-dot.white { background: radial-gradient(circle at 35% 35%, #fff, #ddd); border: 1px solid #bbb; }
-.score-line { display: flex; justify-content: space-between; padding: 0.3rem 0; font-size: 0.9rem; color: var(--text); }
-.score-line span:last-child { font-weight: 700; color: var(--primary); }
+/* Board */
+.board-outer {
+  background: #c9a96e; border-radius: 12px; padding: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2);
+  border: 3px solid #b8944d;
+}
+.board-inner {
+  background: #dcb35c; display: grid; gap: 0;
+  border-radius: 2px; overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+}
+body.dark .board-outer { background: #a08045; border-color: #8a6930; box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); }
+body.dark .board-inner { background: #c49a3c; }
 
-.btn-group { display: flex; flex-direction: column; gap: 0.5rem; }
-.gomoku-btn { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); cursor: pointer; font-family: inherit; font-size: 0.9rem; transition: all 0.15s; }
-.gomoku-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(79,70,229,0.05); }
-.gomoku-btn.primary { background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; border: none; font-weight: 600; box-shadow: 0 4px 14px rgba(79,70,229,0.3); }
-.gomoku-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); color: #fff; background: linear-gradient(135deg, var(--primary), #7c3aed); }
-.gomoku-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Cell with grid lines */
+.cell {
+  position: relative; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.cell::before {
+  content: ''; position: absolute; pointer-events: none;
+  width: 3px; height: 3px; background: rgba(0,0,0,0.25); border-radius: 50%;
+}
+.cell::after {
+  content: ''; position: absolute; pointer-events: none;
+  width: 3px; height: 3px; background: rgba(0,0,0,0.25); border-radius: 50%;
+}
+/* Grid lines via borders */
+.cell .vline { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: rgba(0,0,0,0.15); pointer-events: none; }
+.cell .hline { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0,0,0,0.15); pointer-events: none; }
 
+.cell:hover { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+/* Stones */
+.cell .stone { pointer-events: none; border-radius: 50%; position: relative; z-index: 2; }
+.cell .stone.black {
+  background: radial-gradient(circle at 38% 35%, #5a5a5a 0%, #1a1a1a 100%);
+  box-shadow: 1px 2px 4px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.1);
+}
+.cell .stone.white {
+  background: radial-gradient(circle at 38% 35%, #ffffff 0%, #d4d4d4 100%);
+  box-shadow: 1px 2px 4px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.8);
+  border: 1px solid #bbb;
+}
+.cell .stone.win::after {
+  content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 10px; height: 10px; border-radius: 50%; background: #e53e3e; z-index: 3;
+}
+.cell .stone.last::after {
+  content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; z-index: 2;
+}
+
+/* Panel */
+.panel {
+  display: flex; flex-direction: column; gap: 1rem; min-width: 200px; max-width: 240px;
+}
+
+.player-card {
+  background: var(--bg); border: 2px solid var(--border); border-radius: var(--radius);
+  padding: 1rem 1.2rem; text-align: center; transition: all 0.25s ease;
+}
+.player-card.active { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); transform: scale(1.02); }
+.player-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.15rem; }
+.player-score { font-size: 1.8rem; font-weight: 900; color: var(--primary); }
+
+.status-divider { text-align: center; font-size: 0.8rem; color: var(--text-light); font-weight: 600; letter-spacing: 0.1em; }
+
+.move-counter { text-align: center; font-size: 0.85rem; color: var(--text-light); padding: 0.3rem 0; }
+
+.btn-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.gomoku-btn {
+  padding: 0.55rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--text); cursor: pointer; font-family: inherit;
+  font-size: 0.88rem; font-weight: 500; transition: all 0.15s; text-align: center; text-decoration: none;
+}
+.gomoku-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(79,70,229,0.04); }
+.gomoku-btn.primary {
+  background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; border: none;
+  font-weight: 600; box-shadow: 0 4px 14px rgba(79,70,229,0.3);
+}
+.gomoku-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); color: #fff; }
+.gomoku-btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+/* Win Overlay */
 .win-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: center; justify-content: center; }
 .win-overlay.show { display: flex; }
-.win-box { background: var(--bg); border-radius: var(--radius-lg); padding: 2rem 2.5rem; text-align: center; box-shadow: var(--shadow-xl); animation: slideUp 0.3s ease; }
-.win-box h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-.win-box p { color: var(--text-light); margin-bottom: 1.2rem; }
-.win-box .win-emoji { font-size: 3rem; margin-bottom: 0.5rem; }
-
-body.dark .board { background: #c49a3c; }
-body.dark .cell::before { background: rgba(0,0,0,0.5); }
+.win-box { background: var(--bg); border-radius: var(--radius-lg); padding: 2.5rem 3rem; text-align: center; box-shadow: var(--shadow-xl); animation: slideUp 0.3s ease; }
+.win-box h2 { font-size: 1.6rem; margin-bottom: 0.3rem; }
+.win-box .win-emoji { font-size: 3.5rem; margin-bottom: 0.3rem; }
+.win-box .win-score { font-size: 1rem; color: var(--text-light); margin-bottom: 1.2rem; }
+.win-box .btn-group { display: flex; flex-direction: row; gap: 0.5rem; justify-content: center; }
+.win-box .gomoku-btn { min-width: 120px; }
 
 @media (max-width: 600px) {
-  .board { grid-template-columns: repeat(15, 22px); grid-template-rows: repeat(15, 22px); }
-  .cell { width: 22px; height: 22px; }
-  .cell.black::before, .cell.white::before { width: 20px; height: 20px; }
-  .cell:hover::after { width: 18px; height: 18px; }
-  .board-wrap { padding: 0.5rem; }
+  .board-outer { padding: 8px; }
+  .panel { flex-direction: row; flex-wrap: wrap; max-width: 100%; min-width: auto; gap: 0.5rem; }
+  .player-card { flex: 1; min-width: 100px; padding: 0.8rem; }
+  .player-score { font-size: 1.4rem; }
+  .btn-group { flex-direction: row; flex: 2; min-width: 180px; }
+  .start-screen h1 { font-size: 2rem; }
   .game-wrap { gap: 1rem; }
-  .panel { flex-direction: row; flex-wrap: wrap; justify-content: center; }
 }
 </style>
 </head>
@@ -73,22 +148,41 @@ body.dark .cell::before { background: rgba(0,0,0,0.5); }
 </nav>
 
 <div class="gomoku-page">
-  <div class="gomoku-header">
-    <h1>⚫ 五子棋 ⚪</h1>
-    <p>热座对战 · 轮流下棋 · 五子连珠者胜</p>
+
+  <!-- Start Screen -->
+  <div class="start-screen" id="startScreen">
+    <h1>⚫<span>五子棋</span>⚪</h1>
+    <p class="sub">双人对战 · 轮流落子 · 五子连珠者胜</p>
+    <button class="start-btn" onclick="startGame()">开始对战</button>
+    <p class="start-rules">规则：黑棋先行，两人轮流点击棋盘落子<br>横、竖、斜任意方向率先连成五子者获胜<br>支持悔棋，手机电脑都能玩</p>
   </div>
-  <div class="game-wrap">
-    <div class="board-wrap"><div class="board" id="board"></div></div>
-    <div class="panel">
-      <div class="status-card">
-        <div class="turn-indicator" id="turnText"><span class="turn-dot black"></span>黑棋走</div>
-        <div class="score-line"><span>⚫ 黑棋</span><span id="blackWins">0</span></div>
-        <div class="score-line"><span>⚪ 白棋</span><span id="whiteWins">0</span></div>
+
+  <!-- Game Area -->
+  <div class="game-area" id="gameArea">
+    <div class="gomoku-header">
+      <h1>五子棋</h1>
+      <p id="turnLabel">黑棋先行</p>
+    </div>
+    <div class="game-wrap">
+      <div class="board-outer">
+        <div class="board-inner" id="board"></div>
       </div>
-      <div class="btn-group">
-        <button class="gomoku-btn" onclick="undoMove()" id="undoBtn">↩ 悔棋</button>
-        <button class="gomoku-btn primary" onclick="resetGame()">🔄 重新开始</button>
-        <a href="games.html" class="gomoku-btn" style="text-align:center;text-decoration:none;">← 返回游戏列表</a>
+      <div class="panel">
+        <div class="player-card active" id="blackCard">
+          <div class="player-name">⚫ 黑棋</div>
+          <div class="player-score" id="blackScore">0</div>
+        </div>
+        <div class="status-divider">VS</div>
+        <div class="player-card" id="whiteCard">
+          <div class="player-name">⚪ 白棋</div>
+          <div class="player-score" id="whiteScore">0</div>
+        </div>
+        <div class="move-counter" id="moveCounter">第 1 手</div>
+        <div class="btn-group">
+          <button class="gomoku-btn" onclick="undoMove()" id="undoBtn">↩ 悔棋</button>
+          <button class="gomoku-btn primary" onclick="resetGame()">🔄 重新开始</button>
+          <a href="games.html" class="gomoku-btn">← 返回列表</a>
+        </div>
       </div>
     </div>
   </div>
@@ -97,11 +191,11 @@ body.dark .cell::before { background: rgba(0,0,0,0.5); }
 <div class="win-overlay" id="winOverlay">
   <div class="win-box">
     <div class="win-emoji" id="winEmoji">🎉</div>
-    <h2 id="winTitle">黑棋胜！</h2>
-    <p id="winMsg">五子连珠，漂亮的一局</p>
+    <h2 id="winTitle"></h2>
+    <p class="win-score" id="winScore"></p>
     <div class="btn-group">
-      <button class="gomoku-btn primary" onclick="resetGame();document.getElementById('winOverlay').classList.remove('show')">再来一局</button>
-      <button class="gomoku-btn" onclick="document.getElementById('winOverlay').classList.remove('show')">看看棋盘</button>
+      <button class="gomoku-btn primary" onclick="resetFromOverlay()">再来一局</button>
+      <button class="gomoku-btn" onclick="closeOverlay()">看看棋盘</button>
     </div>
   </div>
 </div>
@@ -113,13 +207,16 @@ body.dark .cell::before { background: rgba(0,0,0,0.5); }
 <script src="ux.js"></script>
 <script>
 var SIZE = 15;
-var board = [];
-var history = [];
-var currentPlayer = 'black';
-var gameOver = false;
-var winCells = [];
-var lastMove = null;
+var board, history, currentPlayer, gameOver, winCells, lastMove;
 var scores = { black: 0, white: 0 };
+var started = false;
+var CELL_SIZE = 32;
+
+function calcCellSize() {
+  var maxW = Math.min(window.innerWidth - 60, 500);
+  CELL_SIZE = Math.floor(maxW / 15);
+  CELL_SIZE = Math.max(22, Math.min(CELL_SIZE, 36));
+}
 
 function initBoard() {
   board = [];
@@ -131,28 +228,54 @@ function initBoard() {
   lastMove = null;
 }
 
+window.startGame = function() {
+  started = true;
+  calcCellSize();
+  initBoard();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('gameArea').classList.add('active');
+  render();
+};
+
 function render() {
+  calcCellSize();
+  var boardEl = document.getElementById('board');
+  boardEl.style.gridTemplateColumns = 'repeat('+SIZE+', '+CELL_SIZE+'px)';
+  boardEl.style.gridTemplateRows = 'repeat('+SIZE+', '+CELL_SIZE+'px)';
+
   var html = '';
   for (var r = 0; r < SIZE; r++) {
     for (var c = 0; c < SIZE; c++) {
-      var cls = 'cell';
-      if (board[r][c]) cls += ' ' + board[r][c];
-      if (winCells.some(function(w){return w[0]===r && w[1]===c;})) cls += ' win';
-      if (lastMove && lastMove[0]===r && lastMove[1]===c && !gameOver) cls += ' last-move';
-      html += '<div class="'+cls+'" onclick="makeMove('+r+','+c+')"></div>';
+      var inner = '';
+      // Grid lines
+      inner += '<span class="vline"></span><span class="hline"></span>';
+
+      if (board[r][c]) {
+        var isWin = winCells.some(function(w){return w[0]===r && w[1]===c;});
+        var isLast = lastMove && lastMove[0]===r && lastMove[1]===c && !gameOver;
+        var stoneSize = CELL_SIZE - 6;
+        inner += '<div class="stone '+board[r][c]+(isWin?' win':'')+(isLast?' last':'')+'" style="width:'+stoneSize+'px;height:'+stoneSize+'px"></div>';
+      }
+
+      html += '<div class="cell" style="width:'+CELL_SIZE+'px;height:'+CELL_SIZE+'px" onclick="makeMove('+r+','+c+')">'+inner+'</div>';
     }
   }
-  document.getElementById('board').innerHTML = html;
+  boardEl.innerHTML = html;
 
-  var t = document.getElementById('turnText');
-  if (gameOver) {
-    t.innerHTML = '<span class="turn-dot '+currentPlayer+'"></span>'+ (currentPlayer==='black'?'黑棋胜！':'白棋胜！');
-  } else {
-    t.innerHTML = '<span class="turn-dot '+currentPlayer+'"></span>'+ (currentPlayer==='black'?'黑棋走':'白棋走');
-  }
-  document.getElementById('blackWins').textContent = scores.black;
-  document.getElementById('whiteWins').textContent = scores.white;
+  // Update UI
+  document.getElementById('blackCard').classList.toggle('active', currentPlayer === 'black' && !gameOver);
+  document.getElementById('whiteCard').classList.toggle('active', currentPlayer === 'white' && !gameOver);
+  document.getElementById('blackScore').textContent = scores.black;
+  document.getElementById('whiteScore').textContent = scores.white;
+  document.getElementById('moveCounter').textContent = '第 '+(history.length+1)+' 手';
   document.getElementById('undoBtn').disabled = history.length === 0 || gameOver;
+
+  var lbl = document.getElementById('turnLabel');
+  if (gameOver) {
+    lbl.textContent = (currentPlayer==='black'?'黑棋获胜！':'白棋获胜！');
+  } else {
+    lbl.textContent = (currentPlayer==='black'?'轮到黑棋':'轮到白棋');
+  }
 }
 
 function makeMove(r, c) {
@@ -172,13 +295,7 @@ function makeMove(r, c) {
     showWin(currentPlayer);
     return;
   }
-
-  if (history.length === SIZE * SIZE) {
-    gameOver = true;
-    render();
-    showDraw();
-    return;
-  }
+  if (history.length === SIZE * SIZE) { gameOver = true; render(); showDraw(); return; }
 
   currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
   render();
@@ -187,10 +304,9 @@ function makeMove(r, c) {
 function checkWin(r, c, player) {
   var dirs = [[0,1],[1,0],[1,1],[1,-1]];
   for (var d = 0; d < dirs.length; d++) {
-    var dr = dirs[d][0], dc = dirs[d][1];
-    var cells = [[r,c]];
-    for (var i = 1; i < 5; i++) { var nr = r + dr*i, nc = c + dc*i; if (nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && board[nr][nc]===player) cells.push([nr,nc]); else break; }
-    for (var i = 1; i < 5; i++) { var nr = r - dr*i, nc = c - dc*i; if (nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && board[nr][nc]===player) cells.push([nr,nc]); else break; }
+    var dr = dirs[d][0], dc = dirs[d][1], cells = [[r,c]];
+    for (var i = 1; i < 5; i++) { var nr=r+dr*i, nc=c+dc*i; if (nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&board[nr][nc]===player) cells.push([nr,nc]); else break; }
+    for (var i = 1; i < 5; i++) { var nr=r-dr*i, nc=c-dc*i; if (nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&board[nr][nc]===player) cells.push([nr,nc]); else break; }
     if (cells.length >= 5) return cells;
   }
   return null;
@@ -201,33 +317,29 @@ function undoMove() {
   var last = history.pop();
   board[last[0]][last[1]] = null;
   currentPlayer = last[2];
-  lastMove = history.length > 0 ? [history[history.length-1][0], history[history.length-1][1]] : null;
+  lastMove = history.length>0 ? [history[history.length-1][0], history[history.length-1][1]] : null;
   render();
 }
 
-function resetGame() {
-  initBoard();
-  render();
-}
+window.resetGame = function() { initBoard(); render(); };
+window.resetFromOverlay = function() { document.getElementById('winOverlay').classList.remove('show'); initBoard(); render(); };
+window.closeOverlay = function() { document.getElementById('winOverlay').classList.remove('show'); };
 
 function showWin(player) {
   var o = document.getElementById('winOverlay');
   document.getElementById('winEmoji').textContent = '🎉';
-  document.getElementById('winTitle').textContent = (player==='black'?'⚫ 黑棋胜！':'⚪ 白棋胜！');
-  document.getElementById('winMsg').textContent = '五子连珠！'+scores.black+':'+scores.white;
+  document.getElementById('winTitle').textContent = (player==='black'?'⚫ 黑棋获胜':'⚪ 白棋获胜');
+  document.getElementById('winScore').textContent = '比分 '+scores.black+':'+scores.white;
   o.classList.add('show');
 }
 
 function showDraw() {
   var o = document.getElementById('winOverlay');
   document.getElementById('winEmoji').textContent = '🤝';
-  document.getElementById('winTitle').textContent = '平局';
-  document.getElementById('winMsg').textContent = '棋盘已满，不分胜负';
+  document.getElementById('winTitle').textContent = '握手言和';
+  document.getElementById('winScore').textContent = '棋盘已满 '+scores.black+':'+scores.white;
   o.classList.add('show');
 }
-
-initBoard();
-render();
 </script>
 </body>
 </html>
