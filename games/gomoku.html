@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五子棋对战 | 蔡梓涵</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.gomoku-page { padding: 5rem 2rem 3rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+.gomoku-header { text-align: center; margin-bottom: 1.5rem; }
+.gomoku-header h1 { font-size: 2rem; margin-bottom: 0.3rem; }
+.gomoku-header p { color: var(--text-light); font-size: 0.95rem; }
+
+.game-wrap { display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+.board-wrap { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; box-shadow: var(--shadow-lg); }
+.board { display: grid; grid-template-columns: repeat(15, 32px); grid-template-rows: repeat(15, 32px); gap: 0; background: #dcb35c; border-radius: 4px; padding: 2px; position: relative; }
+.cell { width: 32px; height: 32px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cell::before { content: ''; position: absolute; width: 3px; height: 3px; background: rgba(0,0,0,0.3); border-radius: 50%; }
+.cell:hover::after { content: ''; position: absolute; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,0.1); }
+.cell.black::before { width: 28px; height: 28px; background: radial-gradient(circle at 35% 35%, #555, #111); box-shadow: 2px 2px 4px rgba(0,0,0,0.4); }
+.cell.white::before { width: 28px; height: 28px; background: radial-gradient(circle at 35% 35%, #fff, #ddd); box-shadow: 2px 2px 4px rgba(0,0,0,0.3); border: 1px solid #bbb; }
+.cell.win::after { content: ''; position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #e53e3e; z-index: 2; }
+.cell.last-move::after { content: ''; position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; z-index: 1; }
+
+.panel { display: flex; flex-direction: column; gap: 1.2rem; min-width: 180px; }
+.status-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; text-align: center; box-shadow: var(--shadow-sm); }
+.turn-indicator { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+.turn-dot { display: inline-block; width: 16px; height: 16px; border-radius: 50%; vertical-align: middle; margin-right: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.turn-dot.black { background: radial-gradient(circle at 35% 35%, #555, #111); }
+.turn-dot.white { background: radial-gradient(circle at 35% 35%, #fff, #ddd); border: 1px solid #bbb; }
+.score-line { display: flex; justify-content: space-between; padding: 0.3rem 0; font-size: 0.9rem; color: var(--text); }
+.score-line span:last-child { font-weight: 700; color: var(--primary); }
+
+.btn-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.gomoku-btn { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); cursor: pointer; font-family: inherit; font-size: 0.9rem; transition: all 0.15s; }
+.gomoku-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(79,70,229,0.05); }
+.gomoku-btn.primary { background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; border: none; font-weight: 600; box-shadow: 0 4px 14px rgba(79,70,229,0.3); }
+.gomoku-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); color: #fff; background: linear-gradient(135deg, var(--primary), #7c3aed); }
+.gomoku-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.win-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: center; justify-content: center; }
+.win-overlay.show { display: flex; }
+.win-box { background: var(--bg); border-radius: var(--radius-lg); padding: 2rem 2.5rem; text-align: center; box-shadow: var(--shadow-xl); animation: slideUp 0.3s ease; }
+.win-box h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.win-box p { color: var(--text-light); margin-bottom: 1.2rem; }
+.win-box .win-emoji { font-size: 3rem; margin-bottom: 0.5rem; }
+
+body.dark .board { background: #c49a3c; }
+body.dark .cell::before { background: rgba(0,0,0,0.5); }
+
+@media (max-width: 600px) {
+  .board { grid-template-columns: repeat(15, 22px); grid-template-rows: repeat(15, 22px); }
+  .cell { width: 22px; height: 22px; }
+  .cell.black::before, .cell.white::before { width: 20px; height: 20px; }
+  .cell:hover::after { width: 18px; height: 18px; }
+  .board-wrap { padding: 0.5rem; }
+  .game-wrap { gap: 1rem; }
+  .panel { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Zihan</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="blog.html">博客</a>
+      <a href="games.html">小游戏</a>
+      <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
+    </div>
+  </div>
+</nav>
+
+<div class="gomoku-page">
+  <div class="gomoku-header">
+    <h1>⚫ 五子棋 ⚪</h1>
+    <p>热座对战 · 轮流下棋 · 五子连珠者胜</p>
+  </div>
+  <div class="game-wrap">
+    <div class="board-wrap"><div class="board" id="board"></div></div>
+    <div class="panel">
+      <div class="status-card">
+        <div class="turn-indicator" id="turnText"><span class="turn-dot black"></span>黑棋走</div>
+        <div class="score-line"><span>⚫ 黑棋</span><span id="blackWins">0</span></div>
+        <div class="score-line"><span>⚪ 白棋</span><span id="whiteWins">0</span></div>
+      </div>
+      <div class="btn-group">
+        <button class="gomoku-btn" onclick="undoMove()" id="undoBtn">↩ 悔棋</button>
+        <button class="gomoku-btn primary" onclick="resetGame()">🔄 重新开始</button>
+        <a href="games.html" class="gomoku-btn" style="text-align:center;text-decoration:none;">← 返回游戏列表</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="win-overlay" id="winOverlay">
+  <div class="win-box">
+    <div class="win-emoji" id="winEmoji">🎉</div>
+    <h2 id="winTitle">黑棋胜！</h2>
+    <p id="winMsg">五子连珠，漂亮的一局</p>
+    <div class="btn-group">
+      <button class="gomoku-btn primary" onclick="resetGame();document.getElementById('winOverlay').classList.remove('show')">再来一局</button>
+      <button class="gomoku-btn" onclick="document.getElementById('winOverlay').classList.remove('show')">看看棋盘</button>
+    </div>
+  </div>
+</div>
+
+<footer><p>&copy; 2026 蔡梓涵</p></footer>
+
+<script src="user.js"></script>
+<script src="theme.js"></script>
+<script src="ux.js"></script>
+<script>
+var SIZE = 15;
+var board = [];
+var history = [];
+var currentPlayer = 'black';
+var gameOver = false;
+var winCells = [];
+var lastMove = null;
+var scores = { black: 0, white: 0 };
+
+function initBoard() {
+  board = [];
+  for (var r = 0; r < SIZE; r++) { board[r] = []; for (var c = 0; c < SIZE; c++) board[r][c] = null; }
+  history = [];
+  currentPlayer = 'black';
+  gameOver = false;
+  winCells = [];
+  lastMove = null;
+}
+
+function render() {
+  var html = '';
+  for (var r = 0; r < SIZE; r++) {
+    for (var c = 0; c < SIZE; c++) {
+      var cls = 'cell';
+      if (board[r][c]) cls += ' ' + board[r][c];
+      if (winCells.some(function(w){return w[0]===r && w[1]===c;})) cls += ' win';
+      if (lastMove && lastMove[0]===r && lastMove[1]===c && !gameOver) cls += ' last-move';
+      html += '<div class="'+cls+'" onclick="makeMove('+r+','+c+')"></div>';
+    }
+  }
+  document.getElementById('board').innerHTML = html;
+
+  var t = document.getElementById('turnText');
+  if (gameOver) {
+    t.innerHTML = '<span class="turn-dot '+currentPlayer+'"></span>'+ (currentPlayer==='black'?'黑棋胜！':'白棋胜！');
+  } else {
+    t.innerHTML = '<span class="turn-dot '+currentPlayer+'"></span>'+ (currentPlayer==='black'?'黑棋走':'白棋走');
+  }
+  document.getElementById('blackWins').textContent = scores.black;
+  document.getElementById('whiteWins').textContent = scores.white;
+  document.getElementById('undoBtn').disabled = history.length === 0 || gameOver;
+}
+
+function makeMove(r, c) {
+  if (gameOver) return;
+  if (board[r][c]) return;
+
+  board[r][c] = currentPlayer;
+  history.push([r, c, currentPlayer]);
+  lastMove = [r, c];
+
+  var result = checkWin(r, c, currentPlayer);
+  if (result) {
+    gameOver = true;
+    winCells = result;
+    scores[currentPlayer] = (scores[currentPlayer] || 0) + 1;
+    render();
+    showWin(currentPlayer);
+    return;
+  }
+
+  if (history.length === SIZE * SIZE) {
+    gameOver = true;
+    render();
+    showDraw();
+    return;
+  }
+
+  currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
+  render();
+}
+
+function checkWin(r, c, player) {
+  var dirs = [[0,1],[1,0],[1,1],[1,-1]];
+  for (var d = 0; d < dirs.length; d++) {
+    var dr = dirs[d][0], dc = dirs[d][1];
+    var cells = [[r,c]];
+    for (var i = 1; i < 5; i++) { var nr = r + dr*i, nc = c + dc*i; if (nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && board[nr][nc]===player) cells.push([nr,nc]); else break; }
+    for (var i = 1; i < 5; i++) { var nr = r - dr*i, nc = c - dc*i; if (nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && board[nr][nc]===player) cells.push([nr,nc]); else break; }
+    if (cells.length >= 5) return cells;
+  }
+  return null;
+}
+
+function undoMove() {
+  if (gameOver || history.length === 0) return;
+  var last = history.pop();
+  board[last[0]][last[1]] = null;
+  currentPlayer = last[2];
+  lastMove = history.length > 0 ? [history[history.length-1][0], history[history.length-1][1]] : null;
+  render();
+}
+
+function resetGame() {
+  initBoard();
+  render();
+}
+
+function showWin(player) {
+  var o = document.getElementById('winOverlay');
+  document.getElementById('winEmoji').textContent = '🎉';
+  document.getElementById('winTitle').textContent = (player==='black'?'⚫ 黑棋胜！':'⚪ 白棋胜！');
+  document.getElementById('winMsg').textContent = '五子连珠！'+scores.black+':'+scores.white;
+  o.classList.add('show');
+}
+
+function showDraw() {
+  var o = document.getElementById('winOverlay');
+  document.getElementById('winEmoji').textContent = '🤝';
+  document.getElementById('winTitle').textContent = '平局';
+  document.getElementById('winMsg').textContent = '棋盘已满，不分胜负';
+  o.classList.add('show');
+}
+
+initBoard();
+render();
+</script>
+</body>
+</html>
