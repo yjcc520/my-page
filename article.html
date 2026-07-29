@@ -205,10 +205,14 @@ if(isIssue){
         window.toggleLike=function(){if(liked){count=Math.max(0,count-1);liked=false;}else{count++;liked=true;}localStorage.setItem(sk,count);localStorage.setItem(sk+'_liked',liked);ul();};
         ul();
         window.deletePreset=function(id){
-          window._showConfirm('确定删除这篇文章吗？', function(){
-            var deleted=JSON.parse(localStorage.getItem('deleted_preset_articles')||'[]');
-            deleted.push('preset-'+id);
-            localStorage.setItem('deleted_preset_articles',JSON.stringify(deleted));
+          window._showConfirm('确定删除这篇文章吗？', async function(){
+            try {
+              await fetch('https://api.github.com/repos/yjcc520/my-page/issues/1/comments', {
+                method: 'POST',
+                headers: { 'Authorization': 'token ' + loadToken(), 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                body: JSON.stringify({ body: 'delete-preset:preset-' + id })
+              });
+            } catch(e) {}
             window.location.href='blog.html';
           });
         };
