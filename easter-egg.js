@@ -1,30 +1,6 @@
 // ===== Easter Eggs & Effects =====
 (function() {
-  // ---------- 1. Hero 打字机效果 ----------
-  var introEl = document.querySelector('.intro');
-  if (introEl) {
-    var fullText = introEl.textContent;
-    introEl.textContent = '';
-    introEl.style.borderRight = '2px solid var(--primary)';
-    introEl.style.display = 'inline-block';
-    var idx = 0;
-    var typeTimer = setInterval(function() {
-      if (idx < fullText.length) {
-        introEl.textContent += fullText[idx];
-        idx++;
-      } else {
-        clearInterval(typeTimer);
-        // Blinking cursor
-        var blink = true;
-        setInterval(function() {
-          introEl.style.borderRightColor = blink ? 'transparent' : 'var(--primary)';
-          blink = !blink;
-        }, 530);
-      }
-    }, 120);
-  }
-
-  // ---------- 2. Konami Code → 梓树叶飘落 ----------
+  // ---------- 1. Konami Code → 梓树叶飘落 ----------
   var konami = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
   var pos = 0;
   var leavesActive = false;
@@ -185,8 +161,8 @@
     var days = ['日','一','二','三','四','五','六'];
     var wd = days[now.getDay()];
 
-    document.getElementById('hudTime').textContent = h + '<blink>:</blink>' + m + '<blink>:</blink>' + s;
-    document.getElementById('hudDate').textContent =
+    document.getElementById('hudTime').innerHTML = h + '<blink>:</blink>' + m + '<blink>:</blink>' + s;
+    document.getElementById('hudDate').innerHTML =
       y + '.' + mo + '.' + d + ' 星期' + wd;
   }
 
