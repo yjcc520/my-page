@@ -43,6 +43,19 @@ body.dark .tag { background: rgba(129,140,248,0.15); color: #a5b4fc; }
 body.dark .blog-card-summary { color: var(--text-light); }
 body.dark input, body.dark textarea { color: var(--text); }
 body.dark input::placeholder, body.dark textarea::placeholder { color: #475569; }
+body.dark .toast { background: #1e293b; color: #e2e8f0; }
+body.dark .write-page { background: var(--bg); }
+body.dark .write-editor-wrap { background: transparent; }
+body.dark .write-content, body.dark .write-title, body.dark .write-tags { background: transparent; color: var(--text); }
+body.dark .write-tags { background: var(--bg-alt); }
+body.dark .write-toolbar { border-color: var(--border); }
+body.dark .tb-btn:hover { background: var(--bg-alt); }
+body.dark .tool-btn { background: var(--bg-alt); color: var(--text); }
+body.dark .tool-btn:hover { background: var(--bg); }
+body.dark .write-preview blockquote { background: var(--bg-alt); }
+body.dark .write-preview code { background: var(--bg-alt); color: #f87171; }
+body.dark .game-cover { opacity: 0.8; }
+body.dark .upload-box { background: var(--bg); }
 /* Theme toggle */
 .theme-toggle {
     background: none; border: none; font-size: 1.1rem; cursor: pointer;
@@ -1370,3 +1383,321 @@ footer {
 }
 
 .modal-btn-ok:hover { background: var(--primary-light); }
+
+/* ============================================
+   UX ENHANCEMENTS - 全局操作手感优化
+   ============================================ */
+
+/* -- Smooth Theme Transition -- */
+body, body *, nav, .hero, .blog-card, .skill-card, .game-card, .about-card,
+.lb-card, .comment-item, .comment-form-wrap, .modal-box, .crop-box, .editor-box,
+.upload-box, .tag, .blog-write-btn, .contact-btn, .game-play-btn, .modal-btn-ok,
+.tb-btn-publish, .gallery-upload-btn, .like-btn, .comment-submit-btn,
+.comment-action-btn, .user-login-btn, .user-logout, .theme-toggle, .lang-btn,
+input, textarea, .editor-title, .editor-content, .editor-tags {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease,
+              box-shadow 0.3s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* -- Global Active: Button press feedback -- */
+button:active:not(:disabled),
+a.contact-btn:active,
+a.game-play-btn:active {
+  transform: scale(0.96);
+}
+
+.blog-card:active { transform: scale(0.985); }
+
+/* -- Ripple Effect -- */
+.contact-btn, .blog-write-btn, .game-play-btn, .modal-btn-ok, .tb-btn-publish,
+.gallery-upload-btn, .comment-submit-btn, .like-btn, .user-login-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0);
+  animation: ripple-anim 0.6s ease-out;
+  pointer-events: none;
+}
+@keyframes ripple-anim {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* -- Back to Top Button -- */
+#backToTop {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 900;
+  box-shadow: 0 4px 16px rgba(79,70,229,0.35);
+  opacity: 0;
+  transform: translateY(16px) scale(0.8);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease, background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+#backToTop.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+#backToTop:hover { background: var(--primary-light); transform: translateY(-2px) scale(1.05); }
+#backToTop:active { transform: scale(0.9); }
+
+/* -- Toast Notification -- */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1e293b;
+  color: #fff;
+  padding: 0.7rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  font-family: inherit;
+  max-width: 90vw;
+  text-align: center;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast.success { background: #16a34a; }
+.toast.error { background: #dc2626; }
+
+/* -- Scrolllocked Body -- */
+body.scroll-locked { overflow: hidden; padding-right: var(--scrollbar-width, 0px); }
+
+/* -- Nav Scroll Shadow -- */
+nav {
+  transition: box-shadow 0.3s ease;
+}
+nav.scrolled {
+  box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+}
+body.dark nav.scrolled {
+  box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+}
+
+/* -- Scroll Reveal Animations -- */
+.reveal-init {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delay for grids */
+.skill-card:nth-child(1) { transition-delay: 0.05s; }
+.skill-card:nth-child(2) { transition-delay: 0.1s; }
+.skill-card:nth-child(3) { transition-delay: 0.15s; }
+.skill-card:nth-child(4) { transition-delay: 0.2s; }
+.skill-card:nth-child(5) { transition-delay: 0.25s; }
+.skill-card:nth-child(6) { transition-delay: 0.3s; }
+
+/* -- Card Hover Lift -- */
+.blog-card, .skill-card, .game-card, .about-card, .lb-card, .ta-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.blog-card:hover, .lb-card:hover, .ta-card:hover {
+  transform: translateY(-2px);
+}
+.game-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary-light);
+}
+
+/* -- Consistent Cursor -- */
+button, a, .tag-pill, .comment-replies-more, .gallery-item, .like-btn,
+[onclick]:not(input):not(textarea), .lb-card ol li, .game-play-btn,
+.lightbox-close, .crop-area, #musicTgl {
+  cursor: pointer;
+}
+input[type="text"], input[type="file"], textarea, [contenteditable] {
+  cursor: text;
+}
+
+/* -- User Select Protection -- */
+nav, button, .logo, .tag, .blog-card-tags, .article-tags, .tag-pill,
+.game-cover, .lb-rank, .comment-actions, .like-section, .nav-links,
+.toolbar-group, .toolbar-actions, footer, .crop-area {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* -- Focus Visible Ring -- */
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* -- Loading Spinner for Buttons -- */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+}
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* -- Form Shake on Error -- */
+.shake {
+  animation: shake-anim 0.4s ease;
+}
+@keyframes shake-anim {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* -- Like Button Heart Burst -- */
+.like-btn.liked {
+  animation: like-pop 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+@keyframes like-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* -- Comment Reply Toggle Smooth -- */
+.comment-replies-all {
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.35s ease;
+}
+.comment-reply-form {
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
+/* -- Lightbox zoom transition -- */
+.lightbox { opacity: 0; transition: opacity 0.3s ease; }
+.lightbox.active { opacity: 1; }
+.lightbox img {
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+.lightbox.active img { transform: scale(1); }
+
+/* -- Modal/overlay animation consistency -- */
+.editor-overlay, .modal-overlay, .crop-overlay, .upload-overlay {
+  animation: fadeInBg 0.25s ease;
+}
+.editor-box, .modal-box, .crop-box, .upload-box {
+  animation: slideUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+/* -- Mobile Touch Areas -- */
+@media (max-width: 768px) {
+  button, a.game-play-btn, .tag-pill, .contact-btn, .comment-action-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .nav-links a {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+  #backToTop {
+    bottom: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  .toast {
+    bottom: 70px;
+    font-size: 0.85rem;
+    padding: 0.6rem 1.2rem;
+  }
+}
+
+/* -- Selection Color -- */
+::selection {
+  background: rgba(79, 70, 229, 0.2);
+  color: var(--text);
+}
+::-moz-selection {
+  background: rgba(79, 70, 229, 0.2);
+  color: var(--text);
+}
+
+/* -- Scrollbar Styling -- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+
+/* -- Custom Confirm Dialog -- */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInBg 0.2s ease;
+}
+.confirm-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem 2rem;
+  max-width: 380px;
+  width: 90vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: slideUp 0.25s ease;
+}
+.confirm-msg {
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 1.2rem;
+  line-height: 1.6;
+  text-align: center;
+}
