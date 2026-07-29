@@ -65,15 +65,28 @@
 <script>
 var allArticles = [];
 
-// Load preset (filter deleted)
-var deletedPreset = JSON.parse(localStorage.getItem('deleted_preset_articles') || '[]');
-articles.forEach(function(a) {
-  if (deletedPreset.indexOf('preset-' + a.id) >= 0) return;
-  allArticles.push({ id: a.id, title: a.title, date: a.date, summary: a.summary, tags: a.tags, issueId: false });
-});
-
-// Load from issues
+// Load from issues + filter preset (load deleted from GitHub Issue #1)
 (async function() {
+  // Fetch deleted presets from Issue #1
+  var deletedPreset = [];
+  try {
+    var dpsResp = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/1/comments?per_page=100', {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    });
+    var dpsComments = await dpsResp.json();
+    dpsComments.forEach(function(c) {
+      var m = c.body.match(/^delete-preset:(preset-\d+)/);
+      if (m) deletedPreset.push(m[1]);
+    });
+  } catch(e) {}
+
+  // Preset articles
+  articles.forEach(function(a) {
+    if (deletedPreset.indexOf('preset-' + a.id) >= 0) return;
+    allArticles.push({ id: a.id, title: a.title, date: a.date, summary: a.summary, tags: a.tags, issueId: false });
+  });
+
+  // GitHub Issues
   try {
     var resp = await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:article+type:issue+state:open&sort=created&order=desc&per_page=50', {
       headers: { 'Accept': 'application/vnd.github.v3+json' }
