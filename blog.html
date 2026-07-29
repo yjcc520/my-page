@@ -15,7 +15,6 @@
                 <a href="index.html">首页</a>
                 <a href="index.html#about">关于我</a>
                 <a href="blog.html" class="active">博客</a>
-                <a href="tags.html">标签</a>
                 <a href="gallery.html">画廊</a>
                 <a href="forum.html">论坛</a>
                 <a href="games.html">小游戏</a>
@@ -29,6 +28,7 @@
             <h1>博客</h1>
             <p>记录思考，分享成长</p>
             <button class="blog-write-btn" onclick="window.location.href='write.html'">✏️ 写文章</button>
+            <a href="tags.html" style="display:inline-block;margin-left:0.5rem;padding:0.5rem 1.2rem;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-light);text-decoration:none;font-size:0.9rem;font-weight:500;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-light)'">🏷️ 标签分类</a>
         </div>
         <div class="blog-list" id="blogList">
             <!-- JS 动态生成 -->
