@@ -6,199 +6,114 @@
 <title>五子棋对战 | 蔡梓涵</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-.gomoku-page { padding: 5rem 2rem 3rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+/* ---- Game-zone reset ---- */
+.gomoku-page { padding: 5rem 1.5rem 3rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.gomoku-page h1 { font-size: 2.5rem; font-weight: 900; margin: 0 0 0.3rem; color: var(--text); background: none; -webkit-text-fill-color: var(--text); -webkit-background-clip: unset; background-clip: unset; }
+.gomoku-page .subtitle { color: var(--text-light); font-size: 1rem; margin-bottom: 2rem; }
+.gomoku-page button { color: #fff; font-family: inherit; border: none; cursor: pointer; }
 
-/* Start Screen */
-.start-screen { text-align: center; padding: 3rem 2rem; }
-.start-screen h1 { font-size: 3rem; margin-bottom: 0.5rem; }
-.start-screen h1 span { display: inline-block; }
-.start-screen .sub { color: var(--text-light); font-size: 1rem; margin-bottom: 2rem; }
-.start-btn { display: inline-block; padding: 0.8rem 3rem; font-size: 1.1rem; font-weight: 700; font-family: inherit;
-  background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; border: none; border-radius: var(--radius);
-  cursor: pointer; box-shadow: 0 6px 24px rgba(79,70,229,0.35); transition: transform 0.2s, box-shadow 0.2s; }
-.start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,70,229,0.5); }
-.start-rules { margin-top: 2rem; color: var(--text-light); font-size: 0.85rem; line-height: 1.8; }
+/* ---- Start screen ---- */
+.start-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 3rem 2rem; max-width: 460px; width: 100%; box-shadow: var(--shadow-lg); }
+.start-card .icon { font-size: 4rem; margin-bottom: 0.5rem; }
+.start-card .rules { margin: 1.8rem 0 0; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--text-light); font-size: 0.82rem; line-height: 1.9; }
+.start-play-btn { margin-top: 1.2rem; padding: 0.8rem 3.5rem; font-size: 1.1rem; font-weight: 700; background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff !important; border-radius: var(--radius-sm); box-shadow: 0 6px 24px rgba(79,70,229,0.35); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.start-play-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(79,70,229,0.5); }
+.start-play-btn:active { transform: scale(0.97) !important; }
 
-/* Game Area */
-.game-area { display: none; flex-direction: column; align-items: center; }
-.game-area.active { display: flex; }
-
-.gomoku-header { text-align: center; margin-bottom: 1.5rem; }
-.gomoku-header h1 { font-size: 1.6rem; margin-bottom: 0.2rem; font-weight: 800; }
-.gomoku-header p { color: var(--text-light); font-size: 0.85rem; }
-
-.game-wrap { display: flex; gap: 2rem; align-items: stretch; flex-wrap: wrap; justify-content: center; }
+/* ---- Game layout ---- */
+.game-layout { display: flex; gap: 2rem; align-items: flex-start; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 800px; }
 
 /* Board */
-.board-outer {
-  background: #c9a96e; border-radius: 12px; padding: 14px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2);
-  border: 3px solid #b8944d;
-}
-.board-inner {
-  background: #dcb35c; display: grid; gap: 0;
-  border-radius: 2px; overflow: hidden;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
-}
-body.dark .board-outer { background: #a08045; border-color: #8a6930; box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); }
-body.dark .board-inner { background: #c49a3c; }
+.board-frame { background: #c9a96e; border-radius: 12px; padding: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.2); border: 3px solid #b8944d; }
+.board-grid { background: #dcb35c; display: grid; gap: 0; border-radius: 2px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); }
 
-/* Cell with grid lines */
-.cell {
-  position: relative; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-.cell::before {
-  content: ''; position: absolute; pointer-events: none;
-  width: 3px; height: 3px; background: rgba(0,0,0,0.25); border-radius: 50%;
-}
-.cell::after {
-  content: ''; position: absolute; pointer-events: none;
-  width: 3px; height: 3px; background: rgba(0,0,0,0.25); border-radius: 50%;
-}
-/* Grid lines via borders */
-.cell .vline { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: rgba(0,0,0,0.15); pointer-events: none; }
-.cell .hline { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0,0,0,0.15); pointer-events: none; }
+body.dark .board-frame { background: #a08045; border-color: #8a6930; box-shadow: 0 8px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08); }
+body.dark .board-grid { background: #c49a3c; }
 
+/* Cell */
+.cell { position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cell .vline, .cell .hline { position: absolute; pointer-events: none; background: rgba(0,0,0,0.12); }
+.cell .vline { top: 0; bottom: 0; left: 50%; width: 1px; }
+.cell .hline { left: 0; right: 0; top: 50%; height: 1px; }
+.cell .dot { position: absolute; pointer-events: none; width: 3px; height: 3px; background: rgba(0,0,0,0.3); border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 .cell:hover { background: rgba(255,255,255,0.15); border-radius: 2px; }
 
 /* Stones */
 .cell .stone { pointer-events: none; border-radius: 50%; position: relative; z-index: 2; }
-.cell .stone.black {
-  background: radial-gradient(circle at 38% 35%, #5a5a5a 0%, #1a1a1a 100%);
-  box-shadow: 1px 2px 4px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.1);
-}
-.cell .stone.white {
-  background: radial-gradient(circle at 38% 35%, #ffffff 0%, #d4d4d4 100%);
-  box-shadow: 1px 2px 4px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.8);
-  border: 1px solid #bbb;
-}
-.cell .stone.win::after {
-  content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 10px; height: 10px; border-radius: 50%; background: #e53e3e; z-index: 3;
-}
-.cell .stone.last::after {
-  content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; z-index: 2;
-}
+.stone.black { background: radial-gradient(circle at 38% 35%, #555 0%, #111 100%); box-shadow: 1px 2px 4px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.1); }
+.stone.white { background: radial-gradient(circle at 38% 35%, #fff 0%, #d4d4d4 100%); box-shadow: 1px 2px 4px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.8); border: 1px solid #bbb; }
+.stone.win::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:40%; height:40%; border-radius:50%; background:#e53e3e; z-index:3; }
+.stone.last::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:30%; height:30%; border-radius:50%; background:#f59e0b; z-index:2; }
 
-/* Panel */
-.panel {
-  display: flex; flex-direction: column; gap: 1rem; min-width: 200px; max-width: 240px;
-}
+/* Side panel */
+.side-panel { display: flex; flex-direction: column; gap: 0.75rem; min-width: 190px; max-width: 220px; }
+.p-card { background: var(--bg); border: 2px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem; text-align: center; transition: all 0.25s; }
+.p-card.active { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+.p-card .p-name { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+.p-card .p-win { font-size: 1.6rem; font-weight: 900; color: var(--primary); margin-top: 0.1rem; }
+.vs-div { text-align: center; font-size: 0.75rem; color: var(--text-light); font-weight: 700; letter-spacing: 0.1em; }
+.turn-tag { text-align: center; font-size: 0.85rem; font-weight: 600; color: var(--primary); padding: 0.2rem 0; }
 
-.player-card {
-  background: var(--bg); border: 2px solid var(--border); border-radius: var(--radius);
-  padding: 1rem 1.2rem; text-align: center; transition: all 0.25s ease;
-}
-.player-card.active { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); transform: scale(1.02); }
-.player-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.15rem; }
-.player-score { font-size: 1.8rem; font-weight: 900; color: var(--primary); }
+.gm-btn { display: block; width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text) !important; font-family: inherit; font-size: 0.85rem; font-weight: 500; cursor: pointer; text-align: center; text-decoration: none; transition: all 0.15s; }
+.gm-btn:hover { border-color: var(--primary); color: var(--primary) !important; background: rgba(79,70,229,0.04); }
+.gm-btn.primary { background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff !important; border: none; font-weight: 600; box-shadow: 0 4px 14px rgba(79,70,229,0.3); }
+.gm-btn.primary:hover { box-shadow: 0 6px 20px rgba(79,70,229,0.4); color: #fff !important; }
+.gm-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-.status-divider { text-align: center; font-size: 0.8rem; color: var(--text-light); font-weight: 600; letter-spacing: 0.1em; }
-
-.move-counter { text-align: center; font-size: 0.85rem; color: var(--text-light); padding: 0.3rem 0; }
-
-.btn-group { display: flex; flex-direction: column; gap: 0.4rem; }
-.gomoku-btn {
-  padding: 0.55rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm);
-  background: var(--bg); color: var(--text); cursor: pointer; font-family: inherit;
-  font-size: 0.88rem; font-weight: 500; transition: all 0.15s; text-align: center; text-decoration: none;
-}
-.gomoku-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(79,70,229,0.04); }
-.gomoku-btn.primary {
-  background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; border: none;
-  font-weight: 600; box-shadow: 0 4px 14px rgba(79,70,229,0.3);
-}
-.gomoku-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); color: #fff; }
-.gomoku-btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
-
-/* Win Overlay */
-.win-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: center; justify-content: center; }
-.win-overlay.show { display: flex; }
-.win-box { background: var(--bg); border-radius: var(--radius-lg); padding: 2.5rem 3rem; text-align: center; box-shadow: var(--shadow-xl); animation: slideUp 0.3s ease; }
-.win-box h2 { font-size: 1.6rem; margin-bottom: 0.3rem; }
-.win-box .win-emoji { font-size: 3.5rem; margin-bottom: 0.3rem; }
-.win-box .win-score { font-size: 1rem; color: var(--text-light); margin-bottom: 1.2rem; }
-.win-box .btn-group { display: flex; flex-direction: row; gap: 0.5rem; justify-content: center; }
-.win-box .gomoku-btn { min-width: 120px; }
+/* Win overlay */
+.win-ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: center; justify-content: center; }
+.win-ov.show { display: flex; }
+.win-box { background: var(--bg); border-radius: var(--radius-lg); padding: 2.5rem; text-align: center; box-shadow: var(--shadow-xl); animation: slideUp 0.3s ease; }
+.win-box .emo { font-size: 3rem; margin-bottom: 0.3rem; }
+.win-box h2 { font-size: 1.5rem; margin: 0 0 0.3rem; color: var(--text); background: none; -webkit-text-fill-color: var(--text); -webkit-background-clip: unset; }
+.win-box .score { color: var(--text-light); font-size: 0.9rem; margin-bottom: 1rem; }
+.win-box .row { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
 
 @media (max-width: 600px) {
-  .board-outer { padding: 8px; }
-  .panel { flex-direction: row; flex-wrap: wrap; max-width: 100%; min-width: auto; gap: 0.5rem; }
-  .player-card { flex: 1; min-width: 100px; padding: 0.8rem; }
-  .player-score { font-size: 1.4rem; }
-  .btn-group { flex-direction: row; flex: 2; min-width: 180px; }
-  .start-screen h1 { font-size: 2rem; }
-  .game-wrap { gap: 1rem; }
+  .board-frame { padding: 6px; }
+  .side-panel { flex-direction: row; flex-wrap: wrap; max-width: 100%; min-width: auto; }
+  .p-card { flex: 1; min-width: 90px; padding: 0.6rem; }
+  .p-card .p-win { font-size: 1.3rem; }
+  .gm-btn { font-size: 0.78rem; padding: 0.4rem 0.6rem; }
+  .start-card { padding: 2rem 1.2rem; }
 }
 </style>
 </head>
 <body>
-<nav>
-  <div class="nav-inner">
-    <a href="index.html" class="logo">Zihan</a>
-    <div class="nav-links">
-      <a href="index.html">首页</a>
-      <a href="blog.html">博客</a>
-      <a href="games.html">小游戏</a>
-      <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
-    </div>
-  </div>
-</nav>
+<nav><div class="nav-inner"><a href="index.html" class="logo">Zihan</a><div class="nav-links"><a href="index.html">首页</a><a href="blog.html">博客</a><a href="games.html">小游戏</a><button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button></div></div></nav>
 
 <div class="gomoku-page">
 
-  <!-- Start Screen -->
-  <div class="start-screen" id="startScreen">
-    <h1>⚫<span>五子棋</span>⚪</h1>
-    <p class="sub">双人对战 · 轮流落子 · 五子连珠者胜</p>
-    <button class="start-btn" onclick="startGame()">开始对战</button>
-    <p class="start-rules">规则：黑棋先行，两人轮流点击棋盘落子<br>横、竖、斜任意方向率先连成五子者获胜<br>支持悔棋，手机电脑都能玩</p>
-  </div>
-
-  <!-- Game Area -->
-  <div class="game-area" id="gameArea">
-    <div class="gomoku-header">
+  <!-- START -->
+  <div id="startView">
+    <div class="start-card">
+      <div class="icon">⚫⚪</div>
       <h1>五子棋</h1>
-      <p id="turnLabel">黑棋先行</p>
+      <p class="subtitle">双人对战 · 轮流下棋</p>
+      <button class="start-play-btn" onclick="begin()">开始对战</button>
+      <p class="rules">黑棋先行，轮流点击棋盘落子<br>横、竖、斜任意方向率先连成五子者获胜<br>支持悔棋，手机 / 电脑都能玩</p>
     </div>
-    <div class="game-wrap">
-      <div class="board-outer">
-        <div class="board-inner" id="board"></div>
-      </div>
-      <div class="panel">
-        <div class="player-card active" id="blackCard">
-          <div class="player-name">⚫ 黑棋</div>
-          <div class="player-score" id="blackScore">0</div>
-        </div>
-        <div class="status-divider">VS</div>
-        <div class="player-card" id="whiteCard">
-          <div class="player-name">⚪ 白棋</div>
-          <div class="player-score" id="whiteScore">0</div>
-        </div>
-        <div class="move-counter" id="moveCounter">第 1 手</div>
-        <div class="btn-group">
-          <button class="gomoku-btn" onclick="undoMove()" id="undoBtn">↩ 悔棋</button>
-          <button class="gomoku-btn primary" onclick="resetGame()">🔄 重新开始</button>
-          <a href="games.html" class="gomoku-btn">← 返回列表</a>
-        </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="gameView" style="display:none">
+    <div class="game-layout">
+      <div class="board-frame"><div class="board-grid" id="board"></div></div>
+      <div class="side-panel">
+        <div class="p-card active" id="bc"><div class="p-name">⚫ 黑棋</div><div class="p-win" id="bs">0</div></div>
+        <div class="vs-div">VS</div>
+        <div class="p-card" id="wc"><div class="p-name">⚪ 白棋</div><div class="p-win" id="ws">0</div></div>
+        <div class="turn-tag" id="tTag">黑棋先行</div>
+        <a class="gm-btn" onclick="undo()" id="ub" style="cursor:pointer">↩ 悔棋</a>
+        <a class="gm-btn primary" onclick="restart()" style="cursor:pointer">🔄 重新开始</a>
+        <a href="games.html" class="gm-btn">← 返回</a>
       </div>
     </div>
   </div>
 </div>
 
-<div class="win-overlay" id="winOverlay">
-  <div class="win-box">
-    <div class="win-emoji" id="winEmoji">🎉</div>
-    <h2 id="winTitle"></h2>
-    <p class="win-score" id="winScore"></p>
-    <div class="btn-group">
-      <button class="gomoku-btn primary" onclick="resetFromOverlay()">再来一局</button>
-      <button class="gomoku-btn" onclick="closeOverlay()">看看棋盘</button>
-    </div>
-  </div>
-</div>
+<!-- WIN OVERLAY -->
+<div class="win-ov" id="wo"><div class="win-box"><div class="emo" id="we">🎉</div><h2 id="wt"></h2><p class="score" id="ws2"></p><div class="row"><a class="gm-btn primary" style="cursor:pointer" onclick="again()">再来一局</a><a class="gm-btn" style="cursor:pointer" onclick="closeWin()">看看棋盘</a></div></div></div>
 
 <footer><p>&copy; 2026 蔡梓涵</p></footer>
 
@@ -206,140 +121,46 @@ body.dark .board-inner { background: #c49a3c; }
 <script src="theme.js"></script>
 <script src="ux.js"></script>
 <script>
-var SIZE = 15;
-var board, history, currentPlayer, gameOver, winCells, lastMove;
-var scores = { black: 0, white: 0 };
-var started = false;
-var CELL_SIZE = 32;
+var S=15,mat,hist,turn,over,wCells,lMove,scores={b:0,w:0},sz=32;
+function mkMat(){mat=[];for(var r=0;r<S;r++){mat[r]=[];for(var c=0;c<S;c++)mat[r][c]=0;}hist=[];turn=1;over=false;wCells=[];lMove=null;}
+function calcSz(){sz=Math.max(22,Math.min(36,Math.floor((Math.min(window.innerWidth-60,500))/S)));}
 
-function calcCellSize() {
-  var maxW = Math.min(window.innerWidth - 60, 500);
-  CELL_SIZE = Math.floor(maxW / 15);
-  CELL_SIZE = Math.max(22, Math.min(CELL_SIZE, 36));
-}
-
-function initBoard() {
-  board = [];
-  for (var r = 0; r < SIZE; r++) { board[r] = []; for (var c = 0; c < SIZE; c++) board[r][c] = null; }
-  history = [];
-  currentPlayer = 'black';
-  gameOver = false;
-  winCells = [];
-  lastMove = null;
-}
-
-window.startGame = function() {
-  started = true;
-  calcCellSize();
-  initBoard();
-  document.getElementById('startScreen').style.display = 'none';
-  document.getElementById('gameArea').classList.add('active');
-  render();
-};
-
-function render() {
-  calcCellSize();
-  var boardEl = document.getElementById('board');
-  boardEl.style.gridTemplateColumns = 'repeat('+SIZE+', '+CELL_SIZE+'px)';
-  boardEl.style.gridTemplateRows = 'repeat('+SIZE+', '+CELL_SIZE+'px)';
-
-  var html = '';
-  for (var r = 0; r < SIZE; r++) {
-    for (var c = 0; c < SIZE; c++) {
-      var inner = '';
-      // Grid lines
-      inner += '<span class="vline"></span><span class="hline"></span>';
-
-      if (board[r][c]) {
-        var isWin = winCells.some(function(w){return w[0]===r && w[1]===c;});
-        var isLast = lastMove && lastMove[0]===r && lastMove[1]===c && !gameOver;
-        var stoneSize = CELL_SIZE - 6;
-        inner += '<div class="stone '+board[r][c]+(isWin?' win':'')+(isLast?' last':'')+'" style="width:'+stoneSize+'px;height:'+stoneSize+'px"></div>';
-      }
-
-      html += '<div class="cell" style="width:'+CELL_SIZE+'px;height:'+CELL_SIZE+'px" onclick="makeMove('+r+','+c+')">'+inner+'</div>';
-    }
+window.begin=function(){calcSz();mkMat();document.getElementById('startView').style.display='none';document.getElementById('gameView').style.display='block';draw();};
+function draw(){
+  calcSz();var b=document.getElementById('board');
+  b.style.gridTemplateColumns='repeat('+S+','+sz+'px)';b.style.gridTemplateRows='repeat('+S+','+sz+'px)';
+  var h='';
+  for(var r=0;r<S;r++)for(var c=0;c<S;c++){
+    var inner='<span class="vline"></span><span class="hline"></span><span class="dot"></span>';
+    if(mat[r][c]){var isW=wCells.some(function(w){return w[0]===r&&w[1]===c;}),isL=lMove&&lMove[0]===r&&lMove[1]===c&&!over,st=mat[r][c]===1?'black':'white',ss=sz-6;
+      inner+='<div class="stone '+st+(isW?' win':'')+(isL?' last':'')+'" style="width:'+ss+'px;height:'+ss+'px"></div>';}
+    h+='<div class="cell" style="width:'+sz+'px;height:'+sz+'px" onclick="drop('+r+','+c+')">'+inner+'</div>';
   }
-  boardEl.innerHTML = html;
-
-  // Update UI
-  document.getElementById('blackCard').classList.toggle('active', currentPlayer === 'black' && !gameOver);
-  document.getElementById('whiteCard').classList.toggle('active', currentPlayer === 'white' && !gameOver);
-  document.getElementById('blackScore').textContent = scores.black;
-  document.getElementById('whiteScore').textContent = scores.white;
-  document.getElementById('moveCounter').textContent = '第 '+(history.length+1)+' 手';
-  document.getElementById('undoBtn').disabled = history.length === 0 || gameOver;
-
-  var lbl = document.getElementById('turnLabel');
-  if (gameOver) {
-    lbl.textContent = (currentPlayer==='black'?'黑棋获胜！':'白棋获胜！');
-  } else {
-    lbl.textContent = (currentPlayer==='black'?'轮到黑棋':'轮到白棋');
-  }
+  b.innerHTML=h;
+  document.getElementById('bc').classList.toggle('active',turn===1&&!over);
+  document.getElementById('wc').classList.toggle('active',turn===2&&!over);
+  document.getElementById('bs').textContent=scores.b;document.getElementById('ws').textContent=scores.w;
+  document.getElementById('tTag').textContent=over?(turn===1?'黑棋获胜':'白棋获胜'):(turn===1?'轮到黑棋':'轮到白棋');
+  document.getElementById('ub').style.pointerEvents=(hist.length===0||over)?'none':'auto';
+  document.getElementById('ub').style.opacity=(hist.length===0||over)?0.3:1;
 }
 
-function makeMove(r, c) {
-  if (gameOver) return;
-  if (board[r][c]) return;
-
-  board[r][c] = currentPlayer;
-  history.push([r, c, currentPlayer]);
-  lastMove = [r, c];
-
-  var result = checkWin(r, c, currentPlayer);
-  if (result) {
-    gameOver = true;
-    winCells = result;
-    scores[currentPlayer] = (scores[currentPlayer] || 0) + 1;
-    render();
-    showWin(currentPlayer);
-    return;
-  }
-  if (history.length === SIZE * SIZE) { gameOver = true; render(); showDraw(); return; }
-
-  currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
-  render();
-}
-
-function checkWin(r, c, player) {
-  var dirs = [[0,1],[1,0],[1,1],[1,-1]];
-  for (var d = 0; d < dirs.length; d++) {
-    var dr = dirs[d][0], dc = dirs[d][1], cells = [[r,c]];
-    for (var i = 1; i < 5; i++) { var nr=r+dr*i, nc=c+dc*i; if (nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&board[nr][nc]===player) cells.push([nr,nc]); else break; }
-    for (var i = 1; i < 5; i++) { var nr=r-dr*i, nc=c-dc*i; if (nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&board[nr][nc]===player) cells.push([nr,nc]); else break; }
-    if (cells.length >= 5) return cells;
-  }
-  return null;
-}
-
-function undoMove() {
-  if (gameOver || history.length === 0) return;
-  var last = history.pop();
-  board[last[0]][last[1]] = null;
-  currentPlayer = last[2];
-  lastMove = history.length>0 ? [history[history.length-1][0], history[history.length-1][1]] : null;
-  render();
-}
-
-window.resetGame = function() { initBoard(); render(); };
-window.resetFromOverlay = function() { document.getElementById('winOverlay').classList.remove('show'); initBoard(); render(); };
-window.closeOverlay = function() { document.getElementById('winOverlay').classList.remove('show'); };
-
-function showWin(player) {
-  var o = document.getElementById('winOverlay');
-  document.getElementById('winEmoji').textContent = '🎉';
-  document.getElementById('winTitle').textContent = (player==='black'?'⚫ 黑棋获胜':'⚪ 白棋获胜');
-  document.getElementById('winScore').textContent = '比分 '+scores.black+':'+scores.white;
-  o.classList.add('show');
-}
-
-function showDraw() {
-  var o = document.getElementById('winOverlay');
-  document.getElementById('winEmoji').textContent = '🤝';
-  document.getElementById('winTitle').textContent = '握手言和';
-  document.getElementById('winScore').textContent = '棋盘已满 '+scores.black+':'+scores.white;
-  o.classList.add('show');
-}
+function drop(r,c){if(over||mat[r][c])return;mat[r][c]=turn;hist.push([r,c,turn]);lMove=[r,c];
+  var res=check(r,c,turn);
+  if(res){over=true;wCells=res;var key=turn===1?'b':'w';scores[key]=(scores[key]||0)+1;draw();win(turn);return;}
+  if(hist.length===S*S){over=true;draw();draw2();return;}
+  turn=turn===1?2:1;draw();}
+function check(r,c,p){var dirs=[[0,1],[1,0],[1,1],[1,-1]];
+  for(var d=0;d<4;d++){var dr=dirs[d][0],dc=dirs[d][1],cells=[[r,c]];
+    for(var i=1;i<5;i++){var nr=r+dr*i,nc=c+dc*i;if(nr>=0&&nr<S&&nc>=0&&nc<S&&mat[nr][nc]===p)cells.push([nr,nc]);else break;}
+    for(var i=1;i<5;i++){var nr=r-dr*i,nc=c-dc*i;if(nr>=0&&nr<S&&nc>=0&&nc<S&&mat[nr][nc]===p)cells.push([nr,nc]);else break;}
+    if(cells.length>=5)return cells;}return null;}
+function undo(){if(over||!hist.length)return;var l=hist.pop();mat[l[0]][l[1]]=0;turn=l[2];lMove=hist.length?[hist[hist.length-1][0],hist[hist.length-1][1]]:null;draw();}
+window.restart=function(){mkMat();draw();};
+window.again=function(){document.getElementById('wo').classList.remove('show');mkMat();draw();};
+window.closeWin=function(){document.getElementById('wo').classList.remove('show');};
+function win(p){var o=document.getElementById('wo');document.getElementById('we').textContent='🎉';document.getElementById('wt').textContent=(p===1?'⚫ 黑棋获胜':'⚪ 白棋获胜');document.getElementById('ws2').textContent='比分 '+scores.b+':'+scores.w;o.classList.add('show');}
+function draw2(){var o=document.getElementById('wo');document.getElementById('we').textContent='🤝';document.getElementById('wt').textContent='握手言和';document.getElementById('ws2').textContent='棋盘已满';o.classList.add('show');}
 </script>
 </body>
 </html>
