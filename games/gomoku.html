@@ -104,8 +104,8 @@ body.dark .board-grid { background: #c49a3c; }
         <div class="vs-div">VS</div>
         <div class="p-card" id="wc"><div class="p-name">⚪ 白棋</div><div class="p-win" id="ws">0</div></div>
         <div class="turn-tag" id="tTag">黑棋先行</div>
-        <a class="gm-btn" onclick="undo()" id="ub" style="cursor:pointer">↩ 悔棋</a>
-        <a class="gm-btn primary" onclick="restart()" style="cursor:pointer">🔄 重新开始</a>
+        <a class="gm-btn" href="javascript:void(0)" onclick="undo()" id="ub">↩ 悔棋</a>
+        <a class="gm-btn primary" href="javascript:void(0)" onclick="restart()">🔄 重新开始</a>
         <a href="games.html" class="gm-btn">← 返回</a>
       </div>
     </div>
@@ -113,7 +113,7 @@ body.dark .board-grid { background: #c49a3c; }
 </div>
 
 <!-- WIN OVERLAY -->
-<div class="win-ov" id="wo"><div class="win-box"><div class="emo" id="we">🎉</div><h2 id="wt"></h2><p class="score" id="ws2"></p><div class="row"><a class="gm-btn primary" style="cursor:pointer" onclick="again()">再来一局</a><a class="gm-btn" style="cursor:pointer" onclick="closeWin()">看看棋盘</a></div></div></div>
+<div class="win-ov" id="wo"><div class="win-box"><div class="emo" id="we">🎉</div><h2 id="wt"></h2><p class="score" id="ws2"></p><div class="row"><a class="gm-btn primary" href="javascript:void(0)" onclick="again()">再来一局</a><a class="gm-btn" href="javascript:void(0)" onclick="closeWin()">看看棋盘</a></div></div></div>
 
 <footer><p>&copy; 2026 蔡梓涵</p></footer>
 
