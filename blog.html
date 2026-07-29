@@ -151,10 +151,15 @@
             window._showConfirm('确定删除这篇文章吗？', async function() {
             // delId format: "issue-123" or "preset-1"
             if (delId.indexOf('preset-') === 0) {
-                // 预置文章用 localStorage 标记删除
-                var deleted = JSON.parse(localStorage.getItem('deleted_preset_articles') || '[]');
-                deleted.push(delId);
-                localStorage.setItem('deleted_preset_articles', JSON.stringify(deleted));
+                // 预置文章：写 GitHub Issue #1 记录全局删除
+                var T = loadToken();
+                try {
+                    await fetch('https://api.github.com/repos/yjcc520/my-page/issues/1/comments', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                        body: JSON.stringify({ body: 'delete-preset:' + delId })
+                    });
+                } catch(e) {}
                 var card = btn.closest('.blog-card');
                 if (card) { card.style.opacity = '0'; setTimeout(function() { card.remove(); }, 300); }
                 return;
@@ -191,7 +196,19 @@
         async function loadArticles() {
             var list = document.getElementById('blogList');
             var all = [];
-            var deletedPreset = JSON.parse(localStorage.getItem('deleted_preset_articles') || '[]');
+
+            // 从 GitHub Issue #1 的评论读取哪些预设文章被删了
+            var deletedPreset = [];
+            try {
+                var dpsResp = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/1/comments?per_page=100', {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                });
+                var dpsComments = await dpsResp.json();
+                dpsComments.forEach(function(c) {
+                    var m = c.body.match(/^delete-preset:(preset-\d+)/);
+                    if (m) deletedPreset.push(m[1]);
+                });
+            } catch(e) {}
 
             // 预置文章
             articles.forEach(function(a) {
