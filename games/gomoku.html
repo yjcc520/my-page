@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>五子棋对战 | 蔡梓涵</title>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../styles.css">
 <style>
 /* ---- Game-zone reset ---- */
 .gomoku-page { padding: 5rem 1.5rem 3rem; min-height: 100vh; display: flex; flex-direction: column; align-items: center; text-align: center; }
@@ -80,7 +80,7 @@ body.dark .board-grid { background: #c49a3c; }
 </style>
 </head>
 <body>
-<nav><div class="nav-inner"><a href="index.html" class="logo">Zihan</a><div class="nav-links"><a href="index.html">首页</a><a href="blog.html">博客</a><a href="games.html">小游戏</a><button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button></div></div></nav>
+<nav><div class="nav-inner"><a href="../index.html" class="logo">Zihan</a><div class="nav-links"><a href="../index.html">首页</a><a href="../blog.html">博客</a><a href="../games.html">小游戏</a><button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button></div></div></nav>
 
 <div class="gomoku-page">
 
@@ -106,7 +106,7 @@ body.dark .board-grid { background: #c49a3c; }
         <div class="turn-tag" id="tTag">黑棋先行</div>
         <a class="gm-btn" href="javascript:void(0)" onclick="undo()" id="ub">↩ 悔棋</a>
         <a class="gm-btn primary" href="javascript:void(0)" onclick="restart()">🔄 重新开始</a>
-        <a href="games.html" class="gm-btn">← 返回</a>
+        <a href="../games.html" class="gm-btn">← 返回</a>
       </div>
     </div>
   </div>
@@ -117,9 +117,9 @@ body.dark .board-grid { background: #c49a3c; }
 
 <footer><p>&copy; 2026 蔡梓涵</p></footer>
 
-<script src="user.js"></script>
-<script src="theme.js"></script>
-<script src="ux.js"></script>
+<script src="../user.js"></script>
+<script src="../theme.js"></script>
+<script src="../ux.js"></script>
 <script>
 var S=15,mat,hist,turn,over,wCells,lMove,scores={b:0,w:0},sz=32;
 function mkMat(){mat=[];for(var r=0;r<S;r++){mat[r]=[];for(var c=0;c<S;c++)mat[r][c]=0;}hist=[];turn=1;over=false;wCells=[];lMove=null;}
