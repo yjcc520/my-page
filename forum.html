@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>论坛 | 蔡梓涵</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.forum-page { padding: 5rem 1.5rem 3rem; max-width: 860px; margin: 0 auto; min-height: 80vh; }
+
+/* Header */
+.forum-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.2rem; }
+.forum-head h1 { font-size: 1.8rem; font-weight: 800; color: var(--text); background: none; -webkit-text-fill-color: var(--text); -webkit-background-clip: unset; }
+.forum-head-actions { display: flex; gap: 0.5rem; align-items: center; }
+.forum-search { padding: 0.45rem 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.88rem; font-family: inherit; background: var(--bg); color: var(--text); width: 180px; transition: border-color 0.2s; }
+.forum-search:focus { outline: none; border-color: var(--primary); }
+.view-toggle { display: flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.view-btn { padding: 0.35rem 0.7rem; background: var(--bg); border: none; cursor: pointer; font-size: 0.85rem; color: var(--text-light); transition: all 0.15s; }
+.view-btn.active { background: var(--primary); color: #fff; }
+.forum-post-btn { padding: 0.45rem 1.2rem; background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; box-shadow: 0 4px 14px rgba(79,70,229,0.3); }
+.forum-post-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); }
+
+/* Tabs */
+.forum-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tab-btn { padding: 0.55rem 1.1rem; border: none; background: none; cursor: pointer; font-family: inherit; font-size: 0.9rem; font-weight: 500; color: var(--text-light); white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+.tab-btn:hover { color: var(--primary); }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+
+/* Pinned */
+.pinned-section { margin-bottom: 1rem; }
+.pinned-label { font-size: 0.75rem; color: var(--text-light); font-weight: 600; letter-spacing: 0.08em; margin-bottom: 0.5rem; padding-left: 0.3rem; }
+
+/* Post cards */
+.post-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.post-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.2rem; box-shadow: var(--shadow-sm); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+.post-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.post-card.pinned { border-left: 3px solid #f59e0b; background: rgba(245,158,11,0.03); }
+.post-top { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; flex-wrap: wrap; }
+.post-tag { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+.tag-chat { background: rgba(79,70,229,0.08); color: var(--primary); }
+.tag-tech { background: rgba(6,182,212,0.08); color: #0891b2; }
+.tag-poetry { background: rgba(217,119,6,0.08); color: #b45309; }
+.tag-game { background: rgba(22,163,74,0.08); color: #15803d; }
+.tag-other { background: rgba(100,116,139,0.08); color: #64748b; }
+.post-pin-badge { font-size: 0.7rem; color: #f59e0b; }
+.post-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.2rem; color: var(--text); }
+.post-title a { color: var(--text); text-decoration: none; }
+.post-title a:hover { color: var(--primary); }
+.post-preview { font-size: 0.85rem; color: var(--text-light); margin-bottom: 0.5rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.post-meta { display: flex; align-items: center; gap: 1rem; font-size: 0.78rem; color: var(--text-light); flex-wrap: wrap; }
+.post-meta span { display: flex; align-items: center; gap: 0.2rem; }
+.post-like-btn { background: none; border: none; cursor: pointer; color: var(--text-light); font-size: 0.78rem; padding: 0; font-family: inherit; display: flex; align-items: center; gap: 0.2rem; }
+.post-like-btn:hover { color: var(--primary); }
+.post-like-btn.liked { color: var(--primary); font-weight: 600; }
+
+/* List view */
+.post-list.list-view .post-card { display: flex; align-items: center; gap: 1rem; padding: 0.7rem 1rem; }
+.post-list.list-view .post-preview { display: none; }
+.post-list.list-view .post-title { font-size: 0.95rem; margin-bottom: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.post-list.list-view .post-meta { width: 280px; flex-shrink: 0; justify-content: flex-end; }
+
+/* Empty */
+.forum-empty { text-align: center; color: var(--text-light); padding: 3rem; font-size: 0.95rem; }
+.forum-loading { text-align: center; padding: 3rem; color: var(--text-light); }
+
+/* Post editor modal */
+.editor-ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: center; justify-content: center; }
+.editor-ov.show { display: flex; }
+.editor-box { background: var(--bg); border-radius: var(--radius-lg); padding: 1.5rem 2rem; width: 600px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-xl); animation: slideUp 0.25s ease; }
+.editor-box h3 { font-size: 1.15rem; margin-bottom: 1rem; color: var(--text); background: none; -webkit-text-fill-color: var(--text); }
+.editor-inp { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.95rem; font-family: inherit; margin-bottom: 0.6rem; background: var(--bg); color: var(--text); }
+.editor-inp:focus { outline: none; border-color: var(--primary); }
+.editor-ta { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.95rem; font-family: inherit; min-height: 140px; resize: vertical; margin-bottom: 0.6rem; background: var(--bg); color: var(--text); }
+.editor-ta:focus { outline: none; border-color: var(--primary); }
+.editor-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; }
+.editor-select { padding: 0.35rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.85rem; font-family: inherit; background: var(--bg); color: var(--text); }
+.editor-anon { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; color: var(--text-light); cursor: pointer; }
+.editor-btns { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+.editor-cancel { padding: 0.45rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); cursor: pointer; font-family: inherit; font-size: 0.88rem; }
+.editor-submit { padding: 0.45rem 1.5rem; background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-weight: 600; font-size: 0.88rem; }
+.editor-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.editor-err { color: #e53e3e; font-size: 0.82rem; margin-bottom: 0.5rem; display: none; }
+
+/* Wall tab */
+#wallTabContent { display: none; }
+
+@media (max-width: 600px) {
+  .forum-head h1 { font-size: 1.4rem; }
+  .forum-search { width: 120px; }
+  .forum-head-actions { gap: 0.3rem; }
+  .post-list.list-view .post-meta { width: auto; }
+  .post-list.list-view .post-card { flex-wrap: wrap; }
+  .tab-btn { padding: 0.45rem 0.7rem; font-size: 0.82rem; }
+}
+</style>
+</head>
+<body>
+<nav><div class="nav-inner"><a href="index.html" class="logo">Zihan</a><div class="nav-links"><a href="index.html">首页</a><a href="blog.html">博客</a><a href="forum.html" class="active">论坛</a><a href="games.html">小游戏</a><button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button></div></div></nav>
+
+<div class="forum-page">
+
+  <div class="forum-head">
+    <h1>论坛</h1>
+    <div class="forum-head-actions">
+      <input type="text" class="forum-search" id="forumSearch" placeholder="🔍 搜索帖子..." oninput="filterPosts()">
+      <div class="view-toggle">
+        <button class="view-btn active" onclick="setView('card')" id="vCard">▦</button>
+        <button class="view-btn" onclick="setView('list')" id="vList">≡</button>
+      </div>
+      <button class="forum-post-btn" onclick="openEditor()">✏️ 发帖</button>
+    </div>
+  </div>
+
+  <div class="forum-tabs" id="forumTabs">
+    <button class="tab-btn active" data-cat="">全部</button>
+    <button class="tab-btn" data-cat="chat">💬 闲聊</button>
+    <button class="tab-btn" data-cat="tech">💻 技术</button>
+    <button class="tab-btn" data-cat="poetry">📜 诗词</button>
+    <button class="tab-btn" data-cat="game">🎮 游戏</button>
+    <button class="tab-btn" data-cat="wall">📝 留言墙</button>
+  </div>
+
+  <div id="forumView">
+    <div class="pinned-section" id="pinnedSection" style="display:none">
+      <div class="pinned-label">📌 置顶</div>
+      <div class="post-list" id="pinnedList"></div>
+    </div>
+    <div class="post-list" id="postList"><p class="forum-loading">加载中...</p></div>
+  </div>
+
+  <!-- Wall content (shown when wall tab active) -->
+  <div id="wallTabContent"></div>
+
+</div>
+
+<!-- Post editor -->
+<div class="editor-ov" id="editorOv">
+  <div class="editor-box">
+    <h3>发帖</h3>
+    <input class="editor-inp" id="edTitle" placeholder="帖子标题" maxlength="80">
+    <textarea class="editor-ta" id="edBody" placeholder="正文内容..." maxlength="5000"></textarea>
+    <div class="editor-row">
+      <select class="editor-select" id="edCat">
+        <option value="chat">💬 闲聊</option>
+        <option value="tech">💻 技术</option>
+        <option value="poetry">📜 诗词</option>
+        <option value="game">🎮 游戏</option>
+      </select>
+      <label class="editor-anon"><input type="checkbox" id="edAnon"> 匿名发帖</label>
+    </div>
+    <p class="editor-err" id="edErr"></p>
+    <div class="editor-btns">
+      <button class="editor-cancel" onclick="closeEditor()">取消</button>
+      <button class="editor-submit" id="edSubmit" onclick="publishPost()">发布</button>
+    </div>
+  </div>
+</div>
+
+<footer><p>&copy; 2026 蔡梓涵</p></footer>
+
+<script src="user.js"></script>
+<script src="theme.js"></script>
+<script src="ux.js"></script>
+<script>
+var REPO='yjcc520/my-page', allPosts=[], curCat='', curView='card', wallLoaded=false;
+
+function loadToken(){var h='6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';return h.match(/.{1,2}/g).map(function(b){return String.fromCharCode(parseInt(b,16));}).join('');}
+function eHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function dg(s){return s.replace(/(<([^>]+)>)/gi,'').substring(0,100);}
+
+// Tabs
+document.getElementById('forumTabs').addEventListener('click',function(e){
+  var btn=e.target.closest('.tab-btn');if(!btn)return;
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  curCat=btn.getAttribute('data-cat');
+  if(curCat==='wall'){showWallTab();return;}
+  document.getElementById('forumView').style.display='block';
+  document.getElementById('wallTabContent').style.display='none';
+  filterPosts();
+});
+
+// View toggle
+window.setView=function(v){
+  curView=v;
+  document.getElementById('vCard').classList.toggle('active',v==='card');
+  document.getElementById('vList').classList.toggle('active',v==='list');
+  document.getElementById('postList').classList.toggle('list-view',v==='list');
+  document.getElementById('pinnedList').classList.toggle('list-view',v==='list');
+};
+
+// Filter/search
+window.filterPosts=function(){
+  var q=(document.getElementById('forumSearch').value||'').toLowerCase();
+  var posts=allPosts.filter(function(p){
+    if(p.isPinned)return false;
+    if(curCat&&p.cat!==curCat)return false;
+    if(q&&p.title.toLowerCase().indexOf(q)<0&&(p.body||'').toLowerCase().indexOf(q)<0)return false;
+    return true;
+  });
+  renderPostList(posts,document.getElementById('postList'));
+  document.getElementById('postList').classList.toggle('list-view',curView==='list');
+  // Pinned
+  var pinned=allPosts.filter(function(p){return p.isPinned&&(!curCat||p.cat===curCat);});
+  document.getElementById('pinnedSection').style.display=pinned.length?'block':'none';
+  if(pinned.length)renderPostList(pinned,document.getElementById('pinnedList'));
+};
+
+// Load posts
+async function loadPosts(){
+  try{
+    var r=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:forum+type:issue+state:open&sort=created&order=desc&per_page=60',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    var d=await r.json();
+    allPosts=[];
+    (d.items||[]).forEach(function(issue){
+      var body=issue.body||'';
+      var am=body.match(/\*\*作者\*\*[：:]\s*(.+)/);
+      var cm=body.match(/\*\*分类\*\*[：:]\s*(\w+)/);
+      var author=am?am[1].trim():'匿名';
+      var cat=cm?cm[1].trim():'chat';
+      var content=body.replace(/\*\*作者\*\*[：:].+\n?/,'').replace(/\*\*分类\*\*[：:].+\n?/,'').replace(/\*\*匿名\*\*/,'').trim();
+      var preview=dg(content);
+      var isPinned=issue.labels.some(function(l){return l.name==='forum-pinned';});
+      var replies=issue.comments||0;
+      var views=getViews(issue.number);
+      var liked=getPostLike(issue.number);
+      allPosts.push({id:issue.number,title:issue.title,body:preview,fullBody:content,author:author,cat:cat,time:issue.created_at.split('T')[0],isPinned:isPinned,replies:replies,views:views,liked:liked.liked,likeCount:liked.count});
+    });
+    filterPosts();
+  }catch(e){document.getElementById('postList').innerHTML='<p class="forum-empty">加载失败</p>';}
+  // Load view counts
+  loadViewCounts();
+}
+
+// View counts via stats issue
+var viewsData={};
+function getViews(id){return viewsData['forum-'+id]||0;}
+async function loadViewCounts(){
+  try{
+    var r=await fetch('https://api.github.com/repos/'+REPO+'/issues/1/comments?per_page=100',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    var comments=await r.json();
+    comments.forEach(function(c){
+      var m=c.body.match(/^view:forum-(\d+)/);
+      if(m)viewsData['forum-'+m[1]]=(viewsData['forum-'+m[1]]||0)+1;
+    });
+    filterPosts();
+  }catch(e){}
+}
+
+// Likes
+function getPostLike(id){
+  return {count:parseInt(localStorage.getItem('fl_'+id)||'0'),liked:localStorage.getItem('fl_liked_'+id)==='true'};
+}
+function togglePostLike(id){
+  var l=getPostLike(id);
+  if(l.liked){l.count=Math.max(0,l.count-1);l.liked=false;}else{l.count++;l.liked=true;}
+  localStorage.setItem('fl_'+id,l.count);localStorage.setItem('fl_liked_'+id,l.liked);
+  return l;
+}
+
+// Render post list
+function renderPostList(posts,container){
+  if(!posts.length){container.innerHTML='<p class="forum-empty">暂无帖子</p>';return;}
+  container.innerHTML=posts.map(function(p){
+    var cats={chat:'闲聊',tech:'技术',poetry:'诗词',game:'游戏'};
+    var catName=cats[p.cat]||'闲聊';
+    return '<div class="post-card'+(p.isPinned?' pinned':'')+'" onclick="openPost('+p.id+')">'+
+      '<div class="post-top">'+
+        (p.isPinned?'<span class="post-pin-badge">📌</span>':'')+
+        '<span class="post-tag tag-'+p.cat+'">'+catName+'</span>'+
+      '</div>'+
+      '<div class="post-title">'+eHtml(p.title)+'</div>'+
+      '<div class="post-preview">'+eHtml(p.body)+'</div>'+
+      '<div class="post-meta">'+
+        '<span>'+eHtml(p.author)+'</span>'+
+        '<span>'+p.time+'</span>'+
+        '<span>💬 '+p.replies+'</span>'+
+        '<span>👁 '+p.views+'</span>'+
+        '<button class="post-like-btn'+(p.liked?' liked':'')+'" onclick="event.stopPropagation();doLike('+p.id+',this)">👍 <span>'+p.likeCount+'</span></button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  setTimeout(function(){if(window._uxObserve)window._uxObserve(container);},50);
+}
+
+window.doLike=function(id,btn){
+  var l=togglePostLike(id);
+  btn.classList.toggle('liked',l.liked);
+  btn.querySelector('span').textContent=l.count;
+};
+
+window.openPost=function(id){
+  // Track view
+  var key='fv_'+id;
+  if(!sessionStorage.getItem(key)){
+    sessionStorage.setItem(key,'1');
+    try{
+      var T=loadToken();
+      fetch('https://api.github.com/repos/'+REPO+'/issues/1/comments',{method:'POST',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({body:'view:forum-'+id})});
+    }catch(e){}
+  }
+  window.location.href='article.html?id='+id+'&type=issue';
+};
+
+// Post editor
+window.openEditor=function(){
+  var name=window._siteGetNickname?window._siteGetNickname():'';
+  if(!name){if(window._siteShowRegister)window._siteShowRegister();return;}
+  document.getElementById('editorOv').classList.add('show');
+  document.getElementById('edTitle').focus();
+};
+window.closeEditor=function(){
+  document.getElementById('editorOv').classList.remove('show');
+  document.getElementById('edTitle').value='';
+  document.getElementById('edBody').value='';
+  document.getElementById('edErr').style.display='none';
+};
+
+window.publishPost=async function(){
+  var name=window._siteGetNickname?window._siteGetNickname():'';
+  var title=document.getElementById('edTitle').value.trim();
+  var body=document.getElementById('edBody').value.trim();
+  var cat=document.getElementById('edCat').value;
+  var anon=document.getElementById('edAnon').checked;
+  var err=document.getElementById('edErr'),btn=document.getElementById('edSubmit');
+
+  if(!title){err.textContent='请输入标题';err.style.display='block';return;}
+  if(!body){err.textContent='请输入正文';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='发布中...';err.style.display='none';
+
+  var author=anon?'匿名':name;
+  var labels=['forum'];
+  if(cat==='chat')labels.push('forum-chat');
+  else if(cat==='tech')labels.push('forum-tech');
+  else if(cat==='poetry')labels.push('forum-poetry');
+  else if(cat==='game')labels.push('forum-game');
+
+  var issueBody='**作者**：'+author+'\n**分类**：'+cat+'\n'+(anon?'**匿名**\n':'')+'\n'+body;
+
+  try{
+    var T=loadToken();
+    var resp=await fetch('https://api.github.com/repos/'+REPO+'/issues',{method:'POST',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({title:title,body:issueBody,labels:labels})});
+    if(resp.ok){
+      var issue=await resp.json();
+      // Create comment issue for replies
+      await fetch('https://api.github.com/repos/'+REPO+'/issues',{method:'POST',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({title:'article-'+issue.number,body:'> 帖子：'+title+'\n\n👇 回复',labels:['comment']})});
+      closeEditor();
+      loadPosts();
+    }else{
+      var e=await resp.json().catch(function(){return{};});
+      err.textContent='发布失败：'+(e.message||'请重试');
+      err.style.display='block';
+    }
+  }catch(ex){err.textContent='网络错误';err.style.display='block';}
+  btn.disabled=false;btn.textContent='发布';
+};
+
+// Wall tab
+function showWallTab(){
+  document.getElementById('forumView').style.display='none';
+  var wc=document.getElementById('wallTabContent');
+  wc.style.display='block';
+  if(!wallLoaded)loadWall();
+}
+
+async function loadWall(){
+  wallLoaded=true;
+  var ISSUE=null;
+  try{
+    var r=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:wall+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    var d=await r.json();
+    if(d.items&&d.items.length)ISSUE=d.items[0].number;
+  }catch(e){}
+  if(!ISSUE){document.getElementById('wallTabContent').innerHTML='<p class="forum-empty">留言墙暂不可用</p>';return;}
+
+  try{
+    var r2=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+ISSUE+'/comments?per_page=100',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    var notes=await r2.json();
+    var colors=['#fef9e7','#fdeded','#eaf2f8','#eafaf1','#f4ecf7','#fdf2e9'];
+    var curName=window._siteGetNickname?window._siteGetNickname():'';
+    var h='<h3 style="margin-bottom:1rem;color:var(--text);font-size:1.1rem;">📝 留言便签</h3><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.8rem">';
+    notes.forEach(function(n,i){
+      var msg=n.body||'',name='匿名';
+      var nm=msg.match(/^\*\*(.+?)\*\*[：:]\s*([\s\S]*)$/);
+      if(nm){name=nm[1];msg=nm[2];}
+      var c=colors[i%colors.length],rot=((i*3+1)%5-2)*0.8;
+      h+='<div style="background:'+c+';padding:0.9rem;border-radius:2px 2px 10px 2px;box-shadow:2px 2px 6px rgba(0,0,0,0.06);transform:rotate('+rot+'deg);font-size:0.82rem;line-height:1.6;word-break:break-word;transition:transform 0.2s">'+eHtml(msg)+'<div style="margin-top:0.5rem;font-size:0.7rem;color:rgba(0,0,0,0.4);display:flex;justify-content:space-between"><span>'+eHtml(name)+'</span><span>'+new Date(n.created_at).toLocaleDateString('zh-CN')+'</span></div></div>';
+    });
+    h+='</div><p style="text-align:center;margin-top:1rem;font-size:0.8rem;color:var(--text-light)">去 <a href="wall.html" style="color:var(--primary)">留言墙</a> 贴上新的便签</p>';
+    document.getElementById('wallTabContent').innerHTML=h;
+  }catch(e){
+    document.getElementById('wallTabContent').innerHTML='<p class="forum-empty">加载失败</p>';
+  }
+}
+
+// Init
+loadPosts();
+</script>
+</body>
+</html>
