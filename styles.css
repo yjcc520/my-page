@@ -1701,3 +1701,23 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
   line-height: 1.6;
   text-align: center;
 }
+
+/* -- HUD Clock Blink -- */
+#hudTime blink {
+  animation: hud-blink 1s step-end infinite;
+}
+@keyframes hud-blink {
+  50% { opacity: 0; }
+}
+
+/* -- Leaf Canvas -- */
+#leafCanvas { transition: opacity 0.5s ease; }
+
+@media (max-width: 768px) {
+  #hudClock {
+    top: 10px;
+    right: 10px;
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+}
