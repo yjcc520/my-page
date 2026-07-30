@@ -168,7 +168,10 @@
       '</div>';
     document.body.appendChild(overlay);
 
-    var close = function() { overlay.remove(); };
+    var close = function() {
+      overlay.remove();
+      document.removeEventListener('keydown', escHandler);
+    };
     document.getElementById('confirmCancel').onclick = close;
     document.getElementById('confirmOk').onclick = function() { close(); if (onOk) onOk(); };
     overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
