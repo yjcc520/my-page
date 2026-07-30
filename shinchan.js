@@ -87,7 +87,6 @@
     } else {
       setTip(finalLine);              // 之后→不要打扰小新了
     }
-    floatEl.classList.add('talking'); // 点击后气泡常驻，便于阅读
     // 出现「动感光波」那句时抖动一下（按文案判断，避免索引错位）
     if (lines[clicks] && lines[clicks].indexOf('动感光波') !== -1) {
       var s = floatEl.querySelector('.shinchan');
