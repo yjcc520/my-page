@@ -445,7 +445,7 @@ nav {
     border-bottom: none;
 }
 .lb-rank {
-    width: 24px;
+    min-width: 28px;
     text-align: center;
     font-weight: 700;
     color: var(--primary);
@@ -468,6 +468,34 @@ nav {
     color: var(--text-light);
     grid-column: 1 / -1;
     padding: 2rem;
+}
+.lb-medal {
+    font-size: 0.8rem;
+    margin-right: 1px;
+}
+.lb-row-fold {
+    display: none;
+}
+.lb-card.lb-expanded .lb-row-fold {
+    display: flex;
+}
+.lb-expand-btn {
+    display: block;
+    width: 100%;
+    margin-top: 0.6rem;
+    padding: 0.35rem 0;
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    color: var(--text-light);
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.lb-expand-btn:hover {
+    color: var(--primary);
+    border-color: var(--primary);
 }
 .lb-placeholder a {
     color: var(--primary);
