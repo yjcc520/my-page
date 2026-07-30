@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>趣味测试 | 蔡梓涵</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .tests-page { padding: 6rem 2rem 4rem; max-width: 800px; margin: 0 auto; min-height: 70vh; }
+  .tests-header { text-align: center; margin-bottom: 2.5rem; }
+  .tests-header h1 { font-size: 2rem; margin-bottom: 0.3rem; }
+  .tests-header p { color: var(--text-light); font-size: 0.95rem; }
+  .test-section { margin-bottom: 2rem; }
+  .test-section h2 {
+    font-size: 1.15rem; color: var(--text); margin-bottom: 0.8rem;
+    padding-bottom: 0.4rem; border-bottom: 2px solid var(--border);
+  }
+  .test-list { display: flex; flex-direction: column; gap: 0.6rem; }
+  .test-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.2rem; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .test-item:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .test-info { flex: 1; min-width: 0; }
+  .test-info h3 { font-size: 1rem; margin-bottom: 0.15rem; color: var(--text); }
+  .test-info p { font-size: 0.82rem; color: var(--text-light); }
+  .test-go {
+    display: inline-block; padding: 0.4rem 1rem; background: linear-gradient(135deg, var(--primary), #7c3aed);
+    color: #fff; text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 500;
+    flex-shrink: 0; margin-left: 1rem; transition: opacity 0.15s;
+  }
+  .test-go:hover { opacity: 0.9; }
+  @media (max-width: 500px) {
+    .test-item { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
+    .test-go { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Zihan</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="blog.html">博客</a>
+      <a href="gallery.html">画廊</a>
+      <a href="forum.html">论坛</a>
+      <a href="games.html">小游戏</a>
+      <a href="tests.html" class="active">测试</a>
+      <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
+    </div>
+  </div>
+</nav>
+
+<div class="tests-page">
+  <div class="tests-header">
+    <h1>趣味测试</h1>
+    <p>认识自己，图一乐</p>
+  </div>
+
+  <div class="test-section">
+    <h2>正经测试</h2>
+    <div class="test-list">
+      <div class="test-item">
+        <div class="test-info">
+          <h3>MBTI 十六型人格</h3>
+          <p>最流行的性格分类，你是 INFJ 还是 ESTP？</p>
+        </div>
+        <a href="https://www.16personalities.com/ch" target="_blank" class="test-go">去测试</a>
+      </div>
+      <div class="test-item">
+        <div class="test-info">
+          <h3>九型人格</h3>
+          <p>比 MBTI 更深入，探索你的核心动机与恐惧。</p>
+        </div>
+        <a href="https://www.eclecticenergies.com/enneagram/test-2" target="_blank" class="test-go">去测试</a>
+      </div>
+      <div class="test-item">
+        <div class="test-info">
+          <h3>大五人格</h3>
+          <p>学术界最认可的人格模型，科学严谨。</p>
+        </div>
+        <a href="https://bigfive-test.com/zh" target="_blank" class="test-go">去测试</a>
+      </div>
+      <div class="test-item">
+        <div class="test-info">
+          <h3>霍兰德职业兴趣</h3>
+          <p>帮你找到适合的职业方向，学生友好。</p>
+        </div>
+        <a href="https://www.apesk.com/holland/index_hr.asp" target="_blank" class="test-go">去测试</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>搞怪测试</h2>
+    <div class="test-list">
+      <div class="test-item">
+        <div class="test-info">
+          <h3>扫雷人格</h3>
+          <p>用各种离谱问题测你在扫雷里的抽象表现。</p>
+        </div>
+        <a href="https://www.arealme.com/minesweeper-personality-test/cn/" target="_blank" class="test-go">去测试</a>
+      </div>
+      <div class="test-item">
+        <div class="test-info">
+          <h3>你是哪种狗</h3>
+          <p>你到底是二哈、金毛，还是中华田园犬？</p>
+        </div>
+        <a href="https://www.arealme.com/what-dog-are-you/cn/" target="_blank" class="test-go">去测试</a>
+      </div>
+      <div class="test-item">
+        <div class="test-info">
+          <h3>精神年龄测试</h3>
+          <p>你的精神年龄到底几岁？结果可能让你沉默。</p>
+        </div>
+        <a href="https://www.arealme.com/mental-age-test/cn/" target="_blank" class="test-go">去测试</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer><p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p></footer>
+<script src="user.js"></script>
+<script src="theme.js"></script>
+<script src="ux.js"></script>
+</body>
+</html>
