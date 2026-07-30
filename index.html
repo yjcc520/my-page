@@ -236,12 +236,23 @@ function _renderLB(games) {
   var grid = document.getElementById('lbGrid');
   if (!games) { grid.innerHTML = '<p class="lb-placeholder">'+_t('lb_empty')+'</p>'; return; }
   var html = '';
+  var medalIcons = ['🥇', '🥈', '🥉'];
   Object.entries(games).forEach(function(g) {
+    var entries = g[1].entries;
+    var unit = g[1].unit;
+    // 冠军行 + 隐藏行
     html += '<div class="lb-card"><h3 class="lb-game-title">' + g[0] + '</h3><ol class="lb-list">';
-    g[1].entries.forEach(function(e, i) {
-      html += '<li class="lb-row"><span class="lb-rank">' + (i + 1) + '</span><span class="lb-name">' + e[0] + '</span><span class="lb-score">' + e[1] + g[1].unit + '</span></li>';
+    entries.forEach(function(e, i) {
+      var rankHtml = i < 3 ? '<span class="lb-medal">' + medalIcons[i] + '</span>' : (i + 1);
+      var rowClass = i >= 1 ? ' lb-row-fold' : '';
+      html += '<li class="lb-row' + rowClass + '"><span class="lb-rank">' + rankHtml + '</span><span class="lb-name">' + e[0] + '</span><span class="lb-score">' + e[1] + unit + '</span></li>';
     });
-    html += '</ol></div>';
+    html += '</ol>';
+    // 折叠按钮（至少2条才显示）
+    if (entries.length >= 2) {
+      html += '<button class="lb-expand-btn" onclick="var card=this.closest(\'.lb-card\');card.classList.toggle(\'lb-expanded\');this.textContent=card.classList.contains(\'lb-expanded\')?\'收起 ▲\':\'展开全部 (' + (entries.length - 1) + ')\'">展开全部 (' + (entries.length - 1) + ')</button>';
+    }
+    html += '</div>';
   });
   grid.innerHTML = html;
   setTimeout(function() { if (window._uxObserve) window._uxObserve(grid); }, 50);
