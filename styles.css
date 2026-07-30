@@ -191,7 +191,9 @@ nav {
     justify-content: center;
     text-align: center;
     padding: 6rem 2rem 4rem;
-    background: linear-gradient(160deg, #f0f4ff 0%, #eef2ff 25%, #f5f3ff 55%, #fef9f0 85%, #f0f4ff 100%);
+    background:
+        radial-gradient(130% 110% at 86% 8%, #fcefda 0%, rgba(252,239,218,0) 52%),
+        linear-gradient(135deg, #eef2ff 0%, #f1edff 30%, #f8f0e4 64%, #fbeeda 100%);
     position: relative;
     overflow: hidden;
 }
@@ -205,6 +207,37 @@ nav {
     background: radial-gradient(ellipse at 30% 50%, rgba(79,70,229,0.04) 0%, transparent 50%),
                 radial-gradient(ellipse at 70% 60%, rgba(245,158,11,0.03) 0%, transparent 40%);
     pointer-events: none;
+}
+
+/* -- 蜡笔小新 互动立绘（绝对定位贴右，不影响居中文字） -- */
+.hero-mascot {
+    position: absolute;
+    right: clamp(1.5rem, 4vw, 4rem);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    z-index: 2;
+}
+.shinchan { position: relative; width: 235px; }
+.shinchan img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 18px;
+    box-shadow: 0 26px 55px rgba(170,130,60,0.20);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.92) 11%, #000 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.92) 11%, #000 100%);
+}
+.shinchan canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.mascot-tip { font-size: 0.85rem; color: var(--text-light); letter-spacing: 0.08em; }
+@media (max-width: 860px) {
+    .hero { flex-direction: column; }
+    .hero-mascot { position: static; transform: none; margin-top: 2.5rem; order: 2; }
+    .hero-content { order: 1; }
+    .shinchan { width: 165px; }
 }
 
 .greeting {
