@@ -248,8 +248,7 @@ nav {
     transition: opacity .25s, transform .25s;
     pointer-events: none;
 }
-.shinchan-float:hover .mascot-tip,
-.shinchan-float.talking .mascot-tip { opacity: 1; transform: translateY(0); }
+.shinchan-float:hover .mascot-tip { opacity: 1; transform: translateY(0); }
 .shinchan.shake { animation: shinchanShake 0.5s ease; }
 @keyframes shinchanShake {
   0%, 100% { transform: translateX(0) rotate(0); }
