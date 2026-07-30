@@ -164,7 +164,7 @@
   }
 
   updateClock();
-  setInterval(updateClock, 1000);
+  var _clockTimer = setInterval(updateClock, 1000);
 
   // Hide near footer
   var clockTicking = false;
