@@ -6,7 +6,7 @@
   document.body.insertBefore(c, document.body.firstChild);
   var ctx = c.getContext('2d');
   var isDark = document.body.classList.contains('dark');
-  var stamps = [];   // [{x, y, ink, cr, edges, dots}]
+  var stamps = [];
 
   function pageW() { return Math.max(document.documentElement.scrollWidth, document.body.scrollWidth, window.innerWidth); }
   function pageH() { return Math.max(document.documentElement.scrollHeight, document.body.scrollHeight, window.innerHeight); }
@@ -31,50 +31,60 @@
     return { r: 35 + Math.random() * 25 | 0, g: 28 + Math.random() * 22 | 0, b: 22 + Math.random() * 20 | 0 };
   }
 
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
   function createStamp(x, y) {
+    var ink = inkColor();
     var cr = 8 + Math.random() * 14;
+    var alpha = rand(0.12, 0.30);
+
     var edges = [];
     for (var i = 0; i < 12; i++) {
       edges.push({
         a: Math.random() * Math.PI * 2,
-        d: cr * (0.4 + Math.random() * 0.9),
-        r: 1.5 + Math.random() * 4
+        d: cr * rand(0.4, 1.3),
+        r: rand(1.5, 5.5),
+        alpha: alpha * rand(0.3, 0.8),
+        crVar: Math.random() * 20 - 10 | 0,
+        cgVar: Math.random() * 15 - 7 | 0,
+        cbVar: Math.random() * 12 - 5 | 0
       });
     }
+
     var dots = [];
     for (var j = 0; j < 20; j++) {
       dots.push({
         dx: (Math.random() - 0.5) * cr * 3,
         dy: (Math.random() - 0.5) * cr * 2.5,
-        dr: 0.6 + Math.random() * 2.5
+        dr: rand(0.6, 3.1),
+        alpha: alpha * rand(0.15, 0.55)
       });
     }
-    return { x: x, y: y, ink: inkColor(), cr: cr, edges: edges, dots: dots, life: 1 };
+
+    return { x: x, y: y, ink: ink, cr: cr, alpha: alpha, edges: edges, dots: dots, life: 1 };
   }
 
   function drawStamp(s) {
-    var ink = s.ink;
     ctx.save();
-    ctx.globalAlpha = 0.12 + Math.random() * 0.18 * s.life;
-
-    ctx.fillStyle = 'rgb(' + ink.r + ',' + ink.g + ',' + ink.b + ')';
+    ctx.globalAlpha = s.alpha * s.life;
+    ctx.fillStyle = 'rgb(' + s.ink.r + ',' + s.ink.g + ',' + s.ink.b + ')';
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.cr, 0, Math.PI * 2);
     ctx.fill();
 
     s.edges.forEach(function(e) {
-      ctx.globalAlpha = (0.12 + Math.random() * 0.18) * s.life * (0.3 + Math.random() * 0.5);
+      ctx.globalAlpha = e.alpha * s.life;
       ctx.fillStyle = 'rgb(' +
-        (ink.r + Math.random() * 20 - 10 | 0) + ',' +
-        (ink.g + Math.random() * 15 - 7 | 0) + ',' +
-        (ink.b + Math.random() * 12 - 5 | 0) + ')';
+        (s.ink.r + e.crVar) + ',' +
+        (s.ink.g + e.cgVar) + ',' +
+        (s.ink.b + e.cbVar) + ')';
       ctx.beginPath();
       ctx.arc(s.x + Math.cos(e.a) * e.d, s.y + Math.sin(e.a) * e.d, e.r, 0, Math.PI * 2);
       ctx.fill();
     });
 
     s.dots.forEach(function(d) {
-      ctx.globalAlpha = (0.12 + Math.random() * 0.18) * s.life * (0.15 + Math.random() * 0.4);
+      ctx.globalAlpha = d.alpha * s.life;
       ctx.beginPath();
       ctx.arc(s.x + d.dx, s.y + d.dy, d.dr, 0, Math.PI * 2);
       ctx.fill();
@@ -96,23 +106,19 @@
     addStamp(e.pageX, e.pageY);
   });
 
-  // 移动端双击
   var lastTap = 0;
   document.addEventListener('touchend', function(e) {
     var now = Date.now();
     if (now - lastTap < 300 && e.changedTouches.length === 1) {
-      var t = e.changedTouches[0];
-      addStamp(t.pageX, t.pageY);
+      addStamp(e.changedTouches[0].pageX, e.changedTouches[0].pageY);
     }
     lastTap = now;
   });
 
-  // 暗色模式切换
   new MutationObserver(function() {
     isDark = document.body.classList.contains('dark');
   }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
-  // 缓慢消退
   (function fade() {
     for (var i = stamps.length - 1; i >= 0; i--) {
       stamps[i].life -= 0.003;
