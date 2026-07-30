@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap');
 
 :root {
-    --primary: #4f46e5;
-    --primary-light: #818cf8;
-    --primary-glow: rgba(79,70,229,0.15);
-    --accent: #f59e0b;
+    --primary: #3a5670;
+    --primary-light: #6b8aab;
+    --primary-glow: rgba(58, 86, 112, 0.12);
+    --accent: #c4903a;
     --text: #1e293b;
     --text-light: #64748b;
     --bg: #ffffff;
@@ -22,10 +22,10 @@
     --switch-icon: '☀️';
 }
 body.dark {
-    --primary: #818cf8;
-    --primary-light: #a5b4fc;
-    --primary-glow: rgba(129,140,248,0.15);
-    --accent: #fbbf24;
+    --primary: #b8c4d4;
+    --primary-light: #d4dce4;
+    --primary-glow: rgba(184, 196, 212, 0.12);
+    --accent: #e8eef5;
     --text: #e2e8f0;
     --text-light: #94a3b8;
     --bg: #0b1120;
@@ -86,7 +86,7 @@ body.dark .game-card { background: var(--bg-alt); }
 body.dark footer { border-color: var(--border); }
 body.dark .comments-section { color: var(--text); }
 body.dark .blog-write-btn { background: var(--primary); }
-body.dark .tag { background: rgba(129,140,248,0.15); color: #a5b4fc; }
+body.dark .tag { background: rgba(184, 196, 212, 0.15); color: #d4dce4; }
 body.dark .blog-card-summary { color: var(--text-light); }
 body.dark input, body.dark textarea { color: var(--text); }
 body.dark input::placeholder, body.dark textarea::placeholder { color: #475569; }
@@ -301,7 +301,7 @@ nav {
 
 .greeting {
     font-size: 1.1rem;
-    color: rgba(40, 36, 32, 0.90);
+    color: rgba(30, 43, 56, 0.90);
     margin-bottom: 0.5rem;
     letter-spacing: 0.18em;
     font-weight: 500;
@@ -310,7 +310,7 @@ nav {
 .hero h1 {
     font-size: 4rem;
     font-weight: 900;
-    background: linear-gradient(170deg, #141211 0%, #2a2520 50%, #3a3228 100%);
+    background: linear-gradient(170deg, #1e2b38 0%, #3a5670 50%, #4a6a85 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -321,7 +321,7 @@ nav {
 
 .tagline {
     font-size: 1.15rem;
-    color: rgba(40, 36, 32, 0.85);
+    color: rgba(30, 43, 56, 0.85);
     margin-bottom: 0.6rem;
     font-weight: 500;
     letter-spacing: 0.12em;
@@ -332,7 +332,7 @@ nav {
 }
 .intro {
     font-size: 1.1rem;
-    color: rgba(50, 44, 38, 0.85);
+    color: rgba(40, 55, 72, 0.85);
     max-width: 480px;
     margin: 0.7rem auto 0;
     font-style: italic;
