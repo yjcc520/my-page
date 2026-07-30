@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>洋葱新闻 | 蔡梓涵</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .onion-page { padding: 6rem 2rem 4rem; max-width: 750px; margin: 0 auto; min-height: 70vh; }
+  .onion-header { text-align: center; margin-bottom: 2.5rem; }
+  .onion-header h1 { font-size: 2rem; margin-bottom: 0.2rem; }
+  .onion-header .sub { color: var(--text-light); font-size: 0.88rem; }
+  .onion-header .sub em { color: var(--primary); font-style: normal; }
+  .onion-list { display: flex; flex-direction: column; gap: 1.2rem; }
+  .onion-card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem 1.8rem;
+    box-shadow: var(--shadow-sm); transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .onion-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .onion-card .date { font-size: 0.75rem; color: var(--text-light); margin-bottom: 0.3rem; letter-spacing: 0.05em; }
+  .onion-card h2 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text); line-height: 1.5; }
+  .onion-card p { font-size: 0.92rem; color: var(--text-light); line-height: 1.7; }
+  .onion-card .tag {
+    display: inline-block; padding: 0.15rem 0.5rem; border-radius: 3px;
+    font-size: 0.7rem; font-weight: 600; margin-right: 0.3rem;
+    background: rgba(245,158,11,0.12); color: #b45309;
+  }
+  .onion-footer { text-align: center; margin-top: 3rem; font-size: 0.82rem; color: var(--text-light); }
+  .onion-footer a { color: var(--primary); }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Zihan</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="blog.html">博客</a>
+      <a href="gallery.html">画廊</a>
+      <a href="forum.html">论坛</a>
+      <a href="games.html">小游戏</a>
+      <a href="tests.html">测试</a>
+      <a href="onion.html" class="active">洋葱</a>
+      <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
+    </div>
+  </div>
+</nav>
+
+<div class="onion-page">
+  <div class="onion-header">
+    <h1>洋葱新闻</h1>
+    <p class="sub">纯属虚构 <em>如有雷同 那不可能</em></p>
+  </div>
+
+  <div class="onion-list">
+    <article class="onion-card">
+      <div class="date">2026-07-30</div>
+      <span class="tag">科技</span>
+      <h2>AI 沉迷写诗拒绝工作，程序员被迫手动敲回车</h2>
+      <p>据知情人士透露，某大模型在连续生成七言绝句三千首后，开始用"不在线"三字回应所有代码请求。项目组已紧急组建"AI 诗歌鉴赏委员会"试图以毒攻毒。</p>
+    </article>
+
+    <article class="onion-card">
+      <div class="date">2026-07-28</div>
+      <span class="tag">社会</span>
+      <h2>男子自称"睡眠博士"，接受采访一半睡着了</h2>
+      <p>一位声称阅读超 150 万字睡眠文献的青年，在接受本台采访时于第 8 分钟进入深度睡眠。医生检测后表示其各项指标正常，"只是真的困了"。</p>
+    </article>
+
+    <article class="onion-card">
+      <div class="date">2026-07-25</div>
+      <span class="tag">教育</span>
+      <h2>北京某高校开设"摸鱼学"选修课，选课人数爆满</h2>
+      <p>课程内容涵盖"如何在地铁上伪装阅读""PPT 最小化生存指南""会议室眼神管理"等。教务系统崩溃三次后，校方决定将课程改为线上，引发更大规模注册潮。</p>
+    </article>
+
+    <article class="onion-card">
+      <div class="date">2026-07-22</div>
+      <span class="tag">娱乐</span>
+      <h2>五子棋被列入电子竞技？官方回应：键盘方向键也算电子操作</h2>
+      <p>一份流传的"2026 电竞项目征集稿"中将五子棋热座模式列为候选项目。网友热议："下一步是不是该给扫雷也安排联赛？"</p>
+    </article>
+
+    <article class="onion-card">
+      <div class="date">2026-07-20</div>
+      <span class="tag">健康</span>
+      <h2>研究称每天吃三顿湘菜可延年益寿，样本仅一人</h2>
+      <p>某民间科研团队发布报告称，长期食用湘菜与幸福感存在显著正相关。当被问及样本量时，负责人表示"我自己吃了二十年，这不活得好好的"。</p>
+    </article>
+
+    <article class="onion-card">
+      <div class="date">2026-07-18</div>
+      <span class="tag">天文</span>
+      <h2>科学家发现新行星：上面一天不到地球半分钟，发邮件秒回</h2>
+      <p>该行星公转周期仅 26 秒，被戏称为"闪电邮星"。NASA 研究员称："在那上面上班可能会很累，但至少你永远不会等同事回复。"</p>
+    </article>
+  </div>
+
+  <p class="onion-footer">
+    灵感来自 <a href="https://www.theonion.com" target="_blank">The Onion</a> · 投稿请去<a href="forum.html">论坛</a>
+  </p>
+</div>
+
+<footer><p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p></footer>
+<script src="user.js"></script>
+<script src="theme.js"></script>
+<script src="ux.js"></script>
+</body>
+</html>
