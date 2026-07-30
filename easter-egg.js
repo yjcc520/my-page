@@ -147,7 +147,7 @@
     'border:1px solid rgba(129,140,248,0.3);border-radius:10px;padding:6px 18px;' +
     'color:#e0e7ff;font-size:17px;font-weight:500;letter-spacing:0.12em;' +
     'line-height:1.4;' +
-    'box-shadow:0 0 24px rgba(79,70,229,0.18),inset 0 0 10px rgba(79,70,229,0.04);' +
+    'box-shadow:0 0 24px rgba(58,86,112,0.18),inset 0 0 10px rgba(58,86,112,0.04);' +
     'transition:opacity 0.5s ease;';
 
   document.body.appendChild(clockEl);
