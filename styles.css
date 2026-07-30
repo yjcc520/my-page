@@ -248,7 +248,15 @@ nav {
     transition: opacity .25s, transform .25s;
     pointer-events: none;
 }
-.shinchan-float:hover .mascot-tip { opacity: 1; transform: translateY(0); }
+.shinchan-float:hover .mascot-tip,
+.shinchan-float.talking .mascot-tip { opacity: 1; transform: translateY(0); }
+.shinchan.shake { animation: shinchanShake 0.5s ease; }
+@keyframes shinchanShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-5px) rotate(-3deg); }
+  50% { transform: translateX(5px) rotate(3deg); }
+  75% { transform: translateX(-4px) rotate(-2deg); }
+}
 @media (max-width: 860px) {
     .hero { flex-direction: column; }
     .hero-content { order: 1; }
