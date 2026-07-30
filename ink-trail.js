@@ -1,5 +1,10 @@
 // 水墨留痕 双击即画 首页专属
 (function() {
+  // 禁止双击选中文字
+  var style = document.createElement('style');
+  style.textContent = 'html.ink-active,html.ink-active *{user-select:none!important;-webkit-user-select:none!important}';
+  document.head.appendChild(style);
+
   var c = document.createElement('canvas');
   c.id = 'inkTrail';
   c.style.cssText = 'position:absolute;top:0;left:0;z-index:9998;pointer-events:none;';
@@ -104,7 +109,31 @@
   }
 
   document.addEventListener('dblclick', function(e) {
+    e.preventDefault();
     addStamp(e.pageX, e.pageY);
+  });
+
+  // 第一次点击时临时禁止选中，300ms后恢复
+  var clickTimer = null;
+  document.addEventListener('mousedown', function(e) {
+    if (e.detail === 1) {
+      // 第一次点击：启用禁止选中，等双击或超时
+      document.documentElement.classList.add('ink-active');
+      clearTimeout(clickTimer);
+      clickTimer = setTimeout(function() {
+        document.documentElement.classList.remove('ink-active');
+      }, 400);
+    }
+  });
+
+  document.addEventListener('mouseup', function(e) {
+    if (e.detail === 2) {
+      // 双击完成，保持一会儿禁止选中
+      clearTimeout(clickTimer);
+      setTimeout(function() {
+        document.documentElement.classList.remove('ink-active');
+      }, 300);
+    }
   });
 
   var lastTap = 0;
