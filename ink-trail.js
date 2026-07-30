@@ -100,6 +100,7 @@
   function addStamp(pageX, pageY) {
     stamps.push(createStamp(pageX, pageY));
     drawStamp(stamps[stamps.length - 1]);
+    if (!fadeId) fade();
   }
 
   document.addEventListener('dblclick', function(e) {
@@ -115,16 +116,24 @@
     lastTap = now;
   });
 
-  new MutationObserver(function() {
+  var observer = new MutationObserver(function() {
     isDark = document.body.classList.contains('dark');
-  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  });
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
-  (function fade() {
+  var fadeId = 0;
+  function fade() {
     for (var i = stamps.length - 1; i >= 0; i--) {
       stamps[i].life -= 0.003;
       if (stamps[i].life <= 0) { stamps.splice(i, 1); }
     }
-    if (stamps.length) redrawAll();
-    requestAnimationFrame(fade);
-  })();
+    if (stamps.length) { redrawAll(); fadeId = requestAnimationFrame(fade); }
+    else { fadeId = 0; }
+  }
+
+  function addStamp(pageX, pageY) {
+    stamps.push(createStamp(pageX, pageY));
+    drawStamp(stamps[stamps.length - 1]);
+    if (!fadeId) fade();
+  }
 })();
