@@ -401,11 +401,7 @@
       '8a2621912866642d0ca615b268f321d3.jpg',
       'c1e4d2f31f203a20bb2399c3a912c8d6.jpg'
     ];
-    var _pxCanvases = {};
-    function getPxCanvas(img) {
-      var k = img.src;
-      if (_pxCanvases[k]) return _pxCanvases[k];
-      if (!img.complete) return null;
+    function pxImg(img) {
       var scale = 6;
       var sw = Math.max(4, Math.floor(img.width / scale));
       var sh = Math.max(4, Math.floor(img.height / scale));
@@ -413,13 +409,20 @@
       pc.width = sw; pc.height = sh;
       var pctx = pc.getContext('2d');
       pctx.drawImage(img, 0, 0, sw, sh);
-      _pxCanvases[k] = pc;
       return pc;
     }
 
     const ENEMY_IMAGES = ENEMY_IMAGE_SOURCES.map(src => {
       const img = new Image();
+      img._px = null;
+      img.addEventListener('load', function() {
+        try { img._px = pxImg(img); } catch(e) {}
+      });
       img.src = src;
+      // 图片可能已缓存，立即尝试
+      if (img.complete) {
+        try { img._px = pxImg(img); } catch(e) {}
+      }
       return img;
     });
 
@@ -775,14 +778,17 @@
     }
 
     function drawEnemy(enemy) {
-      var px = getPxCanvas(enemy.img);
-      if (px) {
+      // 重新尝试生成马赛克（前面可能失败过）
+      if (!enemy.img._px && enemy.img.complete) {
+        try { enemy.img._px = pxImg(enemy.img); } catch(e) {}
+      }
+      if (enemy.img._px) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
         ctx.clip();
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(px, enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
+        ctx.drawImage(enemy.img._px, enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
         ctx.imageSmoothingEnabled = true;
         ctx.restore();
 
