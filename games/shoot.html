@@ -404,6 +404,18 @@
     const ENEMY_IMAGES = ENEMY_IMAGE_SOURCES.map(src => {
       const img = new Image();
       img.src = src;
+      // 马赛克缓存，图片加载后自动生成像素版
+      img._pxCanvas = null;
+      img.onload = function() {
+        var scale = 6;
+        var sw = Math.max(4, Math.floor(img.width / scale));
+        var sh = Math.max(4, Math.floor(img.height / scale));
+        var pc = document.createElement('canvas');
+        pc.width = sw; pc.height = sh;
+        var pctx = pc.getContext('2d');
+        pctx.drawImage(img, 0, 0, sw, sh);
+        img._pxCanvas = pc;
+      };
       return img;
     });
 
@@ -759,26 +771,13 @@
     }
 
     function drawEnemy(enemy) {
-      if (enemy.img && enemy.img.complete) {
-        // 像素化处理：缩小再放大，实现面部打码
-        if (!enemy._pxImg || enemy._pxImg._src !== enemy.img.src) {
-          var scale = 8; // 像素块大小，越大越模糊
-          var sw = Math.max(4, Math.floor(enemy.img.width / scale));
-          var sh = Math.max(4, Math.floor(enemy.img.height / scale));
-          var pxCanvas = document.createElement('canvas');
-          pxCanvas.width = sw; pxCanvas.height = sh;
-          var pxCtx = pxCanvas.getContext('2d');
-          pxCtx.imageSmoothingEnabled = false;
-          pxCtx.drawImage(enemy.img, 0, 0, sw, sh);
-          enemy._pxImg = pxCanvas;
-          enemy._pxImg._src = enemy.img.src;
-        }
+      if (enemy.img && enemy.img.complete && enemy.img._pxCanvas) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
         ctx.clip();
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(enemy._pxImg, enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
+        ctx.drawImage(enemy.img._pxCanvas, enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
         ctx.imageSmoothingEnabled = true;
         ctx.restore();
 
