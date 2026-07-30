@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap');
+
 :root {
     --primary: #4f46e5;
     --primary-light: #818cf8;
@@ -98,6 +100,27 @@ body.dark .upload-box { background: var(--bg); }
     background: var(--primary);
     color: #fff;
     border-color: var(--primary);
+}
+
+/* 思源宋体 + 页面淡入 */
+h1, h2, h3, .hero h1, .quote-item, blockquote, .intro {
+  font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
+}
+body {
+  animation: pageIn 0.5s ease;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 渐变分割线 */
+.about, .skills, .contact, .leaderboard-section, .quote-marquee {
+  border-top: 2px solid transparent;
+  border-image: linear-gradient(90deg, transparent, var(--primary-light), var(--primary), var(--primary-light), transparent) 1;
+}
+.about h2::after, .skills h2::after, .contact h2::after {
+  background: linear-gradient(90deg, var(--primary), #a855f7, var(--primary-light));
 }
 
 * {
