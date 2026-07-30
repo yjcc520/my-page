@@ -26,6 +26,14 @@
 .gallery-item:hover { transform: scale(1.02); }
 .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .gallery-item .gl-uploader { position: absolute; bottom: 6px; right: 6px; font-size: 0.7rem; background: rgba(0,0,0,0.6); color: #ccc; padding: 2px 8px; border-radius: 10px; }
+.gl-del {
+  position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+  border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none;
+  font-size: 13px; cursor: pointer; line-height: 22px; text-align: center;
+  opacity: 0; transition: opacity 0.15s;
+}
+.gallery-item:hover .gl-del { opacity: 1; }
+.gl-del:hover { background: rgba(229,62,62,0.85); }
 .gallery-empty { text-align: center; color: var(--text-light); padding: 3rem; }
 
 /* Lightbox */
@@ -140,13 +148,16 @@ async function loadGallery() {
       grid.innerHTML = '<p class="gallery-empty">还没有图片，来上传第一张吧 📷</p>';
       return;
     }
+    var curName = window._siteGetNickname ? window._siteGetNickname() : '';
     grid.innerHTML = comments.map(function(c) {
       var img = c.body;
       var uploader = '';
       try { var info = JSON.parse(c.body); img = info.url; uploader = info.by || ''; } catch(ex) {}
       if (!img || img.indexOf('http') !== 0 && img.indexOf('data:image') !== 0) return '';
+      var canDel = curName && curName === uploader;
       return '<div class="gallery-item" onclick="openLightbox(\''+img+'\')">' +
         '<img src="'+img+'" alt="" loading="lazy">' +
+        (canDel ? '<button class="gl-del" onclick="event.stopPropagation();deletePhoto('+c.id+',this)" title="删除">×</button>' : '') +
         (uploader ? '<span class="gl-uploader">'+uploader+'</span>' : '') +
         '</div>';
     }).filter(Boolean).join('');
@@ -248,6 +259,20 @@ window.doUpload = async function() {
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
+};
+
+// Delete
+window.deletePhoto = function(commentId, btn) {
+  window._showConfirm('确定删除这张图片吗？', async function() {
+    try {
+      var T = loadToken();
+      await fetch('https://api.github.com/repos/'+REPO+'/issues/comments/'+commentId, {
+        method:'DELETE', headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}
+      });
+      var item = btn.closest('.gallery-item');
+      if (item) { item.style.opacity = '0'; item.style.transform = 'scale(0.9)'; setTimeout(function(){item.remove();}, 300); }
+    } catch(e) { alert('删除失败'); }
+  });
 };
 
 // Init
