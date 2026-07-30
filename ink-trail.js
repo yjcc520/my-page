@@ -1,4 +1,4 @@
-// 水墨拖尾 首页专属
+// 水墨留痕 双击即画 首页专属
 (function() {
   var c = document.createElement('canvas');
   c.id = 'inkTrail';
@@ -6,7 +6,6 @@
   document.body.appendChild(c);
   var ctx = c.getContext('2d');
   var W, H;
-  var lastX = 0, lastY = 0, active = false;
   var isDark = document.body.classList.contains('dark');
 
   function resize() {
@@ -18,78 +17,78 @@
 
   function inkColor() {
     if (isDark) {
-      var v = 160 + Math.random() * 60 | 0;
-      return { r: v, g: v, b: v + 10 | 0 };
+      var v = 170 + Math.random() * 50 | 0;
+      return { r: v, g: v - 5 | 0, b: v };
     }
-    return {
-      r: 35 + Math.random() * 25 | 0,
-      g: 30 + Math.random() * 20 | 0,
-      b: 25 + Math.random() * 18 | 0
-    };
+    return { r: 35 + Math.random() * 25 | 0, g: 28 + Math.random() * 22 | 0, b: 22 + Math.random() * 20 | 0 };
   }
 
-  function draw(x, y, px, py, speed) {
-    var alpha = Math.min(0.15, 0.04 + speed * 0.012);
-    var w = Math.max(3, 14 - speed * 1.2);
+  function stamp(x, y) {
     var ink = inkColor();
-
+    var alpha = 0.12 + Math.random() * 0.18;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.strokeStyle = 'rgb(' + ink.r + ',' + ink.g + ',' + ink.b + ')';
-    ctx.lineWidth = w;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
 
-    if (px && py) {
-      ctx.beginPath();
-      ctx.moveTo(px, py);
-      ctx.lineTo(x, y);
-      ctx.stroke();
-    }
+    // 中心墨团
+    var cr = 8 + Math.random() * 14;
+    ctx.fillStyle = 'rgb(' + ink.r + ',' + ink.g + ',' + ink.b + ')';
+    ctx.beginPath();
+    ctx.arc(x, y, cr, 0, Math.PI * 2);
+    ctx.fill();
 
-    var dots = w * 0.4 | 0;
-    for (var i = 0; i < dots; i++) {
-      var dx = x + (Math.random() - 0.5) * w * 1.5;
-      var dy = y + (Math.random() - 0.5) * w;
-      var ds = Math.random() * w * 0.4 + 0.8;
+    // 不规则边缘
+    for (var i = 0; i < 12; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var dist = cr * (0.4 + Math.random() * 0.9);
+      var sr = 1.5 + Math.random() * 4;
       ctx.globalAlpha = alpha * (0.3 + Math.random() * 0.5);
       ctx.fillStyle = 'rgb(' +
-        (ink.r + Math.random() * 15 | 0) + ',' +
-        (ink.g + Math.random() * 12 | 0) + ',' +
-        (ink.b + Math.random() * 10 | 0) + ')';
+        (ink.r + Math.random() * 20 - 10 | 0) + ',' +
+        (ink.g + Math.random() * 15 - 7 | 0) + ',' +
+        (ink.b + Math.random() * 12 - 5 | 0) + ')';
       ctx.beginPath();
-      ctx.arc(dx, dy, ds, 0, Math.PI * 2);
+      ctx.arc(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, sr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 散落微墨点
+    for (var j = 0; j < 20; j++) {
+      var dx = (Math.random() - 0.5) * cr * 3;
+      var dy = (Math.random() - 0.5) * cr * 2.5;
+      var dr = 0.6 + Math.random() * 2.5;
+      ctx.globalAlpha = alpha * (0.15 + Math.random() * 0.4);
+      ctx.beginPath();
+      ctx.arc(x + dx, y + dy, dr, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
   }
 
-  function handleMove(x, y) {
-    if (!active) { lastX = x; lastY = y; active = true; return; }
-    var dx = x - lastX, dy = y - lastY;
-    var speed = Math.sqrt(dx * dx + dy * dy);
-    if (speed < 3) return;
-    draw(x, y, lastX, lastY, speed);
-    lastX = x; lastY = y;
-  }
+  document.addEventListener('dblclick', function(e) {
+    stamp(e.clientX, e.clientY);
+  });
 
-  function handleEnd() { active = false; lastX = 0; lastY = 0; }
-
-  document.addEventListener('mousemove', function(e) { handleMove(e.clientX, e.clientY); });
-  document.addEventListener('mouseleave', handleEnd);
-  document.addEventListener('touchmove', function(e) { handleMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-  document.addEventListener('touchend', handleEnd);
+  // 移动端双击
+  var lastTap = 0;
+  document.addEventListener('touchend', function(e) {
+    var now = Date.now();
+    if (now - lastTap < 300 && e.changedTouches.length === 1) {
+      var t = e.changedTouches[0];
+      stamp(t.clientX, t.clientY);
+    }
+    lastTap = now;
+  });
 
   // 暗色模式切换
   new MutationObserver(function() {
     isDark = document.body.classList.contains('dark');
   }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
-  // 持续消退
+  // 缓慢消退
   (function fade() {
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = 'rgba(0,0,0,0.025)';
+    ctx.fillStyle = 'rgba(0,0,0,0.008)';
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
     requestAnimationFrame(fade);
