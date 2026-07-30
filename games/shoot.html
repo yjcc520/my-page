@@ -401,21 +401,25 @@
       '8a2621912866642d0ca615b268f321d3.jpg',
       'c1e4d2f31f203a20bb2399c3a912c8d6.jpg'
     ];
+    var _pxCanvases = {};
+    function getPxCanvas(img) {
+      var k = img.src;
+      if (_pxCanvases[k]) return _pxCanvases[k];
+      if (!img.complete) return null;
+      var scale = 6;
+      var sw = Math.max(4, Math.floor(img.width / scale));
+      var sh = Math.max(4, Math.floor(img.height / scale));
+      var pc = document.createElement('canvas');
+      pc.width = sw; pc.height = sh;
+      var pctx = pc.getContext('2d');
+      pctx.drawImage(img, 0, 0, sw, sh);
+      _pxCanvases[k] = pc;
+      return pc;
+    }
+
     const ENEMY_IMAGES = ENEMY_IMAGE_SOURCES.map(src => {
       const img = new Image();
       img.src = src;
-      // 马赛克缓存，图片加载后自动生成像素版
-      img._pxCanvas = null;
-      img.onload = function() {
-        var scale = 6;
-        var sw = Math.max(4, Math.floor(img.width / scale));
-        var sh = Math.max(4, Math.floor(img.height / scale));
-        var pc = document.createElement('canvas');
-        pc.width = sw; pc.height = sh;
-        var pctx = pc.getContext('2d');
-        pctx.drawImage(img, 0, 0, sw, sh);
-        img._pxCanvas = pc;
-      };
       return img;
     });
 
@@ -771,13 +775,14 @@
     }
 
     function drawEnemy(enemy) {
-      if (enemy.img && enemy.img.complete && enemy.img._pxCanvas) {
+      var px = getPxCanvas(enemy.img);
+      if (px) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
         ctx.clip();
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(enemy.img._pxCanvas, enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
+        ctx.drawImage(px, enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
         ctx.imageSmoothingEnabled = true;
         ctx.restore();
 
