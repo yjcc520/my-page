@@ -244,8 +244,9 @@ window.filterPosts=function(){
 
 // Load posts
 async function loadPosts(){
+  var T=loadToken();
   try{
-    var r=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:forum+type:issue+state:open&sort=created&order=desc&per_page=60',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    var r=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:forum+type:issue+state:open&sort=created&order=desc&per_page=60',{headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}});
     var d=await r.json();
     allPosts=[];
     (d.items||[]).forEach(function(issue){
@@ -271,8 +272,9 @@ async function loadPosts(){
 var viewsData={};
 function getViews(id){return viewsData['forum-'+id]||0;}
 async function loadViewCounts(){
+  var T=loadToken();
   try{
-    var r=await fetch('https://api.github.com/repos/'+REPO+'/issues/1/comments?per_page=100',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    var r=await fetch('https://api.github.com/repos/'+REPO+'/issues/1/comments?per_page=100',{headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}});
     var comments=await r.json();
     comments.forEach(function(c){
       var m=c.body.match(/^view:forum-(\d+)/);
@@ -405,15 +407,16 @@ function showWallTab(){
 }
 async function loadWall(){
   wallLoaded=true;
+  var T=loadToken();
   var ISSUE=null;
   try{
-    var r=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:wall+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    var r=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:wall+in:title+type:issue',{headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}});
     var d=await r.json();
     if(d.items&&d.items.length)ISSUE=d.items[0].number;
   }catch(e){}
   if(!ISSUE){document.getElementById('wallTabContent').innerHTML='<p class="forum-empty">留言墙暂不可用</p>';return;}
   try{
-    var r2=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+ISSUE+'/comments?per_page=100',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    var r2=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+ISSUE+'/comments?per_page=100',{headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}});
     var notes=await r2.json();
     var colors=['#fef9e7','#fdeded','#eaf2f8','#eafaf1','#f4ecf7','#fdf2e9'];
     var h='<h3 style="margin-bottom:1rem;color:var(--text);font-size:1.1rem;">📝 留言便签</h3><div class="wall-sticky">';
