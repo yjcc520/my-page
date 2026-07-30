@@ -1,15 +1,15 @@
 // 蜡笔小新 · 眼睛跟随鼠标
-// 眼睛坐标基于原图 736x1596；canvas 与该分辨率一致，CSS 拉伸覆盖图片。
+// 眼睛坐标基于原图 736x736（已裁为正方形）；canvas 与该分辨率一致，CSS 拉伸覆盖图片。
 (function () {
   var canvas = document.getElementById('shinchanEye');
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
-  var W = 736, H = 1596;
+  var W = 736, H = 736;
 
   // 眼睛参数 (原图坐标)：黑色圆形眼睛 + 白色眼珠，贴合小新原图
   var eyes = [
-    { cx: 361, cy: 1013, r: 36 },  // 左眼
-    { cx: 470, cy: 1010, r: 36 }   // 右眼
+    { cx: 361, cy: 459, r: 36 },  // 左眼
+    { cx: 470, cy: 456, r: 36 }   // 右眼
   ];
   var pupilR = 11;  // 白色眼珠半径
 
@@ -56,4 +56,44 @@
   window.addEventListener('touchmove', function (e) {
     if (e.touches[0]) update(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: true });
+})();
+
+// 小新对话气泡：悬停显示第一句，点击循环切换，刷新自动重置（状态仅存于内存）
+(function () {
+  var floatEl = document.getElementById('shinchanFloat');
+  if (!floatEl) return;
+  var tip = floatEl.querySelector('.mascot-tip');
+  if (!tip) return;
+
+  var lines = [
+    '看起来很可疑，不会是青椒吧。',                              // 悬停 / 初始
+    '哎呀~人家才没有偷看你呢。',
+    '嘘，不要告诉美伢我在蔡梓涵这里睡觉。',
+    '你也觉得他这里还不错吧嘿嘿。',                              // 新增
+    '好了我要睡觉了，如果没有漂亮大姐姐不要打扰我。',            // 新增
+    '我真的没有看你了！',                                        // 新增
+    '再点我的话，就尝尝我的动感光波！'                           // 带抖动
+  ];
+  var finalLine = '不要打扰小新了。';
+  var clicks = 0;
+
+  function setTip(t) { tip.textContent = t; }
+  setTip(lines[0]); // 初���/悬停时的第一句
+
+  function advance() {
+    clicks++;
+    if (clicks < lines.length) {
+      setTip(lines[clicks]);          // 依次切换各句
+    } else {
+      setTip(finalLine);              // 之后→不要打扰小新了
+    }
+    floatEl.classList.add('talking'); // 点击后气泡常驻，便于阅读
+    // 出现「动感光波」那句时抖动一下（按文案判断，避免索引错位）
+    if (lines[clicks] && lines[clicks].indexOf('动感光波') !== -1) {
+      var s = floatEl.querySelector('.shinchan');
+      if (s) { s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake'); }
+    }
+  }
+
+  floatEl.addEventListener('click', advance);
 })();
