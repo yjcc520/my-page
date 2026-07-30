@@ -237,6 +237,23 @@ nav {
 .hero h1, .hero .greeting, .hero .tagline, .hero .intro {
     font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
 }
+.intro {
+    font-size: 1.05rem;
+    color: var(--text-light);
+    max-width: 480px;
+    margin: 0.5rem auto 0;
+    font-style: italic;
+    letter-spacing: 0.15em;
+}
+.intro::before {
+    content: '';
+    display: block;
+    width: 30px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary-light));
+    margin: 0 auto 0.6rem;
+    border-radius: 1px;
+}
 
 /* About */
 .about, .skills, .contact { padding: 5rem 2rem; }
