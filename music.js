@@ -2,9 +2,9 @@
 (function() {
   var btn = document.createElement('button');
   btn.id = 'musicTgl';
-  btn.innerHTML = '🎵';
+  btn.innerHTML = '\u266B';
   btn.title = '音乐播放器';
-  btn.style.cssText = 'position:fixed;bottom:20px;left:20px;width:44px;height:44px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:18px;cursor:pointer;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.25);transition:transform 0.2s;';
+  btn.style.cssText = 'position:fixed;bottom:20px;left:20px;width:44px;height:44px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:20px;cursor:pointer;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.25);transition:transform 0.2s;';
   btn.onmouseenter = function() { this.style.transform = 'scale(1.1)'; };
   btn.onmouseleave = function() { this.style.transform = 'scale(1)'; };
   
@@ -16,7 +16,7 @@
   btn.onclick = function() {
     var v = player.style.display === 'none' ? 'block' : 'none';
     player.style.display = v;
-    btn.innerHTML = v === 'block' ? '✕' : '🎵';
+    btn.innerHTML = v === 'block' ? '\u00D7' : '\u266B';
   };
   
   document.body.appendChild(btn);
