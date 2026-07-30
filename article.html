@@ -186,8 +186,10 @@ if(isIssue){
             var tags=[],tm=body.match(/\*\*标签\*\*[：:]\s*(.+)/);
             if(tm)tags=tm[1].split(/[,，]/).map(function(t){return t.trim();}).filter(Boolean);
             document.title=issue.title+' | 蔡梓涵';
+            var isForum=issue.labels.some(function(l){return l.name==='forum';});
             var delBtn=window._siteGetNickname&&window._siteGetNickname()?'<button class="article-del-btn" onclick="deleteArticle('+aid+')" title="删除文章">🗑</button>':'';
-            document.getElementById('articleContent').innerHTML='<header class="article-header"><div class="article-tags">'+tags.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</div><h1>'+issue.title+'</h1><time>'+issue.created_at.split('T')[0]+'</time>'+delBtn+'</header><div class="article-body">'+fm(content)+'</div><div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
+            var backLink=isForum?'<a href="forum.html">← 返回论坛</a>':'<a href="blog.html">← 返回博客列表</a>';
+            document.getElementById('articleContent').innerHTML='<header class="article-header"><div class="article-tags">'+tags.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</div><h1>'+issue.title+'</h1><time>'+issue.created_at.split('T')[0]+'</time>'+delBtn+'</header><div class="article-body">'+fm(content)+'</div><div class="article-back">'+backLink+'</div>';
             document.getElementById('interactions').style.display='none';
             initComments(aid);
         }catch(e){ document.getElementById('articleContent').innerHTML='<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>'; }
