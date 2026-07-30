@@ -194,24 +194,30 @@
       draw();
 
       // 拖拽
+      function onCropMove(e) {
+        if (!dragging) return;
+        var cx = e.clientX || (e.touches && e.touches[0].clientX);
+        var cy = e.clientY || (e.touches && e.touches[0].clientY);
+        offsetX = startOffX + (cx - startX);
+        offsetY = startOffY + (cy - startY);
+        updateSizes();
+        draw();
+      }
+      function onCropEnd() { dragging = false; }
       area.onmousedown = function(e) { dragging = true; startX = e.clientX; startY = e.clientY; startOffX = offsetX; startOffY = offsetY; e.preventDefault(); };
       area.ontouchstart = function(e) { dragging = true; startX = e.touches[0].clientX; startY = e.touches[0].clientY; startOffX = offsetX; startOffY = offsetY; };
-      window.addEventListener('mousemove', function(e) {
-        if (!dragging) return;
-        offsetX = startOffX + (e.clientX - startX);
-        offsetY = startOffY + (e.clientY - startY);
-        updateSizes();
-        draw();
-      });
-      window.addEventListener('touchmove', function(e) {
-        if (!dragging) return;
-        offsetX = startOffX + (e.touches[0].clientX - startX);
-        offsetY = startOffY + (e.touches[0].clientY - startY);
-        updateSizes();
-        draw();
-      });
-      window.addEventListener('mouseup', function() { dragging = false; });
-      window.addEventListener('touchend', function() { dragging = false; });
+      window.addEventListener('mousemove', onCropMove);
+      window.addEventListener('touchmove', onCropMove);
+      window.addEventListener('mouseup', onCropEnd);
+      window.addEventListener('touchend', onCropEnd);
+
+      function cleanupCrop() {
+        window.removeEventListener('mousemove', onCropMove);
+        window.removeEventListener('touchmove', onCropMove);
+        window.removeEventListener('mouseup', onCropEnd);
+        window.removeEventListener('touchend', onCropEnd);
+        overlay.remove();
+      }
 
       // 滚轮缩放
       area.addEventListener('wheel', function(e) {
@@ -246,10 +252,10 @@
         var sh = (r * 2) * (img.height / imgH);
         rctx.drawImage(img, sx, sy, sw, sh, 0, 0, cropSize, cropSize);
         callback(resultCanvas.toDataURL('image/jpeg', 0.85));
-        overlay.remove();
+        cleanupCrop();
       };
 
-      document.getElementById('cropCancel').onclick = function() { overlay.remove(); };
+      document.getElementById('cropCancel').onclick = cleanupCrop;
     };
     img.src = imageSrc;
   }
