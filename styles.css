@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap');
+
 :root {
     --primary: #4f46e5;
     --primary-light: #818cf8;
@@ -232,12 +234,8 @@ nav {
     font-weight: 500;
 }
 
-.intro {
-    font-size: 1rem;
-    color: var(--text-light);
-    max-width: 480px;
-    margin: 0 auto;
-    font-style: italic;
+.hero h1, .hero .greeting, .hero .tagline, .hero .intro {
+    font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
 }
 
 /* About */
