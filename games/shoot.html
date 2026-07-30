@@ -397,32 +397,13 @@
     };
 
     const ENEMY_IMAGE_SOURCES = [
-      '83ff2cf30b497fb11adf5cac9556ae1f.jpg',
-      '8a2621912866642d0ca615b268f321d3.jpg',
-      'c1e4d2f31f203a20bb2399c3a912c8d6.jpg'
+      '83ff2cf30b497fb11adf5cac9556ae1f_px.jpg',
+      '8a2621912866642d0ca615b268f321d3_px.jpg',
+      'c1e4d2f31f203a20bb2399c3a912c8d6_px.jpg'
     ];
-    function pxImg(img) {
-      var scale = 6;
-      var sw = Math.max(4, Math.floor(img.width / scale));
-      var sh = Math.max(4, Math.floor(img.height / scale));
-      var pc = document.createElement('canvas');
-      pc.width = sw; pc.height = sh;
-      var pctx = pc.getContext('2d');
-      pctx.drawImage(img, 0, 0, sw, sh);
-      return pc;
-    }
-
     const ENEMY_IMAGES = ENEMY_IMAGE_SOURCES.map(src => {
       const img = new Image();
-      img._px = null;
-      img.addEventListener('load', function() {
-        try { img._px = pxImg(img); } catch(e) {}
-      });
       img.src = src;
-      // 图片可能已缓存，立即尝试
-      if (img.complete) {
-        try { img._px = pxImg(img); } catch(e) {}
-      }
       return img;
     });
 
@@ -778,18 +759,12 @@
     }
 
     function drawEnemy(enemy) {
-      // 重新尝试生成马赛克（前面可能失败过）
-      if (!enemy.img._px && enemy.img.complete) {
-        try { enemy.img._px = pxImg(enemy.img); } catch(e) {}
-      }
-      if (enemy.img._px) {
+      if (enemy.img && enemy.img.complete) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
         ctx.clip();
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(enemy.img._px, enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
-        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(enemy.img, enemy.x - enemy.r, enemy.y - enemy.r, enemy.r * 2, enemy.r * 2);
         ctx.restore();
 
         ctx.beginPath();
