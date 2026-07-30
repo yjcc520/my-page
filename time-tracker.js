@@ -37,14 +37,18 @@
   window._getOnlineTime = function() {
     var h = Math.floor(total / 3600);
     var m = Math.floor((total % 3600) / 60);
-    if (h > 0) return h + 'h ' + m + 'm';
-    return m + 'm';
+    var s = total % 60;
+    var parts = [];
+    if (h > 0) parts.push(h + 'h');
+    if (m > 0 || h > 0) parts.push(m + 'm');
+    parts.push(s + 's');
+    return parts.join(' ');
   };
 
   // 渲染到页面
   function render() {
     var el = document.getElementById('onlineTime');
-    if (el) el.textContent = '⏱ 在线 ' + window._getOnlineTime();
+    if (el) el.textContent = '已经在此虚度 ' + window._getOnlineTime();
   }
 
   // 等 footer 加载后插入
@@ -57,8 +61,8 @@
       el.style.cssText = 'text-align:center;color:var(--text-light);font-size:0.82rem;margin-top:0.3rem;';
       render();
       ft.appendChild(el);
-      // 每分钟更新
-      setInterval(render, 60000);
+      // 每秒更新
+      setInterval(render, 1000);
     } else if (tries < 20) {
       tries++;
       setTimeout(tryRender, 200);
