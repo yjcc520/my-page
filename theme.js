@@ -17,5 +17,13 @@
     var isDark = document.body.classList.toggle('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
     updateIcon();
+
+    // 如果首页 hero 可见，重播入场动画
+    var hero = document.querySelector('.hero-animate');
+    if (hero) {
+      hero.classList.remove('hero-animate');
+      void hero.offsetWidth;
+      hero.classList.add('hero-animate');
+    }
   };
 })();
