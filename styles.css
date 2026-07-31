@@ -1691,16 +1691,16 @@ body.dark nav.scrolled {
   background: linear-gradient(180deg, #cdd5de 0%, #dce3ea 40%, #c5cfd9 100%);
   z-index: 1;
   pointer-events: none;
-  animation: heroMaskOut 0.6s 0.3s ease-out both;
+  animation: heroMaskOut 0.5s 0.8s ease-out both;
 }
 .hero-content { position: relative; z-index: 2; }
 .hero {
   animation: heroBgZoom 3s ease-out;
   background-size: 100%;
 }
-.hero .greeting { animation: heroFadeUp 1s 0.15s ease-out both; }
-.hero h1        { animation: heroFadeUp 1s 0.35s ease-out both; }
-.hero .intro    { animation: heroFadeUp 1s 0.60s ease-out both; }
+.hero .greeting { animation: heroFadeUp 1s 0.6s ease-out both; }
+.hero h1        { animation: heroFadeUp 1s 0.85s ease-out both; }
+.hero .intro    { animation: heroFadeUp 1s 1.15s ease-out both; }
 
 /* -- Consistent Cursor -- */
 button, a, .tag-pill, .comment-replies-more, .gallery-item, .like-btn,
