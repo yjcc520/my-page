@@ -225,9 +225,9 @@ nav {
     padding: 6rem 2rem 4rem;
     background:
         radial-gradient(ellipse at center,
-            rgba(255, 255, 255, 0.35) 0%,
-            rgba(255, 255, 255, 0.15) 40%,
-            rgba(0, 0, 0, 0.12) 80%,
+            rgba(255, 255, 255, 0.20) 0%,
+            rgba(255, 255, 255, 0.05) 40%,
+            rgba(0, 0, 0, 0.15) 80%,
             rgba(0, 0, 0, 0.30) 100%
         ),
         url("mountain.jpg") center/cover no-repeat;
@@ -305,7 +305,6 @@ nav {
     margin-bottom: 0.5rem;
     letter-spacing: 0.18em;
     font-weight: 500;
-    text-shadow: 0 0 18px rgba(255,255,255,0.5);
 }
 
 .hero h1 {
@@ -315,7 +314,6 @@ nav {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: 0 0 30px rgba(255,255,255,0.45);
     margin-bottom: 0.6rem;
     letter-spacing: -0.01em;
     line-height: 1.15;
@@ -340,7 +338,6 @@ nav {
     font-style: italic;
     letter-spacing: 0.18em;
     font-weight: 600;
-    text-shadow: 0 0 16px rgba(255,255,255,0.45);
 }
 .intro::before {
     content: '';
