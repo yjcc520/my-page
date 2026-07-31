@@ -1671,6 +1671,23 @@ body.dark nav.scrolled {
   border-color: var(--primary-light);
 }
 
+/* -- Hero Entrance Animation -- */
+@keyframes heroFadeUp {
+  from { opacity: 0; transform: translateY(28px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+}
+@keyframes heroBgZoom {
+  from { background-size: 112%; }
+  to   { background-size: 100%; }
+}
+.hero {
+  animation: heroBgZoom 2.8s ease-out;
+  background-size: 100%;
+}
+.hero .greeting { animation: heroFadeUp 0.8s 0.05s ease-out both; }
+.hero h1        { animation: heroFadeUp 0.8s 0.20s ease-out both; }
+.hero .intro    { animation: heroFadeUp 0.8s 0.40s ease-out both; }
+
 /* -- Consistent Cursor -- */
 button, a, .tag-pill, .comment-replies-more, .gallery-item, .like-btn,
 [onclick]:not(input):not(textarea), .lb-card ol li, .game-play-btn,
