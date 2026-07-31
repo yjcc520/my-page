@@ -398,11 +398,27 @@ nav {
     border-radius: 12px;
     transition: transform 0.25s, box-shadow 0.25s, background 0.25s;
     cursor: default;
+    position: relative;
+}
+.info-item::before {
+    content: '';
+    display: block;
+    width: 5px;
+    height: 5px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin: 0 auto 0.5rem;
+    opacity: 0.45;
+    transition: opacity 0.25s, transform 0.25s;
 }
 .info-item:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(58,86,112,0.10);
     background: var(--bg);
+}
+.info-item:hover::before {
+    opacity: 0.9;
+    transform: scale(1.6);
 }
 
 .info-item .label {
