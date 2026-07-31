@@ -344,7 +344,7 @@ nav {
     display: block;
     width: 30px;
     height: 1.5px;
-    background: linear-gradient(90deg, transparent, var(--primary) 50%, transparent);
+    background: linear-gradient(90deg, transparent, rgba(58,86,112,0.65) 30%, rgba(74,106,133,0.65) 70%, transparent);
     margin: 0 auto 0.6rem;
     border-radius: 1px;
 }
