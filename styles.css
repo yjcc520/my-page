@@ -376,7 +376,7 @@ nav {
     border-radius: var(--radius-lg);
     padding: 2.5rem;
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-sm);
 }
 
 .about-card > p {
@@ -389,23 +389,39 @@ nav {
 .info-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    gap: 0;
 }
 
 .info-item {
     text-align: center;
+    padding: 1.2rem 1rem;
+    transition: background 0.3s;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+}
+/* 每行最后一列去掉右边框 */
+.info-item:nth-child(3n) { border-right: none; }
+/* 最后一行去掉底部边框 */
+.info-grid .info-item:nth-last-child(-n+3) { border-bottom: none; }
+/* 悬停 */
+.info-item:hover {
+    background: var(--primary-glow);
 }
 
 .info-item .label {
     display: block;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: var(--text-light);
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .info-item .value {
     font-weight: 600;
     color: var(--text);
+    font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
+    font-size: 0.95rem;
 }
 
 /* Skills */
