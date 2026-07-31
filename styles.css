@@ -389,23 +389,20 @@ nav {
 .info-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0;
+    gap: 1rem;
 }
 
 .info-item {
     text-align: center;
-    padding: 1.2rem 1rem;
-    transition: background 0.3s;
-    border-bottom: 1px solid var(--border);
-    border-right: 1px solid var(--border);
+    padding: 1.3rem 0.8rem;
+    border-radius: 12px;
+    transition: transform 0.25s, box-shadow 0.25s, background 0.25s;
+    cursor: default;
 }
-/* 每行最后一列去掉右边框 */
-.info-item:nth-child(3n) { border-right: none; }
-/* 最后一行去掉底部边框 */
-.info-grid .info-item:nth-last-child(-n+3) { border-bottom: none; }
-/* 悬停 */
 .info-item:hover {
-    background: var(--primary-glow);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(58,86,112,0.10);
+    background: var(--bg);
 }
 
 .info-item .label {
