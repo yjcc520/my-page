@@ -398,38 +398,12 @@ nav {
     border-radius: 12px;
     transition: transform 0.25s, box-shadow 0.25s, background 0.25s;
     cursor: default;
-    position: relative;
 }
-/* 每列不同图案 */
-.info-item::before {
-    content: '';
-    display: block;
-    background: var(--accent);
-    margin: 0 auto 0.5rem;
-    opacity: 0.45;
-    transition: opacity 0.25s, transform 0.25s, width 0.25s;
-}
-/* 第1列：圆点 */
-.info-item:nth-child(3n+1)::before { width: 5px; height: 5px; border-radius: 50%; }
-/* 第2列：菱形 */
-.info-item:nth-child(3n+2)::before { width: 5px; height: 5px; border-radius: 1px; transform: rotate(45deg); }
-/* 第3列：短横线 */
-.info-item:nth-child(3n)::before { width: 14px; height: 2px; border-radius: 1px; }
 
 .info-item:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(58,86,112,0.10);
     background: var(--bg);
-}
-/* hover 图案变化 */
-.info-item:nth-child(3n+1):hover::before {
-    opacity: 0.9; transform: scale(1.6);
-}
-.info-item:nth-child(3n+2):hover::before {
-    opacity: 0.9; transform: scale(1.6) rotate(45deg);
-}
-.info-item:nth-child(3n):hover::before {
-    opacity: 0.9; width: 20px;
 }
 
 .info-item .label {
