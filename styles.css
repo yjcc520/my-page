@@ -1706,7 +1706,7 @@ body.dark nav.scrolled {
 
 /* 键盘提示 */
 .piano-hint {
-  position: fixed; top: 48px; left: 24px; z-index: 90;
+  position: fixed; top: 76px; left: 24px; z-index: 90;
   font-size: 0.75rem; color: var(--text-light); opacity: 0.6;
   font-family: 'Noto Serif SC', serif; letter-spacing: 0.05em;
   pointer-events: none;
