@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="蔡梓涵的个人主页">
+    <style>
+    .greeting{font-family:'宋体','SimSun',serif!important}
+    .hero-animate .greeting{animation:heroFadeUp 1s .6s ease-out both}
+    .hero-animate h1{animation:heroFadeUp 1s .85s ease-out both}
+    .hero-animate .intro{animation:heroFadeUp 1s 1.15s ease-out both}
+    .hero-animate{animation:heroBgZoom 3s ease-out;background-size:100%}
+    .hero-animate::after{animation:heroMaskOut .5s .8s ease-out both}
+    @keyframes heroFadeUp{from{opacity:0;transform:translateY(48px) scale(.96);filter:blur(10px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+    @keyframes heroBgZoom{from{background-size:125%;opacity:.6}to{background-size:100%;opacity:1}}
+    @keyframes heroMaskOut{from{opacity:1}to{opacity:0}}
+    .hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#cdd5de 0%,#dce3ea 40%,#c5cfd9 100%);z-index:1;pointer-events:none}
+    .hero-content{position:relative;z-index:2}
+    </style>
     <title>蔡梓涵 | 个人主页</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -32,7 +45,7 @@
     <div class="piano-hint">打开声音试试键盘 A~L</div>
     <section id="home" class="hero hero-animate">
         <div class="hero-content">
-            <p class="greeting" data-i18n-text="hero_greet">你好，我是</p>
+            <p class="greeting" data-i18n-text="hero_greet" style="font-family:'宋体','SimSun',serif">你好，我是</p>
             <h1>蔡梓涵</h1>
 
             <p class="intro">花径不曾缘客扫，蓬门今始为君开</p>
