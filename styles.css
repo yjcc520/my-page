@@ -300,6 +300,7 @@ nav {
 }
 
 .greeting {
+    font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
     font-size: 1.1rem;
     color: rgba(30, 43, 56, 0.90);
     margin-bottom: 0.5rem;
@@ -308,6 +309,7 @@ nav {
 }
 
 .hero h1 {
+    font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
     font-size: 4rem;
     font-weight: 900;
     background: linear-gradient(170deg, #1e2b38 0%, #3a5670 50%, #4a6a85 100%);
@@ -331,6 +333,7 @@ nav {
     font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
 }
 .intro {
+    font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
     font-size: 1.1rem;
     color: rgba(40, 55, 72, 0.85);
     max-width: 480px;
