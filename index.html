@@ -37,7 +37,7 @@
             <p class="greeting" data-i18n-text="hero_greet">你好，我是</p>
             <h1>蔡梓涵</h1>
 
-            <p class="intro">花径不曾缘客扫，蓬门今始为君开</p>
+            <p class="intro" id="introLine" style="visibility:hidden">花径不曾缘客扫，蓬门今始为君开</p>
         </div>
     </section>
 
@@ -332,5 +332,19 @@ window._applyI18n();
 
     <script src="shinchan.js"></script>
     <script src="piano.js"></script>
+    <script>
+    // 点击屏幕才显示intro诗句
+    (function(){
+      var intro = document.getElementById('introLine');
+      if (!intro) return;
+      document.addEventListener('click', function reveal(){
+        intro.style.visibility = 'visible';
+        intro.style.animation = 'none';
+        void intro.offsetWidth;
+        intro.style.animation = 'heroFadeUp 1s ease-out both';
+        document.removeEventListener('click', reveal);
+      });
+    })();
+    </script>
 </body>
 </html>
