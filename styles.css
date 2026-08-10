@@ -1677,7 +1677,7 @@ body.dark nav.scrolled {
   to   { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0); }
 }
 @keyframes heroBgZoom {
-  from { background-size: 125%; opacity: 0.6; }
+  from { background-size: 125%; opacity: 0.7; }
   to   { background-size: 100%; opacity: 1;   }
 }
 @keyframes heroMaskOut {
@@ -1694,14 +1694,14 @@ body.dark nav.scrolled {
 }
 .hero-content { position: relative; z-index: 2; }
 .hero-animate {
-  animation: heroBgZoom 3s ease-out;
+  animation: heroBgZoom 1.6s ease-out;
   background-size: 100%;
 }
 .hero-animate::after {
-  animation: heroMaskOut 0.5s 0.8s ease-out both;
+  animation: heroMaskOut 0.4s 0.1s ease-out both;
 }
-.hero-animate .greeting { animation: heroFadeUp 1s 0.6s ease-out both; }
-.hero-animate h1        { animation: heroFadeUp 1s 0.85s ease-out both; }
+.hero-animate .greeting { animation: heroFadeUp 0.6s 0.1s ease-out both; }
+.hero-animate h1        { animation: heroFadeUp 0.6s 0.2s ease-out both; }
 /* .intro 改为点击触发，见 index.html 底部 script */
 
 /* 键盘提示 */
