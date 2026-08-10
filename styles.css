@@ -1704,6 +1704,14 @@ body.dark nav.scrolled {
 .hero-animate h1        { animation: heroFadeUp 1s 0.85s ease-out both; }
 .hero-animate .intro    { animation: heroFadeUp 1s 1.15s ease-out both; }
 
+/* 键盘提示 */
+.piano-hint {
+  position: fixed; top: 48px; left: 24px; z-index: 90;
+  font-size: 0.75rem; color: var(--text-light); opacity: 0.6;
+  font-family: 'Noto Serif SC', serif; letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
 /* -- Consistent Cursor -- */
 button, a, .tag-pill, .comment-replies-more, .gallery-item, .like-btn,
 [onclick]:not(input):not(textarea), .lb-card ol li, .game-play-btn,
