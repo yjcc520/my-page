@@ -1702,7 +1702,7 @@ body.dark nav.scrolled {
 }
 .hero-animate .greeting { animation: heroFadeUp 1s 0.6s ease-out both; }
 .hero-animate h1        { animation: heroFadeUp 1s 0.85s ease-out both; }
-.hero-animate .intro    { animation: heroFadeUp 1s 1.15s ease-out both; }
+/* .intro 改为点击触发，见 index.html 底部 script */
 
 /* 键盘提示 */
 .piano-hint {
