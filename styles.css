@@ -1,4 +1,4 @@
-/* font loaded via <link> in HTML */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap');
 
 :root {
     --primary: #3a5670;
@@ -300,7 +300,6 @@ nav {
 }
 
 .greeting {
-    font-family: '宋体', 'SimSun', serif !important;
     font-size: 1.1rem;
     color: rgba(30, 43, 56, 0.90);
     margin-bottom: 0.5rem;
@@ -309,7 +308,7 @@ nav {
 }
 
 .hero h1 {
-    font-family: '宋体', 'SimSun', 'STSong', 'Songti SC', serif;
+    font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
     font-size: 4rem;
     font-weight: 900;
     background: linear-gradient(170deg, #1e2b38 0%, #3a5670 50%, #4a6a85 100%);
@@ -330,10 +329,10 @@ nav {
 }
 
 .hero h1, .hero .greeting, .hero .tagline, .hero .intro {
-    font-family: '宋体', 'SimSun', 'STSong', 'Songti SC', serif;
+    font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
 }
 .intro {
-    font-family: '宋体', 'SimSun', 'STSong', 'Songti SC', serif;
+    font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
     font-size: 1.1rem;
     color: rgba(40, 55, 72, 0.85);
     max-width: 480px;
@@ -421,7 +420,7 @@ nav {
 .info-item .value {
     font-weight: 600;
     color: var(--text);
-    font-family: '宋体', 'SimSun', 'STSong', 'Songti SC', serif;
+    font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
     font-size: 0.95rem;
 }
 
@@ -1711,7 +1710,7 @@ body.dark nav.scrolled {
 .piano-hint {
   position: fixed; top: 76px; left: 24px; z-index: 90;
   font-size: 0.75rem; color: var(--text-light); opacity: 0.6;
-  font-family: 'STSong', 'SimSun', serif; letter-spacing: 0.05em;
+  font-family: 'Noto Serif SC', serif; letter-spacing: 0.05em;
   pointer-events: none;
 }
 
