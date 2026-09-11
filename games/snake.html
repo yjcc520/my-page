@@ -166,6 +166,9 @@ const startBtn = document.getElementById('startBtn');
 
 let snake, food, dir, score, best, running, speed, timer, particles, dirQueue;
 
+// 排行榜用的游戏标识（与库中 scores.game 一致）
+var GAME_SNAKE = 'snake';
+
 // Particles
 function createParticles(x, y, color) {
   for (var i = 0; i < 8; i++) {

@@ -19,17 +19,32 @@
 
   // 毫秒计时的游戏：越少越好
   var LOWER_IS_BETTER = { reaction: 1 };
-  var UNIT = { reaction: 'ms' };
+  var UNIT = { reaction: 'ms', memory: '步', minesweeper: '秒' };
 
-  var game = (typeof GAME !== 'undefined' && GAME) ||
-             (typeof GAME_SNAKE !== 'undefined' && GAME_SNAKE) ||
-             (typeof GAME_SHOOT !== 'undefined' && GAME_SHOOT) ||
-             (typeof GAME_MEMORY !== 'undefined' && GAME_MEMORY) ||
-             (typeof GAME_MINES !== 'undefined' && GAME_MINES) ||
-             (typeof GAME_GOMOKU !== 'undefined' && GAME_GOMOKU) ||
-             (typeof GAME_TETRIS !== 'undefined' && GAME_TETRIS) ||
-             (typeof GAME_POETRY !== 'undefined' && GAME_POETRY) ||
-             'game';
+  // 各游戏页历史遗留的中文标题 → 库中 scores.game 使用的 key。
+  // 页面里若仍写着 '2048-排行榜' 这类标题，这里归一化掉，避免查到空结果。
+  var TITLE2KEY = {
+    '2048-排行榜': '2048',
+    '记忆翻牌-排行榜': 'memory',
+    '扫雷-排行榜': 'minesweeper',
+    '诗词挑战-排行榜': 'poetry',
+    '反应速度-排行榜': 'reaction',
+    '射爆邓宸铭-排行榜': 'shoot',
+    '贪吃蛇-排行榜': 'snake',
+    '俄罗斯方块-排行榜': 'tetris'
+  };
+
+  var raw = (typeof GAME !== 'undefined' && GAME) ||
+            (typeof GAME_SNAKE !== 'undefined' && GAME_SNAKE) ||
+            (typeof GAME_SHOOT !== 'undefined' && GAME_SHOOT) ||
+            (typeof GAME_MEMORY !== 'undefined' && GAME_MEMORY) ||
+            (typeof GAME_MINES !== 'undefined' && GAME_MINES) ||
+            (typeof GAME_GOMOKU !== 'undefined' && GAME_GOMOKU) ||
+            (typeof GAME_TETRIS !== 'undefined' && GAME_TETRIS) ||
+            (typeof GAME_POETRY !== 'undefined' && GAME_POETRY) ||
+            '';
+
+  var game = TITLE2KEY[raw] || raw || 'game';
 
   var lower = !!LOWER_IS_BETTER[game];
   var unit = UNIT[game] || '分';
