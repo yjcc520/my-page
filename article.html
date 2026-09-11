@@ -39,7 +39,7 @@
         <p style="text-align:center;color:var(--text-light);font-size:0.85rem;margin-bottom:1.2rem;">
             用 GitHub 账号登录即可评论<span id="articlePv"></span>
         </p>
-        <div class="giscus-host" id="giscusHost" data-giscus-term="article-0"></div>
+        <div id="giscusHost"></div>
     </section>
 
     <footer><p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p></footer>
@@ -84,7 +84,13 @@ var aid = parseInt(params.get('id'));
 var isIssue = params.get('type') === 'issue';
 
 // giscus 按文章区分讨论话题：article-<id>
-document.getElementById('giscusHost').setAttribute('data-giscus-term', 'article-' + aid);
+// 只有文章确实存在时才挂载，避免有人构造任意 id 凭空创建讨论
+window._mountArticleComments = function () {
+    var el = document.getElementById('giscusHost');
+    el.className = 'giscus-host';
+    el.setAttribute('data-giscus-term', 'article-' + aid);
+    if (window._mountComments) window._mountComments('#giscusHost');
+};
 
 _trackRead(aid);
 window._onStatsReady = function (sitePv, pagePv) {
@@ -109,14 +115,17 @@ if (isIssue) {
             document.getElementById('articleContent').innerHTML =
                 '<header class="article-header"><div class="article-tags">' + tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('') + '</div><h1>' + issue.title + '</h1><time>' + issue.created_at.split('T')[0] + '</time>' + delBtn + '</header><div class="article-body">' + fm(content) + '</div><div class="article-back">' + backLink + '</div>';
             document.getElementById('interactions').style.display = 'none';
+            window._mountArticleComments();
         } catch (e) {
             document.getElementById('articleContent').innerHTML = '<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
+        document.getElementById('comments').style.display = 'none';
         }
     })();
 } else {
     var article = articles.find(function (a) { return a.id === aid; });
     if (!article) {
         document.getElementById('articleContent').innerHTML = '<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
+        document.getElementById('comments').style.display = 'none';
     } else {
         document.title = article.title + ' | 蔡梓涵';
         var preDelBtn = '<button class="article-del-btn" onclick="deletePreset(' + aid + ')" title="隐藏文章">🗑</button>';
@@ -139,6 +148,7 @@ if (isIssue) {
             ul();
         };
         ul();
+        window._mountArticleComments();
     }
 }
     </script>
