@@ -134,36 +134,51 @@
 
   function threadHtml(state) {
     var rows = state.rows;
-    var tops = rows.filter(function (r) { return !r.parent_id; });
-    var repliesOf = {};
-    rows.forEach(function (r) {
-      if (r.parent_id) (repliesOf[r.parent_id] = repliesOf[r.parent_id] || []).push(r);
-    });
+    var total = rows.length;
 
+    // 按 parent_id 挂成一棵树，层级不限。
+    // 父评论不在本次结果里的（条数上限截断，或者父评论已被删），
+    // 一律当顶层显示 —— 否则那些内容会凭空消失。
     var byId = {};
     rows.forEach(function (r) { byId[r.id] = r; });
+    var kidsMap = {};
+    var roots = [];
+    rows.forEach(function (r) {
+      var p = r.parent_id ? byId[r.parent_id] : null;
+      if (p) (kidsMap[p.id] = kidsMap[p.id] || []).push(r);
+      else roots.push(r);
+    });
 
     return '' +
-      (rows.length ? '<div class="cmt-summary">共 ' + rows.length + ' 条评论</div>' : '') +
+      (total ? '<div class="cmt-summary">共 ' + total + ' 条评论</div>' : '') +
       composerHtml(state, 'thread') +
       (state.loading ? '<div class="comments-loading"><div class="loading-spinner"></div>加载中…</div>' :
         state.error ? '<div class="comments-error">' + esc(state.error) + '</div>' :
-        (!rows.length ? '<div class="comments-empty">空着也是空着，说点什么吧</div>' :
-          tops.map(function (c) {
-            var kids = repliesOf[c.id] || [];
-            return commentHtml(c, kids, byId, state);
+        (!total ? '<div class="comments-empty">空着也是空着，说点什么吧</div>' :
+          roots.map(function (c) {
+            return commentHtml(c, 0, state, kidsMap, '');
           }).join('')));
   }
 
-  function commentHtml(c, kids, byId, state) {
+  // 缩进最多累积 3 层：再深的评论照样能回，只是不再往右挤，
+  // 免得窄屏上每层只剩几个字的位置。
+  function levelCls(n) { return 'cmt-lv' + Math.min(n, 3); }
+
+  // 递归渲染一条评论及其全部后代。每一层都能被回复、点赞、删除自己发的。
+  function commentHtml(c, depth, state, kidsMap, parentName) {
     var own = mine(c);
+    var kids = kidsMap[c.id] || [];
+    var nested = depth > 0;
+
     return '' +
-      '<div class="comment-item" data-id="' + c.id + '">' +
+      '<div class="comment-item' + (nested ? ' comment-item-nested' : '') +
+          '" data-id="' + c.id + '" data-depth="' + depth + '">' +
         '<div class="comment-header">' +
-          avatarHtml(c.nickname) +
+          avatarHtml(c.nickname, nested) +
           '<div>' +
             '<span class="comment-author-name">' + esc(c.nickname) + (own ? '<span class="cmt-you">我</span>' : '') + '</span>' +
-            '<span class="comment-time">' + esc(fmtTime(c.created_at)) + '</span>' +
+            '<span class="comment-time">' + esc(fmtTime(c.created_at)) +
+              (parentName ? ' · 回复 @' + esc(parentName) : '') + '</span>' +
           '</div>' +
         '</div>' +
         '<div class="comment-body">' + rich(c.body) + '</div>' +
@@ -174,21 +189,13 @@
           '<button type="button" class="comment-action-btn" data-act="reply" data-id="' + c.id + '" data-name="' + esc(c.nickname) + '">回复</button>' +
           (own ? '<button type="button" class="comment-action-btn" data-act="del" data-id="' + c.id + '">删除</button>' : '') +
         '</div>' +
-        (kids.length ? '<div class="comment-replies">' + kids.map(function (k) {
-          var kOwn = mine(k);
-          return '<div class="comment-reply-item" data-id="' + k.id + '">' +
-            avatarHtml(k.nickname, true) +
-            '<div class="comment-reply-content">' +
-              '<span class="comment-author-name">' + esc(k.nickname) + '</span>' +
-              '<div class="comment-body">' + rich(k.body) + '</div>' +
-              '<div class="comment-reply-actions-inline">' +
-                '<span class="comment-time">' + esc(fmtTime(k.created_at)) + '</span>' +
-                (kOwn ? '<button type="button" class="comment-action-btn" data-act="del" data-id="' + k.id + '">删除</button>' : '') +
-              '</div>' +
-            '</div>' +
-          '</div>';
-        }).join('') + '</div>' : '') +
+        // 回复框紧贴这条评论的操作行，再往下才是它的回复
         (state.openReply === c.id ? replyFormHtml(c) : '') +
+        (kids.length ? '<div class="comment-replies ' + levelCls(depth + 1) + '">' +
+            kids.map(function (k) {
+              return commentHtml(k, depth + 1, state, kidsMap, c.nickname);
+            }).join('') +
+          '</div>' : '') +
       '</div>';
   }
 

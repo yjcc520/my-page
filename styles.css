@@ -1203,30 +1203,37 @@ footer {
 .comment-action-btn:hover { color: var(--primary); }
 .comment-action-btn.liked { color: var(--primary); font-weight: 600; }
 
-/* 回复区 */
+/* 回复区：每一层都靠一条竖线归位，层级不限 */
 .comment-replies {
     margin-top: 0.6rem;
     padding-left: 1rem;
     border-left: 2px solid var(--border);
 }
 
-.comment-reply-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    padding: 0.4rem 0;
-    font-size: 0.9rem;
+/* 缩进到第 3 层就不再加深，免得窄屏上越往里越没地方放字 */
+.comment-replies.cmt-lv3 {
+    padding-left: 0.5rem;
 }
 
-.comment-reply-content {
-    flex: 1;
-    line-height: 1.5;
-    color: var(--text);
-    word-break: break-word;
+/* 嵌套的评论不套卡片：边框与底色交给外层竖线，越深视觉越轻。
+   这里刻意写成两段类名（.comment-item.comment-item-nested），
+   否则会被响应式里的 .comment-item { padding } 盖掉 —— 左右各多吃 16px，
+   嵌套几层下来窄屏就没地方放字了。 */
+.comment-item.comment-item-nested {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0.45rem 0 0.1rem;
+    margin-bottom: 0;
 }
 
-.comment-reply-actions {
-    flex-shrink: 0;
+body.dark .comment-item.comment-item-nested {
+    background: transparent;
+}
+
+/* 同一层里挨着的两条之间给一道浅线，方便分清是两条还是同一条 */
+.comment-item.comment-item-nested + .comment-item.comment-item-nested {
+    border-top: 1px dashed var(--border);
 }
 
 .comment-reply-actions-inline {
@@ -1937,6 +1944,14 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
     border: 1px solid currentColor;
     border-radius: 3px;
     vertical-align: 1px;
+}
+
+/* 窄屏上缩进整体收窄一档，嵌套再深也留得住阅读宽度 */
+@media (max-width: 768px) {
+    .comment-item { padding: 1rem; }
+    .comment-replies { padding-left: 0.6rem; }
+    .comment-replies.cmt-lv3 { padding-left: 0.35rem; }
+    .comment-reply-form { padding-left: 0.6rem; }
 }
 
 /* 文章页与画廊：评论区收窄，读起来更舒服 */
