@@ -143,7 +143,7 @@
   }
 
   // 表名白名单，避免拼接出意外路径
-  var TABLES = { comments: 1, notes: 1, posts: 1, scores: 1, photos: 1, profiles: 1 };
+  var TABLES = { comments: 1, notes: 1, posts: 1, articles: 1, scores: 1, photos: 1, profiles: 1 };
 
   function table(name) {
     if (!TABLES[name]) throw new Error('未知数据表：' + name);

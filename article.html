@@ -16,6 +16,7 @@
                 <a href="index.html">首页</a>
                 <a href="index.html#about">关于我</a>
                 <a href="blog.html">博客</a>
+                <a href="forum.html">论坛</a>
                 <a href="index.html#contact">联系</a>
                 <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
             </div>
@@ -46,113 +47,152 @@
         <span id="busuanzi_container_page_pv">本页访问量<span id="busuanzi_value_page_pv"></span>次</span>
     </div>
 
-    <script src="blog-data.js"></script>
     <script src="sb.js"></script>
-<script src="user.js"></script>
+    <script src="user.js"></script>
     <script src="stats.js"></script>
-    <script src="gh-publish.js"></script>
     <script>
-var REPO = 'yjcc520/my-page';
+var CATS = { chat: '闲聊', tech: '技术', poetry: '诗词', game: '游戏' };
 
-function eHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
-function fm(md) { return ('<p>' + (md || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/### (.+)/g, '<h4>$1</h4>').replace(/## (.+)/g, '<h3>$1</h3>').replace(/# (.+)/g, '<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/^> (.+)/gm, '<blockquote>$1</blockquote>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>'); }
-
-// ===== 删除文章 =====
-// 关闭 Issue 需要仓库权限，因此改为跳到 GitHub 上操作；预置文章则记在本地
-window.deleteArticle = function (id) {
-    window._showConfirm('删除需要到 GitHub 上关闭这篇 Issue，现在打开吗？', function () {
-        window.open(window._ghIssueUrl(id), '_blank', 'noopener');
-    });
-};
-
-window.deletePreset = function (id) {
-    window._showConfirm('确定隐藏这篇预置文章吗？（仅对当前浏览器生效）', function () {
-        var list = [];
-        try { list = JSON.parse(localStorage.getItem('deleted_presets') || '[]'); } catch (e) {}
-        if (list.indexOf(id) < 0) list.push(id);
-        localStorage.setItem('deleted_presets', JSON.stringify(list));
-        window.location.href = 'blog.html';
-    });
-};
-
-// ===== 文章加载 =====
 var params = new URLSearchParams(window.location.search);
-var aid = parseInt(params.get('id'));
-var isIssue = params.get('type') === 'issue';
+var aid    = parseInt(params.get('id'), 10);
+var isPost = params.get('type') === 'post';
 
-// 评论按文章区分：article-<id>
-// 只有文章确实存在时才挂载，避免有人构造任意 id 凭空造出一堆空评论区
-window._mountArticleComments = function () {
+// 文章与帖子共用这个页面，只是取数的表不同
+var TABLE = isPost ? 'posts' : 'articles';
+// 评论区按内容区分：文章 article-<id>，帖子 forum-<id>
+var TERM  = (isPost ? 'forum-' : 'article-') + aid;
+
+function eHtml(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+function fm(md) {
+    return ('<p>' + (md || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/### (.+)/g, '<h4>$1</h4>')
+        .replace(/## (.+)/g, '<h3>$1</h3>')
+        .replace(/# (.+)/g, '<h2>$1</h2>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/^> (.+)/gm, '<blockquote>$1</blockquote>')
+        .replace(/^- (.+)/gm, '<li>$1</li>')
+        .replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>');
+}
+
+function fmtDate(iso) { return String(iso || '').slice(0, 10); }
+
+// 归属判断：只认服务端记录的 user_id，和昵称无关
+function mine(row) { return !!(SB.user && row.user_id && row.user_id === SB.user.id); }
+
+// ===== 删除 =====
+// 服务端只允许删自己发的；删掉就是数据库里没了，所有人（含未登录）都看不到。
+window.deleteItem = function () {
+    var what = isPost ? '这个帖子' : '这篇文章';
+    window._showConfirm('删除' + what + '？删除后所有人都看不到了。', function () {
+        SB.remove(TABLE, aid).then(function () {
+            window.location.href = isPost ? 'forum.html' : 'blog.html';
+        }).catch(function (e) {
+            alert((e && e.message) || '删除失败，稍后再试');
+        });
+    });
+};
+
+// ===== 点赞（记在数据库里，所有人看得到）=====
+window.toggleLike = function () {};
+
+function initLike(row) {
+    var btn   = document.getElementById('likeBtn');
+    var span  = document.getElementById('likeCount');
+    var text  = btn.querySelector('.like-text');
+    var key   = 'liked_' + TABLE + '_' + aid;
+    var liked = false;
+    try { liked = localStorage.getItem(key) === '1'; } catch (e) {}
+
+    var count = row.likes || 0;
+    function paint() {
+        span.textContent = count;
+        btn.classList.toggle('liked', liked);
+        text.textContent = liked ? '已赞' : '点赞';
+    }
+    paint();
+
+    window.toggleLike = function () {
+        if (liked) return;                       // 只加不减，避免反复点击刷数字
+        liked = true;
+        try { localStorage.setItem(key, '1'); } catch (e) {}
+        count += 1;
+        paint();
+        var fn = isPost ? 'like_post' : 'like_article';
+        SB.rpc(fn, { p_id: aid }).catch(function () {});
+    };
+}
+
+// ===== 评论挂载 =====
+// 只有内容确实存在时才挂，避免有人构造任意 id 凭空造出一堆空评论区
+function mountComments() {
     var el = document.getElementById('commentHost');
     if (!el) return;
     el.className = 'comment-host';
-    el.setAttribute('data-term', 'article-' + aid);
-    var go = function () {
-        if (window._mountComments) window._mountComments('#commentHost');
-    };
+    el.setAttribute('data-term', TERM);
+    var go = function () { if (window._mountComments) window._mountComments('#commentHost'); };
     if (window._mountComments) go();
     else window.addEventListener('load', go);
-};
+}
 
-_trackRead(aid);
-window._onStatsReady = function (sitePv, pagePv) {
-    if (pagePv) document.getElementById('articlePv').textContent = '· 阅读 ' + pagePv;
-};
+function notFound(msg) {
+    document.getElementById('articleContent').innerHTML =
+        '<div class="article-not-found"><h1>' + msg + '</h1><p><a href="' +
+        (isPost ? 'forum.html' : 'blog.html') + '">← 返回' + (isPost ? '论坛' : '博客列表') + '</a></p></div>';
+    document.getElementById('comments').style.display = 'none';
+    document.getElementById('interactions').style.display = 'none';
+}
 
-if (isIssue) {
-    (async function () {
-        try {
-            var resp = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + aid, {
-                headers: { 'Accept': 'application/vnd.github.v3+json' }
-            });
-            if (!resp.ok) throw new Error('nf');
-            var issue = await resp.json(), body = issue.body || '';
-            var content = body.replace(/\*\*作者\*\*[：:].+\n?/, '').replace(/\*\*标签\*\*[：:].+\n?/, '').trim();
-            var tags = [], tm = body.match(/\*\*标签\*\*[：:]\s*(.+)/);
-            if (tm) tags = tm[1].split(/[,，]/).map(function (t) { return t.trim(); }).filter(Boolean);
-            document.title = issue.title + ' | 蔡梓涵';
-            var isForum = issue.labels.some(function (l) { return l.name === 'forum'; });
-            var delBtn = '<button class="article-del-btn" onclick="deleteArticle(' + aid + ')" title="到 GitHub 上删除">🗑</button>';
-            var backLink = isForum ? '<a href="forum.html">← 返回论坛</a>' : '<a href="blog.html">← 返回博客列表</a>';
-            document.getElementById('articleContent').innerHTML =
-                '<header class="article-header"><div class="article-tags">' + tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('') + '</div><h1>' + issue.title + '</h1><time>' + issue.created_at.split('T')[0] + '</time>' + delBtn + '</header><div class="article-body">' + fm(content) + '</div><div class="article-back">' + backLink + '</div>';
-            document.getElementById('interactions').style.display = 'none';
-            window._mountArticleComments();
-        } catch (e) {
-            document.getElementById('articleContent').innerHTML = '<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
-        document.getElementById('comments').style.display = 'none';
-        }
-    })();
-} else {
-    var article = articles.find(function (a) { return a.id === aid; });
-    if (!article) {
-        document.getElementById('articleContent').innerHTML = '<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
-        document.getElementById('comments').style.display = 'none';
-    } else {
-        document.title = article.title + ' | 蔡梓涵';
-        var preDelBtn = '<button class="article-del-btn" onclick="deletePreset(' + aid + ')" title="隐藏文章">🗑</button>';
-        document.getElementById('articleContent').innerHTML =
-            '<header class="article-header"><div class="article-tags">' + article.tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('') + '</div><h1>' + article.title + '</h1><time>' + article.date + '</time>' + preDelBtn + '</header><div class="article-body">' + article.content + '</div><div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
-
-        var sk = 'likes_' + aid;
-        var liked = localStorage.getItem(sk + '_liked') === 'true';
-        var count = parseInt(localStorage.getItem(sk) || '0');
-        function ul() {
-            document.getElementById('likeCount').textContent = count;
-            var b = document.getElementById('likeBtn');
-            if (liked) { b.classList.add('liked'); b.querySelector('.like-text').textContent = '已赞'; }
-            else { b.classList.remove('liked'); b.querySelector('.like-text').textContent = '点赞'; }
-        }
-        window.toggleLike = function () {
-            if (liked) { count = Math.max(0, count - 1); liked = false; } else { count++; liked = true; }
-            localStorage.setItem(sk, count);
-            localStorage.setItem(sk + '_liked', liked);
-            ul();
-        };
-        ul();
-        window._mountArticleComments();
+function render(row) {
+    var tags = (row.tags || []).map(function (t) { return '<span class="tag">' + eHtml(t) + '</span>'; }).join('');
+    if (isPost) {
+        tags = '<span class="tag">' + (CATS[row.category] || '闲聊') + '</span>';
     }
+    // 删除按钮只在本人查看时出现。这只是界面上的便利，
+    // 真正拦得住越权的是数据库里的行级策略。
+    var delBtn = mine(row)
+        ? '<button class="article-del-btn" onclick="deleteItem()" title="删除">🗑</button>'
+        : '';
+    var body = row.format === 'html' ? String(row.body || '') : fm(row.body);
+
+    document.title = row.title + ' | 蔡梓涵';
+    document.getElementById('articleContent').innerHTML =
+        '<header class="article-header">' +
+            '<div class="article-tags">' + tags + '</div>' +
+            '<h1>' + eHtml(row.title) + '</h1>' +
+            '<time>' + fmtDate(row.created_at) +
+                (row.nickname ? ' · ' + eHtml(row.nickname) : '') + '</time>' +
+            delBtn +
+        '</header>' +
+        '<div class="article-body">' + body + '</div>' +
+        '<div class="article-back"><a href="' + (isPost ? 'forum.html' : 'blog.html') + '">← 返回' +
+            (isPost ? '论坛' : '博客列表') + '</a></div>';
+
+    initLike(row);
+    mountComments();
+    // 计数尽力而为，失败不影响阅读
+    SB.rpc('bump_views', { p_table: TABLE, p_id: aid }).catch(function () {});
+}
+
+if (!aid || isNaN(aid)) {
+    notFound('内容不存在');
+} else {
+    _trackRead(aid);
+    window._onStatsReady = function (sitePv, pagePv) {
+        if (pagePv) document.getElementById('articlePv').textContent = '· 阅读 ' + pagePv;
+    };
+
+    SB.select(TABLE, SB.q({
+        select: '*', id: 'eq.' + aid, limit: '1'
+    })).then(function (rows) {
+        if (!rows || !rows.length) { notFound(isPost ? '帖子不存在' : '文章不存在'); return; }
+        render(rows[0]);
+    }).catch(function () {
+        notFound('加载失败');
+    });
 }
     </script>
     <script src="theme.js"></script>

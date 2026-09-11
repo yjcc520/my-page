@@ -44,7 +44,7 @@
 .post-card {
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 1rem 1.2rem; box-shadow: var(--shadow-sm); transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer; display: flex; gap: 0.8rem;
+  cursor: pointer; display: flex; gap: 0.8rem; position: relative;
 }
 .post-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .post-card.pinned { border-left: 3px solid #f59e0b; background: rgba(245,158,11,0.03); }
@@ -75,7 +75,7 @@
 /* Empty / Loading */
 .forum-empty { text-align: center; color: var(--text-light); padding: 3rem; font-size: 0.95rem; }
 .forum-loading { text-align: center; padding: 3rem; color: var(--text-light); }
-.forum-empty svg { display: block; margin: 0 auto 1rem; opacity: 0.3; }
+.forum-empty svg { display: block; margin: 0 auto 1.5rem; opacity: 0.3; }
 
 /* Post editor modal */
 .editor-ov { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: center; justify-content: center; }
@@ -90,7 +90,6 @@
 .editor-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; justify-content: space-between; }
 .editor-row-left { display: flex; gap: 0.5rem; align-items: center; }
 .editor-select { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.85rem; font-family: inherit; background: var(--bg); color: var(--text); }
-.editor-anon { display: flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; color: var(--text-light); cursor: pointer; }
 .editor-count { font-size: 0.75rem; color: var(--text-light); }
 .editor-btns { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
 .editor-cancel { padding: 0.45rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); cursor: pointer; font-family: inherit; font-size: 0.88rem; }
@@ -180,7 +179,6 @@
           <option value="poetry">诗词</option>
           <option value="game">游戏</option>
         </select>
-        <label class="editor-anon"><input type="checkbox" id="edAnon"> 匿名</label>
       </div>
     </div>
     <p class="editor-err" id="edErr"></p>
@@ -195,15 +193,20 @@
 
     <script src="sb.js"></script>
 <script src="user.js"></script>
-<script src="gh-publish.js"></script>
 <script src="theme.js"></script>
 <script src="ux.js"></script>
 <script>
-var REPO='yjcc520/my-page', allPosts=[], curCat='', curSort='new', wallLoaded=false;
+var allPosts=[], curCat='', curSort='new', wallLoaded=false;
+var CATS={chat:'闲聊',tech:'技术',poetry:'诗词',game:'游戏'};
+var POST_FIELDS='id,category,nickname,title,body,is_pinned,views,likes,created_at,user_id';
 
-function eHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function dg(s){return s.replace(/(<([^>]+)>)/gi,'').replace(/\n+/g,' ').substring(0,100);}
+function eHtml(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+function dg(s){return String(s||'').replace(/[#*>`_~\-]+/g,' ').replace(/\s+/g,' ').trim().substring(0,100);}
 function avLetter(n){return n?n[0].toUpperCase():'?'}
+function fmtDate(iso){return String(iso||'').slice(0,10);}
+
+// 归属判断：只认服务端记录的 user_id
+function mine(row){return !!(SB.user&&row.user_id&&row.user_id===SB.user.id);}
 
 // Sort
 window.setSort=function(s){
@@ -235,64 +238,58 @@ window.filterPosts=function(){
   });
   if(curSort==='hot') posts.sort(function(a,b){ return (b.replies+b.likeCount)-(a.replies+a.likeCount); });
   renderPostList(posts,document.getElementById('postList'));
-  // Pinned
   var pinned=allPosts.filter(function(p){return p.isPinned&&(!curCat||p.cat===curCat);});
   document.getElementById('pinnedSection').style.display=pinned.length?'block':'none';
   if(pinned.length)renderPostList(pinned,document.getElementById('pinnedList'));
-  // Stats
   var today=new Date().toISOString().split('T')[0];
   document.getElementById('statTotal').textContent=allPosts.length;
-  document.getElementById('statToday').textContent=allPosts.filter(function(p){return p.time===today;}).length;
+  document.getElementById('statToday').textContent=allPosts.filter(function(p){return p.date===today;}).length;
 };
 
-// Load posts
+// 帖子与回复都存在数据库里，一次拉齐
 async function loadPosts(){
   try{
-    var r=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:forum+type:issue+state:open&sort=created&order=desc&per_page=60',{headers:{'Accept':'application/vnd.github.v3+json'}});
-    var d=await r.json();
-    allPosts=[];
-    (d.items||[]).forEach(function(issue){
-      var body=issue.body||'';
-      var am=body.match(/\*\*作者\*\*[：:]\s*(.+)/);
-      var cm=body.match(/\*\*分类\*\*[：:]\s*(\w+)/);
-      var author=am?am[1].trim():'匿名';
-      var cat=cm?cm[1].trim():'chat';
-      var content=body.replace(/\*\*作者\*\*[：:].+\n?/,'').replace(/\*\*分类\*\*[：:].+\n?/,'').replace(/\*\*匿名\*\*/,'').trim();
-      var preview=dg(content);
-      var isPinned=issue.labels.some(function(l){return l.name==='forum-pinned';});
-      var replies=issue.comments||0;
-      var views=getViews(issue.number);
-      var liked=getPostLike(issue.number);
-      allPosts.push({id:issue.number,title:issue.title,body:preview,fullBody:content,author:author,cat:cat,time:issue.created_at.split('T')[0],isPinned:isPinned,replies:replies,views:views,liked:liked.liked,likeCount:liked.count});
+    var res=await Promise.all([
+      SB.select('posts', SB.q({select:POST_FIELDS, order:'created_at.desc', limit:'200'})),
+      SB.select('comments', SB.q({select:'path', path:'like.forum-*', limit:'5000'})).catch(function(){return [];})
+    ]);
+    var rows=res[0]||[], cmts=res[1]||[];
+    var replyMap={};
+    cmts.forEach(function(c){ replyMap[c.path]=(replyMap[c.path]||0)+1; });
+
+    allPosts=rows.map(function(p){
+      var liked=getPostLike(p.id);
+      return {
+        id:p.id, title:p.title, body:dg(p.body), fullBody:p.body,
+        author:p.nickname||'', cat:p.category||'chat',
+        date:fmtDate(p.created_at), time:fmtDate(p.created_at),
+        isPinned:!!p.is_pinned,
+        replies:replyMap['forum-'+p.id]||0,
+        views:p.views||0,
+        liked:liked.liked, likeCount:(p.likes||0),
+        user_id:p.user_id
+      };
     });
     filterPosts();
-  }catch(e){document.getElementById('postList').innerHTML='<p class="forum-empty">加载失败</p>';}
-  loadViewCounts();
+  }catch(e){
+    document.getElementById('postList').innerHTML='<p class="forum-empty">加载失败，刷新重试</p>';
+  }
 }
 
-// 浏览量写入需要凭据，已停用（历史数据仍保存在仓库 Issue #1 中）
-function getViews(){return 0;}
-function loadViewCounts(){}
-
-// Likes
+// 点赞记录在数据库里，本机只记「我点过没」，防止连点刷数字
 function getPostLike(id){
-  return {count:parseInt(localStorage.getItem('fl_'+id)||'0'),liked:localStorage.getItem('fl_liked_'+id)==='true'};
-}
-function togglePostLike(id){
-  var l=getPostLike(id);
-  if(l.liked){l.count=Math.max(0,l.count-1);l.liked=false;}else{l.count++;l.liked=true;}
-  localStorage.setItem('fl_'+id,l.count);localStorage.setItem('fl_liked_'+id,l.liked);
-  return l;
+  return {liked:localStorage.getItem('fl_liked_'+id)==='true'};
 }
 
 // Render
 function renderPostList(posts,container){
   if(!posts.length){container.innerHTML='<div class="forum-empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><p>暂无帖子</p></div>';return;}
-  var cats={chat:'闲聊',tech:'技术',poetry:'诗词',game:'游戏'};
   container.innerHTML=posts.map(function(p){
-    var catName=cats[p.cat]||'闲聊';
+    var catName=CATS[p.cat]||'闲聊';
+    var delBtn=mine(p)?'<button class="blog-del-btn" onclick="event.stopPropagation();delPost('+p.id+',this)" title="删除这个帖子">✕</button>':'';
     return '<div class="post-card'+(p.isPinned?' pinned':'')+'" onclick="openPost('+p.id+')">'+
-      '<div class="post-avatar">'+avLetter(p.author)+'</div>'+
+      delBtn+
+      '<div class="post-avatar">'+eHtml(avLetter(p.author))+'</div>'+
       '<div class="post-body">'+
         '<div class="post-top">'+
           (p.isPinned?'<span class="post-pin-badge">📌</span>':'')+
@@ -302,8 +299,9 @@ function renderPostList(posts,container){
         '<div class="post-preview">'+eHtml(p.body)+'</div>'+
         '<div class="post-meta">'+
           '<span class="post-meta-item">'+eHtml(p.author)+'</span>'+
-          '<span class="post-meta-item">'+p.time+'</span>'+
+          '<span class="post-meta-item">'+p.date+'</span>'+
           '<span class="post-meta-item">💬 '+p.replies+'</span>'+
+          '<span class="post-meta-item">👁 '+p.views+'</span>'+
           '<button class="post-like-btn'+(p.liked?' liked':'')+'" onclick="event.stopPropagation();doLike('+p.id+',this)">👍 '+p.likeCount+'</button>'+
         '</div>'+
       '</div>'+
@@ -313,13 +311,26 @@ function renderPostList(posts,container){
 }
 
 window.doLike=function(id,btn){
-  var l=togglePostLike(id);
-  btn.classList.toggle('liked',l.liked);
-  btn.textContent='👍 '+l.count;
+  if(btn.classList.contains('liked'))return;      // 只加不减
+  btn.classList.add('liked');
+  localStorage.setItem('fl_liked_'+id,'true');
+  var n=parseInt((btn.textContent||'').replace(/\D/g,''),10)||0;
+  btn.textContent='👍 '+(n+1);
+  SB.rpc('like_post',{p_id:id}).catch(function(){});
+};
+
+// 删除：服务端确认这条属于你之后才真的删，删完所有人都看不到
+window.delPost=function(id,btn){
+  var p=allPosts.filter(function(x){return x.id===id;})[0]||{};
+  window._showConfirm('删除帖子《'+(p.title||'')+'》？删除后所有人都看不到了。',function(){
+    if(btn)btn.disabled=true;
+    SB.remove('posts',Number(id)).then(function(){ loadPosts(); })
+      .catch(function(e){ if(btn)btn.disabled=false; alert((e&&e.message)||'删除失败，稍后再试'); });
+  });
 };
 
 window.openPost=function(id){
-  window.location.href='article.html?id='+id+'&type=issue';
+  window.location.href='article.html?id='+id+'&type=post';
 };
 
 // Editor
@@ -328,8 +339,7 @@ window.updateCharCount=function(){
   document.getElementById('charCount').textContent=len+'/5000';
 };
 window.openEditor=function(){
-  var name=window._siteGetNickname?window._siteGetNickname():'';
-  if(!name){if(window._siteShowRegister)window._siteShowRegister();return;}
+  if(!SB.loggedIn){ if(window._siteShowRegister)window._siteShowRegister(); return; }
   document.getElementById('editorOv').classList.add('show');
   document.getElementById('edTitle').focus();
   updateCharCount();
@@ -341,32 +351,37 @@ window.closeEditor=function(){
   document.getElementById('edErr').style.display='none';
 };
 
-window.publishPost=function(){
-  var name=window._siteGetNickname?window._siteGetNickname():'';
+window.publishPost=async function(){
   var title=document.getElementById('edTitle').value.trim();
   var body=document.getElementById('edBody').value.trim();
   var cat=document.getElementById('edCat').value;
-  var anon=document.getElementById('edAnon').checked;
   var err=document.getElementById('edErr');
+  var btn=document.getElementById('edSubmit');
 
   if(!title){err.textContent='请输入标题';err.style.display='block';return;}
   if(!body){err.textContent='请输入正文';err.style.display='block';return;}
 
-  var author=anon?'匿名':name;
-  var labels=['forum'];
-  if(cat==='chat')labels.push('forum-chat');
-  else if(cat==='tech')labels.push('forum-tech');
-  else if(cat==='poetry')labels.push('forum-poetry');
-  else if(cat==='game')labels.push('forum-game');
-
-  var issueBody='**作者**：'+author+'\n**分类**：'+cat+'\n'+(anon?'**匿名**\n':'')+'\n'+body;
-
-  // 发帖改由 GitHub 官方页面完成：前端不再保存任何凭据
-  closeEditor();
-  var r=window._ghNewIssue({title:title,body:issueBody,labels:labels});
-  if(r.copied){
-    alert('正文较长，已复制到剪贴板。请在刚打开的 GitHub 页面里粘贴进正文框，再点 Submit new issue。');
+  if(!SB.loggedIn){
+    closeEditor();
+    var name=await window._siteRequireLogin();
+    if(!name)return;
+    document.getElementById('edTitle').value=title;
+    document.getElementById('edBody').value=body;
+    document.getElementById('editorOv').classList.add('show');
   }
+
+  err.style.display='none';
+  btn.disabled=true;btn.textContent='发布中…';
+  try{
+    // 作者由服务端盖章，前端传不了别人的名字
+    await SB.insert('posts',{title:title,body:body,category:cat});
+    closeEditor();
+    loadPosts();
+  }catch(e){
+    err.textContent=(e&&e.message)||'发布失败，稍后再试';
+    err.style.display='block';
+  }
+  btn.disabled=false;btn.textContent='发布';
 };
 
 // Wall tab：留言墙已独立成页
@@ -380,7 +395,8 @@ function showWallTab(){
   }
 }
 
-loadPosts();
+// 登录状态一变就重画，删除按钮只对自己发的帖子出现（onChange 会立刻先触发一次）
+SB.onChange(function(){ loadPosts(); });
 </script>
 </body>
 </html>
