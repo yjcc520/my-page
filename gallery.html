@@ -28,6 +28,13 @@
 .gallery-item:hover { transform: scale(1.02); }
 .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .gallery-item .gl-uploader { position: absolute; bottom: 6px; right: 6px; font-size: 0.7rem; background: rgba(0,0,0,0.6); color: #ccc; padding: 2px 8px; border-radius: 10px; }
+.gallery-item .gl-del {
+  position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; line-height: 1;
+  border: none; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff;
+  font-size: 0.8rem; cursor: pointer; opacity: 0; transition: opacity 0.15s; font-family: inherit;
+}
+.gallery-item:hover .gl-del { opacity: 1; }
+.gallery-upload-btn { cursor: pointer; }
 .gallery-empty { text-align: center; color: var(--text-light); padding: 3rem; }
 
 /* Lightbox */
@@ -62,7 +69,8 @@
     <p>生活中的美好瞬间</p>
   </div>
   <div class="gallery-upload">
-    <button class="gallery-upload-btn" onclick="openGalleryIssue()">＋ 添加照片（站长）</button>
+    <label class="gallery-upload-btn" for="galleryPick">＋ 添加照片</label>
+    <input type="file" id="galleryPick" accept="image/*" multiple hidden>
   </div>
   <div class="gallery-grid" id="galleryGrid">
     <p class="gallery-empty">加载中...</p>
@@ -86,65 +94,80 @@
 <script src="theme.js"></script>
 <script src="music.js"></script>
 <script>
-var GALLERY_ISSUE = null;
-var REPO = 'yjcc520/my-page';
+var GALLERY_BUCKET = 'gallery';
 
-// 画廊内容存放在仓库「图库」话题的留言里，读取是公开的，不需要任何凭据
-async function getGalleryIssue() {
-  try {
-    var r = await fetch('https://api.github.com/search/issues?q=repo:' + REPO + '+label:gallery+in:title+type:issue', {
-      headers: { 'Accept': 'application/vnd.github.v3+json' }
-    });
-    var d = await r.json();
-    if (d.items && d.items.length) GALLERY_ISSUE = d.items[0].number;
-  } catch (e) {}
-}
-
-// 站长添加照片：跳到 GitHub 对应的图库话题
-window.openGalleryIssue = function () {
-  var url = GALLERY_ISSUE
-    ? 'https://github.com/' + REPO + '/issues/' + GALLERY_ISSUE
-    : 'https://github.com/' + REPO + '/issues?q=label%3Agallery';
-  window.open(url, '_blank', 'noopener');
-};
-
+/* ---- 读取：库里存元数据（路径 + 上传者），图片本身在 Storage ---- */
 async function loadGallery() {
-  if (!GALLERY_ISSUE) await getGalleryIssue();
   var grid = document.getElementById('galleryGrid');
-  if (!GALLERY_ISSUE) { grid.innerHTML = '<p class="gallery-empty">暂无图片</p>'; return; }
+  grid.innerHTML = '<p class="gallery-empty">加载中...</p>';
   try {
-    var r = await fetch('https://api.github.com/repos/' + REPO + '/issues/' + GALLERY_ISSUE + '/comments?per_page=100', {
-      headers: { 'Accept': 'application/vnd.github.v3+json' }
-    });
-    var comments = await r.json();
-    if (!comments.length) {
-      grid.innerHTML = '<p class="gallery-empty">还没有图片，来上传第一张吧 📷</p>';
+    var rows = await SB.select('photos', 'select=id,url,uploader,caption,user_id&order=created_at.desc&limit=300');
+    if (!rows || !rows.length) {
+      grid.innerHTML = '<p class="gallery-empty">还没有照片</p>';
       return;
     }
-    grid.innerHTML = comments.map(function (c) {
-      var img = c.body, uploader = '';
-      try { var info = JSON.parse(c.body); img = info.url; uploader = info.by || ''; } catch (ex) {}
-      if (!img || (img.indexOf('http') !== 0 && img.indexOf('data:image') !== 0)) return '';
-      return '<div class="gallery-item" onclick="openLightbox(\'' + img + '\')">' +
-        '<img src="' + img + '" alt="" loading="lazy">' +
-        (uploader ? '<span class="gl-uploader">' + uploader + '</span>' : '') +
+    grid.innerHTML = rows.map(function (p) {
+      var full = SB.publicUrl(GALLERY_BUCKET, p.url);
+      var cap = p.caption ? ' title="' + esc(p.caption) + '"' : '';
+      return '<div class="gallery-item" data-id="' + p.id + '"' + cap + '>' +
+        '<img src="' + full + '" alt="" loading="lazy">' +
+        (p.uploader ? '<span class="gl-uploader">' + esc(p.uploader) + '</span>' : '') +
+        (p.user_id ? '<button class="gl-del" data-id="' + p.id + '" title="删除">✕</button>' : '') +
         '</div>';
-    }).filter(Boolean).join('');
+    }).join('');
   } catch (e) {
     grid.innerHTML = '<p class="gallery-empty">加载失败</p>';
   }
 }
 
-// Lightbox
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+/* ---- 上传 ---- */
+async function uploadPhotos(files) {
+  if (!SB.loggedIn) { openAccountPanel(); return; }
+  var grid = document.getElementById('galleryGrid');
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    if (!/^image\//.test(f.type)) continue;
+    if (f.size > 5 * 1024 * 1024) { toastG('「' + f.name + '」超过 5MB'); continue; }
+    try {
+      // 路径首段用 uid，与 Storage 策略里的属主目录一致
+      var path = SB.user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) +
+        '.' + (f.name.split('.').pop() || 'jpg').toLowerCase();
+      await SB.upload(GALLERY_BUCKET, path, f);
+      await SB.insert('photos', { url: path, uploader: '', caption: '', user_id: null });
+      toastG('已上传');
+    } catch (e) {
+      toastG((e && e.message) || '上传失败');
+    }
+  }
+  loadGallery();
+}
+
+function toastG(msg) {
+  var d = document.createElement('div');
+  d.textContent = msg;
+  d.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%);' +
+    'background:rgba(30,41,59,0.92);color:#fff;padding:0.55rem 1.1rem;border-radius:10px;' +
+    'font-size:0.85rem;z-index:9999;pointer-events:none;font-family:inherit';
+  document.body.appendChild(d);
+  setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 2200);
+}
+
+/* ---- Lightbox ---- */
 var _lbImages = [];
-window.openLightbox = function (src) {
+function openLightbox(src) {
   document.getElementById('lightboxImg').src = src;
   document.getElementById('lightbox').classList.add('active');
   _lbImages = Array.prototype.slice.call(document.querySelectorAll('.gallery-item img')).map(function (el) { return el.src; });
-};
-window.closeLightbox = function () {
+}
+function closeLightbox() {
   document.getElementById('lightbox').classList.remove('active');
-};
+}
 document.addEventListener('keydown', function (e) {
   var lb = document.getElementById('lightbox');
   if (!lb.classList.contains('active')) return;
@@ -159,7 +182,34 @@ document.addEventListener('keydown', function (e) {
   }
 });
 
-getGalleryIssue().then(loadGallery);
+/* ---- 交互绑定（只绑一次） ---- */
+document.getElementById('galleryGrid').addEventListener('click', async function (e) {
+  var del = e.target.closest('.gl-del');
+  if (del) {
+    e.stopPropagation();
+    if (!confirm('删除这张照片？')) return;
+    var id = del.getAttribute('data-id');
+    var item = del.closest('.gallery-item');
+    var rel = item.querySelector('img').src.split('/' + GALLERY_BUCKET + '/').pop();
+    try {
+      await SB.remove('photos', id);
+      // 图片本体也删掉；失败不影响记录已删（Storage 策略只允许删自己目录）
+      try { await SB.removeStorage(GALLERY_BUCKET, decodeURIComponent(rel)); } catch (x) {}
+      item.remove();
+      toastG('已删除');
+    } catch (x) { toastG('删除失败'); }
+    return;
+  }
+  var img = e.target.closest('img');
+  if (img) openLightbox(img.src);
+});
+
+document.getElementById('galleryPick').addEventListener('change', function (e) {
+  uploadPhotos(e.target.files);
+  e.target.value = '';
+});
+
+loadGallery();
 </script>
 <script src="comments.js"></script>
 <script src="ux.js"></script>

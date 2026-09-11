@@ -104,60 +104,9 @@ function checkWin(){
   if(allRevealed){gameOver_=true;clearInterval(timerId);document.getElementById('msg').textContent='🎉 赢了！用时 '+seconds+' 秒';submitScore(seconds)}
 }
 // Leaderboard
-function _name(){return (typeof _siteGetNickname==='function')?_siteGetNickname()||'匿名玩家':'匿名玩家'}
-function showLB(){document.getElementById('lbOverlay').classList.add('show');loadLB()}
-function hideLB(){document.getElementById('lbOverlay').classList.remove('show')}
-async function loadLB(){
-  var list=document.getElementById('lbList');list.innerHTML='<p class="lb-placeholder">加载中...</p>';
-  try{var r=await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME)+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});var d=await r.json();
-    if(!d.items||!d.items.length){list.innerHTML='<p class="lb-placeholder">暂无排行数据</p>';return}
-    var scores={};d.items[0].body.split('\n').forEach(function(l){var m=l.match(/^(\d+)秒[：:]\s*(.+)/);if(m){var n=m[2].trim(),s=parseInt(m[1]);if(!scores[n]||scores[n]>s)scores[n]=s}});
-    var entries=Object.entries(scores).sort(function(a,b){return a[1]-b[1]}).slice(0,10);
-    if(!entries.length){list.innerHTML='<p class="lb-placeholder">暂无排行数据</p>';return}
-    var curName=_name();
-    list.innerHTML=entries.map(function(e,i){var me=e[0]===curName;return '<div class="lb-item'+(me?' lb-me':'')+'"><span class="lb-rank">'+(i+1)+'</span><span class="lb-name">'+e[0]+'</span><span class="lb-score">'+e[1]+'秒</span></div>'}).join('');
-  }catch(e){list.innerHTML='<p class="lb-placeholder">加载失败</p>'}
-}
 start();
 </script>
-<script>
-/* 排行榜改造：写入 GitHub 需要前端持有凭据（存在泄露风险），已停用。
-   成绩改为记录在本机；线上榜单保留为历史数据展示。 */
-(function () {
-  var G = (typeof GAME !== 'undefined' && GAME) ||
-          (typeof GAME_SNAKE !== 'undefined' && GAME_SNAKE) ||
-          (typeof GAME_SHOOT !== 'undefined' && GAME_SHOOT) || 'game';
-
-  function toast(msg) {
-    var d = document.createElement('div');
-    d.textContent = msg;
-    d.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%);' +
-      'background:rgba(30,41,59,0.92);color:#fff;padding:0.55rem 1.1rem;border-radius:10px;' +
-      'font-size:0.85rem;z-index:9999;pointer-events:none;transition:opacity .4s;font-family:inherit';
-    document.body.appendChild(d);
-    setTimeout(function () { d.style.opacity = '0'; }, 1800);
-    setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 2400);
-  }
-
-  window.submitScore = function (sc) {
-    if (!sc) return;
-    try { localStorage.setItem('lb_local_' + G, sc); } catch (e) {}
-    toast('本机成绩已记录：' + sc + ' · 公网榜暂停提交');
-  };
-
-  var _orig = window.loadLB;
-  if (typeof _orig === 'function') {
-    window.loadLB = async function () {
-      await _orig.apply(this, arguments);
-      var l = document.getElementById('lbList');
-      if (l && !l.querySelector('.lb-frozen')) {
-        l.insertAdjacentHTML('afterbegin',
-          '<p class="lb-frozen" style="font-size:0.75rem;color:#889;text-align:center;margin-bottom:0.6rem">' +
-          '历史榜单 · 公网提交已暂停</p>');
-      }
-    };
-  }
-})();
-</script>
+<script src="../sb.js"></script>
+<script src="../leaderboard.js"></script>
 </body>
 </html>

@@ -143,8 +143,8 @@
     return parts.join('&');
   }
 
-  // 表名白名单，避免拼接出意外路径
-  var TABLES = { comments: 1, notes: 1, posts: 1, articles: 1, scores: 1, photos: 1, profiles: 1 };
+  // 表名白名单，避免拼接出意外路径（score_board 是聚合视图，只读）
+  var TABLES = { comments: 1, notes: 1, posts: 1, articles: 1, scores: 1, photos: 1, profiles: 1, score_board: 1 };
 
   function table(name) {
     if (!TABLES[name]) throw new Error('未知数据表：' + name);
@@ -352,6 +352,26 @@
     return BASE + '/storage/v1/object/public/' + bucket + '/' + path;
   }
 
+  // 删除 Storage 里的文件（策略只允许删自己目录下的）
+  function removeStorage(bucket, path) {
+    return fresh().then(function () {
+      var headers = { 'apikey': KEY };
+      if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+      return fetch(BASE + '/storage/v1/object/' + bucket + '/' + path, {
+        method: 'DELETE', headers: headers
+      }).then(function (r) {
+        if (!r.ok && r.status !== 404) {
+          return r.text().then(function (t) {
+            var e = new Error('删除失败（' + r.status + '）：' + t.slice(0, 160));
+            e.status = r.status;
+            throw e;
+          });
+        }
+        return true;
+      });
+    });
+  }
+
   // ---------------------------------------------------------------- 导出
 
   var SB = {
@@ -373,6 +393,7 @@
     rpc: rpc,
     upload: upload,
     publicUrl: publicUrl,
+    removeStorage: removeStorage,
     normalize: normalize,
     onChange: function (fn) {
       if (typeof fn === 'function') { listeners.push(fn); fn(SB.user); }
