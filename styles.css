@@ -1903,13 +1903,135 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
   }
 }
 
-/* ===== giscus 评论区（评论由 GitHub Discussions 承载）===== */
-.giscus-host { margin-top: 0.4rem; }
-.giscus-host iframe { border: none; }
+/* ===== 评论区（数据存在自己的后端，登录后即可发言）===== */
+.comment-host { margin-top: 0.4rem; }
+
+.cmt-summary {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-bottom: 0.9rem;
+    letter-spacing: 0.02em;
+}
+
+/* 未登录时的提示卡 */
+.cmt-gate { text-align: center; padding: 1.6rem 1.2rem; }
+.cmt-gate-title { font-size: 1.02rem; font-weight: 600; color: var(--text); margin-bottom: 0.4rem; }
+.cmt-gate-sub { font-size: 0.85rem; color: var(--text-light); line-height: 1.7; margin-bottom: 1rem; }
+
+/* 「我」标记 */
+.cmt-you {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0 0.4em;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--accent);
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    vertical-align: 1px;
+}
 
 /* 文章页与画廊：评论区收窄，读起来更舒服 */
-.comments-section .giscus-host,
-.gallery-comments .giscus-host { max-width: 760px; margin-left: auto; margin-right: auto; }
+.comments-section .comment-host,
+.gallery-comments .comment-host { max-width: 760px; margin-left: auto; margin-right: auto; }
 
-/* 留言墙：便签风格由 giscus-wall-*.css 在 iframe 内实现，这里只管外壳 */
-.wall-board .giscus-host { margin-top: 0; }
+/* 留言墙：便签外壳 */
+.wall-board .comment-host { margin-top: 0; }
+
+.wall-notes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 0.9rem;
+    margin-top: 0.6rem;
+}
+
+.wall-note {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 132px;
+    padding: 0.95rem 0.9rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.wall-note:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+/* 四种纸色，循环使用，让墙面有点参差感 */
+.wall-tone-0 { background: var(--bg); }
+.wall-tone-1 { background: var(--bg-alt); }
+.wall-tone-2 { background: linear-gradient(160deg, var(--bg) 0%, var(--bg-alt) 100%); }
+.wall-tone-3 { background: var(--bg-alt); border-style: dashed; }
+
+.wall-note-body {
+    flex: 1;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.wall-note-foot {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.9rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.78rem;
+}
+
+.wall-note-name {
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.8rem;
+    max-width: 8em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wall-note-foot .comment-time { font-size: 0.75rem; }
+.wall-note-foot .comment-action-btn { font-size: 0.75rem; margin-left: auto; }
+
+/* ===== 账号面板 ===== */
+.acct-box { max-width: 400px; }
+
+.acct-tabs {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.22rem;
+}
+
+.acct-tab {
+    flex: 1;
+    padding: 0.45rem 0;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+}
+
+.acct-tab.active { background: var(--bg); color: var(--primary); font-weight: 600; box-shadow: var(--shadow-sm); }
+
+.acct-box .modal-input { margin-bottom: 0.6rem; }
+
+.acct-hint {
+    margin-top: 0.7rem;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: var(--text-light);
+    text-align: center;
+}

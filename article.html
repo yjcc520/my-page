@@ -37,9 +37,9 @@
     <section class="comments-section" id="comments">
         <h2>评论</h2>
         <p style="text-align:center;color:var(--text-light);font-size:0.85rem;margin-bottom:1.2rem;">
-            用 GitHub 账号登录即可评论<span id="articlePv"></span>
+            登录后即可评论，可以互相回复<span id="articlePv"></span>
         </p>
-        <div id="giscusHost"></div>
+        <div id="commentHost" class="comment-host"></div>
     </section>
 
     <footer><p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p></footer>
@@ -50,7 +50,8 @@
     </div>
 
     <script src="blog-data.js"></script>
-    <script src="user.js"></script>
+    <script src="sb.js"></script>
+<script src="user.js"></script>
     <script src="stats.js"></script>
     <script src="gh-publish.js"></script>
     <script>
@@ -83,13 +84,18 @@ var params = new URLSearchParams(window.location.search);
 var aid = parseInt(params.get('id'));
 var isIssue = params.get('type') === 'issue';
 
-// giscus 按文章区分讨论话题：article-<id>
-// 只有文章确实存在时才挂载，避免有人构造任意 id 凭空创建讨论
+// 评论按文章区分：article-<id>
+// 只有文章确实存在时才挂载，避免有人构造任意 id 凭空造出一堆空评论区
 window._mountArticleComments = function () {
-    var el = document.getElementById('giscusHost');
-    el.className = 'giscus-host';
-    el.setAttribute('data-giscus-term', 'article-' + aid);
-    if (window._mountComments) window._mountComments('#giscusHost');
+    var el = document.getElementById('commentHost');
+    if (!el) return;
+    el.className = 'comment-host';
+    el.setAttribute('data-term', 'article-' + aid);
+    var go = function () {
+        if (window._mountComments) window._mountComments('#commentHost');
+    };
+    if (window._mountComments) go();
+    else window.addEventListener('load', go);
 };
 
 _trackRead(aid);
