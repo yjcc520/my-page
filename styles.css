@@ -1001,6 +1001,14 @@ footer {
     color: var(--text);
 }
 
+/* 标题旁的阅读量：次要信息，弱化显示 */
+.cmt-pv {
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-light);
+}
+
 /* 评论表单 */
 .comment-form-wrap {
     background: var(--bg-alt);

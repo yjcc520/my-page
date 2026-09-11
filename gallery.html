@@ -19,7 +19,6 @@
   cursor: pointer; font-family: inherit; transition: background 0.15s;
 }
 .gallery-upload-btn:hover { background: var(--primary-light); }
-.gallery-upload-hint { margin-top: 0.6rem; font-size: 0.78rem; color: var(--text-light); }
 .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
 .gallery-item {
   position: relative; border-radius: 10px; overflow: hidden;
@@ -39,8 +38,7 @@
 
 /* 评论区 */
 .gallery-comments { margin-top: 3.5rem; }
-.gallery-comments h2 { text-align: center; font-size: 1.25rem; margin-bottom: 0.3rem; }
-.gallery-comments .gc-sub { text-align: center; color: var(--text-light); font-size: 0.83rem; margin-bottom: 1.2rem; }
+.gallery-comments h2 { text-align: center; font-size: 1.25rem; margin-bottom: 1.2rem; }
 </style>
 </head>
 <body>
@@ -65,15 +63,13 @@
   </div>
   <div class="gallery-upload">
     <button class="gallery-upload-btn" onclick="openGalleryIssue()">＋ 添加照片（站长）</button>
-    <p class="gallery-upload-hint">在 GitHub 的「图库」话题下留言并粘贴图片，画廊会自动收录</p>
   </div>
   <div class="gallery-grid" id="galleryGrid">
     <p class="gallery-empty">加载中...</p>
   </div>
 
   <div class="gallery-comments">
-    <h2>说说你的想法</h2>
-    <p class="gc-sub">用 GitHub 账号登录即可留言</p>
+    <h2>评论</h2>
     <div class="comment-host" data-term="gallery"></div>
   </div>
 </div>

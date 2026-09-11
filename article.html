@@ -35,10 +35,7 @@
     </section>
 
     <section class="comments-section" id="comments">
-        <h2>评论</h2>
-        <p style="text-align:center;color:var(--text-light);font-size:0.85rem;margin-bottom:1.2rem;">
-            登录后即可评论，可以互相回复<span id="articlePv"></span>
-        </p>
+        <h2>评论<span class="cmt-pv" id="articlePv"></span></h2>
         <div id="commentHost" class="comment-host"></div>
     </section>
 
@@ -100,7 +97,7 @@ window._mountArticleComments = function () {
 
 _trackRead(aid);
 window._onStatsReady = function (sitePv, pagePv) {
-    if (pagePv) document.getElementById('articlePv').textContent = ' · 本页阅读 ' + pagePv + ' 次';
+    if (pagePv) document.getElementById('articlePv').textContent = '· 阅读 ' + pagePv;
 };
 
 if (isIssue) {

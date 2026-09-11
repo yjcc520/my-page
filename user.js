@@ -114,7 +114,7 @@
         '<input type="password" id="acctPass" class="modal-input" placeholder="密码（至少 6 位）" autocomplete="current-password">' +
         '<input type="password" id="acctPass2" class="modal-input" placeholder="再输一次密码" autocomplete="new-password"' + (reg ? '' : ' style="display:none"') + '>' +
         '<p class="comment-error" id="acctError" style="display:none"></p>' +
-        '<p class="acct-hint">昵称就是账号，不用邮箱也不用 GitHub。<br>换个设备用同样的昵称和密码就能登回来。</p>' +
+        '<p class="acct-hint">昵称就是账号，换个设备用它登录即可。</p>' +
         '<div class="modal-btns">' +
           '<button type="button" class="modal-btn-cancel" id="acctCancel">取消</button>' +
           '<button type="button" class="modal-btn-ok" id="acctOk">' + (reg ? '注册并登录' : '登录') + '</button>' +

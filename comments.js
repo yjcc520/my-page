@@ -144,7 +144,7 @@
     rows.forEach(function (r) { byId[r.id] = r; });
 
     return '' +
-      '<div class="cmt-summary">' + (rows.length ? '共 ' + rows.length + ' 条评论' : '还没有人说话') + '</div>' +
+      (rows.length ? '<div class="cmt-summary">共 ' + rows.length + ' 条评论</div>' : '') +
       composerHtml(state, 'thread') +
       (state.loading ? '<div class="comments-loading"><div class="loading-spinner"></div>加载中…</div>' :
         state.error ? '<div class="comments-error">' + esc(state.error) + '</div>' :
@@ -210,7 +210,7 @@
       return '' +
         '<div class="comment-form-wrap cmt-gate">' +
           '<p class="cmt-gate-title">登录后就能评论</p>' +
-          '<p class="cmt-gate-sub">用昵称注册一个站内账号即可，不用邮箱，也不用 GitHub。</p>' +
+          '<p class="cmt-gate-sub">用昵称注册即可，不需要邮箱。</p>' +
           '<button type="button" class="comment-submit-btn" data-act="login">登录 / 注册</button>' +
         '</div>';
     }
@@ -238,7 +238,7 @@
   function wallHtml(state) {
     var rows = state.rows;
     return '' +
-      '<div class="cmt-summary">' + (rows.length ? '墙上贴着 ' + rows.length + ' 张便签' : '墙上还是空的') + '</div>' +
+      (rows.length ? '<div class="cmt-summary">墙上贴着 ' + rows.length + ' 张便签</div>' : '') +
       composerHtml(state, 'wall') +
       (state.loading ? '<div class="comments-loading"><div class="loading-spinner"></div>加载中…</div>' :
         state.error ? '<div class="comments-error">' + esc(state.error) + '</div>' :
