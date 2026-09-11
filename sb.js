@@ -42,6 +42,10 @@
 
   var listeners = [];
 
+  // 服务端 profiles 里盖章后的真实昵称：注册时若与他人重名，数据库会自动加后缀，
+  // 因此就绪后要以服务端为准，覆盖本地缓存里的那一个。
+  var dbNick = null;
+
   function notify() {
     for (var i = 0; i < listeners.length; i++) {
       try { listeners[i](SB.user); } catch (e) {}
@@ -50,6 +54,7 @@
 
   function save(s) {
     session = s || null;
+    dbNick = (session && session.user && session.user.nickname) || null;
     try {
       if (session) localStorage.setItem(SK, JSON.stringify(session));
       else localStorage.removeItem(SK);
@@ -330,6 +335,11 @@
     key: KEY,
     get user() { return session ? session.user : null; },
     get loggedIn() { return !!(session && session.access_token); },
+    // 当前昵称：优先用服务端校正过的，其次用会话里带的，未登录返回空串
+    get nickname() {
+      if (dbNick) return dbNick;
+      return (session && session.user && session.user.nickname) || '';
+    },
     q: q,
     select: select,
     insert: insert,
@@ -353,7 +363,20 @@
     ready: null
   };
 
-  SB.ready = session ? fresh().catch(function () { return null; }) : Promise.resolve(null);
+  SB.ready = (session ? fresh().catch(function () { return null; }) : Promise.resolve(null))
+    .then(function () {
+      if (!session) return null;
+      // 用服务端资料校正昵称，纠正本地缓存的偏差
+      return profile().then(function (p) {
+        if (p && p.nickname && p.nickname !== dbNick) {
+          dbNick = p.nickname;
+          if (session.user) session.user.nickname = p.nickname;
+          try { localStorage.setItem(SK, JSON.stringify(session)); } catch (e) {}
+          notify();
+        }
+        return session;
+      });
+    });
 
   window.SB = SB;
 })();

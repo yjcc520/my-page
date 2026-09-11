@@ -92,7 +92,6 @@
 
     function render() {
       root.innerHTML = state.kind === 'wall' ? wallHtml(state) : threadHtml(state);
-      bind(root, state, render, load);
     }
 
     function load() {
@@ -124,6 +123,9 @@
     }
 
     host._czhReload = load;
+    // 监听只绑一次：render 会被反复调用（初始 / 加载中 / 加载完成），
+    // 绑在 render 里会在同一个节点上叠出多重监听，一次点击就发多条内容。
+    bind(root, state, render, load);
     render();
     load();
   }
@@ -296,17 +298,21 @@
       }
 
       if (act === 'send') {
+        if (state.sending) return;
         var box = root.querySelector('[data-role="box"]');
         var body = box ? box.value.trim() : '';
         if (!body) { showErr('还没写内容'); return; }
+        state.sending = true;
         t.disabled = true;
         t.textContent = '发表中…';
         var table = state.kind === 'wall' ? 'notes' : 'comments';
         var row = state.kind === 'wall' ? { body: body } : { path: state.term, body: body };
         SB.insert(table, row).then(function () {
           if (box) box.value = '';
+          state.sending = false;
           return load();
         }).catch(function (err) {
+          state.sending = false;
           t.disabled = false;
           t.textContent = '发表';
           showErr(errText(err));
@@ -315,16 +321,20 @@
       }
 
       if (act === 'send-reply') {
+        if (state.sending) return;
         var rbox = root.querySelector('[data-role="reply-box"]');
         var rbody = rbox ? rbox.value.trim() : '';
         if (!rbody) { showErr('还没写内容'); return; }
+        state.sending = true;
         t.disabled = true;
         t.textContent = '发送中…';
         SB.insert('comments', { path: state.term, body: rbody, parent_id: Number(t.getAttribute('data-parent')) })
           .then(function () {
             state.openReply = null;
+            state.sending = false;
             return load();
           }).catch(function (err) {
+            state.sending = false;
             t.disabled = false;
             t.textContent = '发送';
             showErr(errText(err));
