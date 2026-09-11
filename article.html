@@ -84,11 +84,12 @@ function fmtDate(iso) { return String(iso || '').slice(0, 10); }
 function mine(row) { return !!(SB.user && row.user_id && row.user_id === SB.user.id); }
 
 // ===== 删除 =====
-// 服务端只允许删自己发的；删掉就是数据库里没了，所有人（含未登录）都看不到。
+// 服务端先确认这条属于你，再把内容连同它下面的评论一起删掉；
+// 删掉就是数据库里没了，所有人（含未登录）都看不到。
 window.deleteItem = function () {
     var what = isPost ? '这个帖子' : '这篇文章';
     window._showConfirm('删除' + what + '？删除后所有人都看不到了。', function () {
-        SB.remove(TABLE, aid).then(function () {
+        SB.removeContent(TABLE, aid).then(function () {
             window.location.href = isPost ? 'forum.html' : 'blog.html';
         }).catch(function (e) {
             alert((e && e.message) || '删除失败，稍后再试');

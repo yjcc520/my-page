@@ -319,12 +319,12 @@ window.doLike=function(id,btn){
   SB.rpc('like_post',{p_id:id}).catch(function(){});
 };
 
-// 删除：服务端确认这条属于你之后才真的删，删完所有人都看不到
+// 删除：服务端确认这条属于你之后，把帖子连同它下面的回复一起删掉，删完所有人都看不到
 window.delPost=function(id,btn){
   var p=allPosts.filter(function(x){return x.id===id;})[0]||{};
   window._showConfirm('删除帖子《'+(p.title||'')+'》？删除后所有人都看不到了。',function(){
     if(btn)btn.disabled=true;
-    SB.remove('posts',Number(id)).then(function(){ loadPosts(); })
+    SB.removeContent('posts',Number(id)).then(function(){ loadPosts(); })
       .catch(function(e){ if(btn)btn.disabled=false; alert((e&&e.message)||'删除失败，稍后再试'); });
   });
 };

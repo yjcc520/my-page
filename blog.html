@@ -111,14 +111,14 @@
             });
         }
 
-        // 删除：服务端会先确认这条属于你，再真的从数据库里删掉。
+        // 删除：服务端会先确认这条属于你，再把文章连同它下面的评论一起删掉。
         // 删完别人也看不到，不是只在本机隐藏。
         window.delArticle = function (id, btn) {
             var card = btn && btn.closest ? btn.closest('.blog-card') : null;
             var title = card ? (card.querySelector('h2') || {}).textContent : '';
             window._showConfirm('删除《' + (title || '这篇文章') + '》？删除后所有人都看不到了。', function () {
                 if (btn) btn.disabled = true;
-                SB.remove('articles', Number(id)).then(function () {
+                SB.removeContent('articles', Number(id)).then(function () {
                     loadArticles();
                 }).catch(function (e) {
                     if (btn) btn.disabled = false;

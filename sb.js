@@ -21,6 +21,7 @@
      SB.select(table, query)      查询
      SB.insert(table, row)        新增
      SB.remove(table, id)         删除（服务端只允许删自己的）
+     SB.removeContent(table, id)  删文章/帖子（连带清掉它的评论，仅限本人）
      SB.rpc(fn, args)             调用数据库函数
      SB.upload(bucket, path, file) 上传文件
      SB.publicUrl(bucket, path)   取公开地址
@@ -299,6 +300,29 @@
     });
   }
 
+  // 删文章 / 帖子。
+  // 优先走服务端的级联删除：由数据库确认这条确实属于你，再连同它下面的
+  // 评论一起清掉，不留孤儿数据。只有本人能删，这一点由函数内部把关。
+  // 万一数据库里还没装那两个函数（404），退回普通删除 —— 删不掉评论，
+  // 但删除功能本身不会瘫。
+  function removeContent(t, id) {
+    var fn = t === 'articles' ? 'delete_article' : 'delete_post';
+    return rpc(fn, { p_id: Number(id) }).then(function (done) {
+      if (done === false) {
+        // 服务端筛不到属于你的这一行：要么不是你的，要么已经被删了
+        var e = new Error('这条内容不属于你，删不掉');
+        e.code = 'not_owner';
+        throw e;
+      }
+      return true;
+    }).catch(function (e) {
+      if (e && e.status === 404) {
+        return remove(t, id).then(function () { return true; });
+      }
+      throw e;
+    });
+  }
+
   // ---------------------------------------------------------------- 存储
 
   function upload(bucket, path, file, contentType) {
@@ -345,6 +369,7 @@
     insert: insert,
     update: update,
     remove: remove,
+    removeContent: removeContent,
     rpc: rpc,
     upload: upload,
     publicUrl: publicUrl,
