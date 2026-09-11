@@ -1,0 +1,25 @@
+# 本地推送脚本（内含凭据，切勿提交）
+push.py
+push_*.py
+*.local.py
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+
+# 依赖与缓存
+node_modules/
+__pycache__/
+*.pyc
+.cache/
+
+# 临时文件
+*.tmp
+*.log
+
+# 环境变量
+.env
+.env.*
