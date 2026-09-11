@@ -164,5 +164,44 @@ window.closeWin=function(){document.getElementById('wo').classList.remove('show'
 function win(p){var o=document.getElementById('wo');document.getElementById('we').textContent='🎉';document.getElementById('wt').textContent=(p===1?'⚫ 黑棋获胜':'⚪ 白棋获胜');document.getElementById('ws2').textContent='比分 '+scores.b+':'+scores.w;o.classList.add('show');}
 function draw2(){var o=document.getElementById('wo');document.getElementById('we').textContent='🤝';document.getElementById('wt').textContent='握手言和';document.getElementById('ws2').textContent='棋盘已满';o.classList.add('show');}
 </script>
+<script>
+/* 排行榜改造：写入 GitHub 需要前端持有凭据（存在泄露风险），已停用。
+   成绩改为记录在本机；线上榜单保留为历史数据展示。 */
+(function () {
+  var G = (typeof GAME !== 'undefined' && GAME) ||
+          (typeof GAME_SNAKE !== 'undefined' && GAME_SNAKE) ||
+          (typeof GAME_SHOOT !== 'undefined' && GAME_SHOOT) || 'game';
+
+  function toast(msg) {
+    var d = document.createElement('div');
+    d.textContent = msg;
+    d.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%);' +
+      'background:rgba(30,41,59,0.92);color:#fff;padding:0.55rem 1.1rem;border-radius:10px;' +
+      'font-size:0.85rem;z-index:9999;pointer-events:none;transition:opacity .4s;font-family:inherit';
+    document.body.appendChild(d);
+    setTimeout(function () { d.style.opacity = '0'; }, 1800);
+    setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 2400);
+  }
+
+  window.submitScore = function (sc) {
+    if (!sc) return;
+    try { localStorage.setItem('lb_local_' + G, sc); } catch (e) {}
+    toast('本机成绩已记录：' + sc + ' · 公网榜暂停提交');
+  };
+
+  var _orig = window.loadLB;
+  if (typeof _orig === 'function') {
+    window.loadLB = async function () {
+      await _orig.apply(this, arguments);
+      var l = document.getElementById('lbList');
+      if (l && !l.querySelector('.lb-frozen')) {
+        l.insertAdjacentHTML('afterbegin',
+          '<p class="lb-frozen" style="font-size:0.75rem;color:#889;text-align:center;margin-bottom:0.6rem">' +
+          '历史榜单 · 公网提交已暂停</p>');
+      }
+    };
+  }
+})();
+</script>
 </body>
 </html>

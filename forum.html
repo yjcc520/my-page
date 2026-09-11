@@ -193,14 +193,13 @@
 
 <footer><p>&copy; 2026 蔡梓涵</p></footer>
 
-<script src="api-auth.js"></script>
     <script src="user.js"></script>
+<script src="gh-publish.js"></script>
 <script src="theme.js"></script>
 <script src="ux.js"></script>
 <script>
 var REPO='yjcc520/my-page', allPosts=[], curCat='', curSort='new', wallLoaded=false;
 
-function loadToken(){var h='6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';return h.match(/.{1,2}/g).map(function(b){return String.fromCharCode(parseInt(b,16));}).join('');}
 function eHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function dg(s){return s.replace(/(<([^>]+)>)/gi,'').replace(/\n+/g,' ').substring(0,100);}
 function avLetter(n){return n?n[0].toUpperCase():'?'}
@@ -247,9 +246,8 @@ window.filterPosts=function(){
 
 // Load posts
 async function loadPosts(){
-  var T=loadToken();
   try{
-    var r=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:forum+type:issue+state:open&sort=created&order=desc&per_page=60',{headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}});
+    var r=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:forum+type:issue+state:open&sort=created&order=desc&per_page=60',{headers:{'Accept':'application/vnd.github.v3+json'}});
     var d=await r.json();
     allPosts=[];
     (d.items||[]).forEach(function(issue){
@@ -271,21 +269,9 @@ async function loadPosts(){
   loadViewCounts();
 }
 
-// View counts
-var viewsData={};
-function getViews(id){return viewsData['forum-'+id]||0;}
-async function loadViewCounts(){
-  var T=loadToken();
-  try{
-    var r=await fetch('https://api.github.com/repos/'+REPO+'/issues/1/comments?per_page=100',{headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}});
-    var comments=await r.json();
-    comments.forEach(function(c){
-      var m=c.body.match(/^view:forum-(\d+)/);
-      if(m)viewsData['forum-'+m[1]]=(viewsData['forum-'+m[1]]||0)+1;
-    });
-    filterPosts();
-  }catch(e){}
-}
+// 浏览量写入需要凭据，已停用（历史数据仍保存在仓库 Issue #1 中）
+function getViews(){return 0;}
+function loadViewCounts(){}
 
 // Likes
 function getPostLike(id){
@@ -317,7 +303,6 @@ function renderPostList(posts,container){
           '<span class="post-meta-item">'+eHtml(p.author)+'</span>'+
           '<span class="post-meta-item">'+p.time+'</span>'+
           '<span class="post-meta-item">💬 '+p.replies+'</span>'+
-          '<span class="post-meta-item">👁 '+p.views+'</span>'+
           '<button class="post-like-btn'+(p.liked?' liked':'')+'" onclick="event.stopPropagation();doLike('+p.id+',this)">👍 '+p.likeCount+'</button>'+
         '</div>'+
       '</div>'+
@@ -333,14 +318,6 @@ window.doLike=function(id,btn){
 };
 
 window.openPost=function(id){
-  var key='fv_'+id;
-  if(!sessionStorage.getItem(key)){
-    sessionStorage.setItem(key,'1');
-    try{
-      var T=loadToken();
-      fetch('https://api.github.com/repos/'+REPO+'/issues/1/comments',{method:'POST',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({body:'view:forum-'+id})});
-    }catch(e){}
-  }
   window.location.href='article.html?id='+id+'&type=issue';
 };
 
@@ -363,17 +340,16 @@ window.closeEditor=function(){
   document.getElementById('edErr').style.display='none';
 };
 
-window.publishPost=async function(){
+window.publishPost=function(){
   var name=window._siteGetNickname?window._siteGetNickname():'';
   var title=document.getElementById('edTitle').value.trim();
   var body=document.getElementById('edBody').value.trim();
   var cat=document.getElementById('edCat').value;
   var anon=document.getElementById('edAnon').checked;
-  var err=document.getElementById('edErr'),btn=document.getElementById('edSubmit');
+  var err=document.getElementById('edErr');
 
   if(!title){err.textContent='请输入标题';err.style.display='block';return;}
   if(!body){err.textContent='请输入正文';err.style.display='block';return;}
-  btn.disabled=true;btn.textContent='发布中...';err.style.display='none';
 
   var author=anon?'匿名':name;
   var labels=['forum'];
@@ -384,55 +360,23 @@ window.publishPost=async function(){
 
   var issueBody='**作者**：'+author+'\n**分类**：'+cat+'\n'+(anon?'**匿名**\n':'')+'\n'+body;
 
-  try{
-    var T=loadToken();
-    var resp=await fetch('https://api.github.com/repos/'+REPO+'/issues',{method:'POST',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({title:title,body:issueBody,labels:labels})});
-    if(resp.ok){
-      var issue=await resp.json();
-      await fetch('https://api.github.com/repos/'+REPO+'/issues',{method:'POST',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({title:'article-'+issue.number,body:'> 帖子：'+title+'\n\n👇 回复',labels:['comment']})});
-      closeEditor();
-      loadPosts();
-    }else{
-      var e=await resp.json().catch(function(){return{};});
-      err.textContent='发布失败：'+(e.message||'请重试');
-      err.style.display='block';
-    }
-  }catch(ex){err.textContent='网络错误';err.style.display='block';}
-  btn.disabled=false;btn.textContent='发布';
+  // 发帖改由 GitHub 官方页面完成：前端不再保存任何凭据
+  closeEditor();
+  var r=window._ghNewIssue({title:title,body:issueBody,labels:labels});
+  if(r.copied){
+    alert('正文较长，已复制到剪贴板。请在刚打开的 GitHub 页面里粘贴进正文框，再点 Submit new issue。');
+  }
 };
 
-// Wall tab
+// Wall tab：留言墙已独立成页
 function showWallTab(){
   document.getElementById('forumView').style.display='none';
   var wc=document.getElementById('wallTabContent');
   wc.style.display='block';
-  if(!wallLoaded)loadWall();
-}
-async function loadWall(){
-  wallLoaded=true;
-  var T=loadToken();
-  var ISSUE=null;
-  try{
-    var r=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:wall+in:title+type:issue',{headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}});
-    var d=await r.json();
-    if(d.items&&d.items.length)ISSUE=d.items[0].number;
-  }catch(e){}
-  if(!ISSUE){document.getElementById('wallTabContent').innerHTML='<p class="forum-empty">留言墙暂不可用</p>';return;}
-  try{
-    var r2=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+ISSUE+'/comments?per_page=100',{headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}});
-    var notes=await r2.json();
-    var colors=['#fef9e7','#fdeded','#eaf2f8','#eafaf1','#f4ecf7','#fdf2e9'];
-    var h='<h3 style="margin-bottom:1rem;color:var(--text);font-size:1.1rem;">📝 留言便签</h3><div class="wall-sticky">';
-    notes.forEach(function(n,i){
-      var msg=n.body||'',name='匿名';
-      var nm=msg.match(/^\*\*(.+?)\*\*[：:]\s*([\s\S]*)$/);
-      if(nm){name=nm[1];msg=nm[2];}
-      var c=colors[i%colors.length],rot=((i*3+1)%5-2)*0.8;
-      h+='<div class="wall-note" style="background:'+c+';transform:rotate('+rot+'deg)">'+eHtml(msg)+'<div class="wall-note-header"><span>'+eHtml(name)+'</span><span>'+new Date(n.created_at).toLocaleDateString('zh-CN')+'</span></div></div>';
-    });
-    h+='</div><p style="text-align:center;margin-top:1rem;font-size:0.8rem;color:var(--text-light)">去 <a href="wall.html" style="color:var(--primary)">留言墙</a> 贴上新的便签</p>';
-    document.getElementById('wallTabContent').innerHTML=h;
-  }catch(e){ document.getElementById('wallTabContent').innerHTML='<p class="forum-empty">加载失败</p>'; }
+  if(!wallLoaded){
+    wallLoaded=true;
+    wc.innerHTML='<p class="forum-empty">留言墙已经搬到独立页面 👉 <a href="wall.html" style="color:var(--primary)">前往留言墙</a></p>';
+  }
 }
 
 loadPosts();

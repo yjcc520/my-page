@@ -19,6 +19,7 @@
   cursor: pointer; font-family: inherit; transition: background 0.15s;
 }
 .gallery-upload-btn:hover { background: var(--primary-light); }
+.gallery-upload-hint { margin-top: 0.6rem; font-size: 0.78rem; color: var(--text-light); }
 .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
 .gallery-item {
   position: relative; border-radius: 10px; overflow: hidden;
@@ -28,14 +29,6 @@
 .gallery-item:hover { transform: scale(1.02); }
 .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .gallery-item .gl-uploader { position: absolute; bottom: 6px; right: 6px; font-size: 0.7rem; background: rgba(0,0,0,0.6); color: #ccc; padding: 2px 8px; border-radius: 10px; }
-.gl-del {
-  position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
-  border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none;
-  font-size: 13px; cursor: pointer; line-height: 22px; text-align: center;
-  opacity: 0; transition: opacity 0.15s;
-}
-.gallery-item:hover .gl-del { opacity: 1; }
-.gl-del:hover { background: rgba(229,62,62,0.85); }
 .gallery-empty { text-align: center; color: var(--text-light); padding: 3rem; }
 
 /* Lightbox */
@@ -44,17 +37,10 @@
 .lightbox img { max-width: 90vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 0 60px rgba(0,0,0,0.5); }
 .lightbox-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 32px; cursor: pointer; z-index: 1001; background: none; border: none; }
 
-/* Upload modal */
-.upload-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; justify-content: center; align-items: center; }
-.upload-overlay.active { display: flex; }
-.upload-box { background: var(--bg-alt); border-radius: 16px; padding: 2rem; width: 360px; max-width: 90vw; text-align: center; }
-.upload-box h3 { margin-bottom: 1rem; }
-.upload-box input[type="file"] { margin-bottom: 1rem; }
-.upload-box img { max-width: 200px; max-height: 150px; border-radius: 8px; margin-bottom: 0.5rem; display: none; }
-.upload-box .modal-btns { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; }
-.upload-box .modal-btn-cancel { padding: 0.5rem 1.2rem; border: 1px solid var(--border); border-radius: 8px; background: none; color: var(--text); cursor: pointer; font-family: inherit; }
-.upload-box .modal-btn-ok { padding: 0.5rem 1.2rem; border: none; border-radius: 8px; background: var(--primary); color: #fff; cursor: pointer; font-family: inherit; }
-.upload-status { font-size: 0.85rem; margin-top: 0.5rem; color: var(--text-light); }
+/* 评论区 */
+.gallery-comments { margin-top: 3.5rem; }
+.gallery-comments h2 { text-align: center; font-size: 1.25rem; margin-bottom: 0.3rem; }
+.gallery-comments .gc-sub { text-align: center; color: var(--text-light); font-size: 0.83rem; margin-bottom: 1.2rem; }
 </style>
 </head>
 <body>
@@ -77,11 +63,18 @@
     <h1>画廊</h1>
     <p>生活中的美好瞬间</p>
   </div>
-  <div class="gallery-upload" id="uploadArea" style="display:none">
-    <button class="gallery-upload-btn" onclick="showUpload()">📷 上传图片</button>
+  <div class="gallery-upload">
+    <button class="gallery-upload-btn" onclick="openGalleryIssue()">＋ 添加照片（站长）</button>
+    <p class="gallery-upload-hint">在 GitHub 的「图库」话题下留言并粘贴图片，画廊会自动收录</p>
   </div>
   <div class="gallery-grid" id="galleryGrid">
     <p class="gallery-empty">加载中...</p>
+  </div>
+
+  <div class="gallery-comments">
+    <h2>说说你的想法</h2>
+    <p class="gc-sub">用 GitHub 账号登录即可留言</p>
+    <div class="giscus-host" data-giscus-term="gallery"></div>
   </div>
 </div>
 
@@ -92,194 +85,86 @@
   <img id="lightboxImg" src="" alt="">
 </div>
 
-<div class="upload-overlay" id="uploadOverlay">
-  <div class="upload-box">
-    <h3>上传图片</h3>
-    <input type="file" id="uploadFile" accept="image/*" onchange="previewImage()">
-    <img id="uploadPreview" alt="">
-    <div class="upload-status" id="uploadStatus"></div>
-    <div class="modal-btns">
-      <button class="modal-btn-cancel" onclick="closeUpload()">取消</button>
-      <button class="modal-btn-ok" id="uploadSubmit" onclick="doUpload()">上传</button>
-    </div>
-  </div>
-</div>
-
-<script src="api-auth.js"></script>
-    <script src="user.js"></script>
+<script src="user.js"></script>
 <script src="theme.js"></script>
 <script src="music.js"></script>
 <script>
 var GALLERY_ISSUE = null;
 var REPO = 'yjcc520/my-page';
 
-function loadToken() {
-  var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
-  return h.match(/.{1,2}/g).map(function(b){return String.fromCharCode(parseInt(b,16));}).join('');
-}
-
-// Find or create gallery issue
+// 画廊内容存放在仓库「图库」话题的留言里，读取是公开的，不需要任何凭据
 async function getGalleryIssue() {
   try {
-    var r = await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:gallery+in:title+type:issue', {
-      headers: {'Accept':'application/vnd.github.v3+json'}
+    var r = await fetch('https://api.github.com/search/issues?q=repo:' + REPO + '+label:gallery+in:title+type:issue', {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
     });
     var d = await r.json();
-    if (d.items && d.items.length) { GALLERY_ISSUE = d.items[0].number; return; }
-    var T = loadToken();
-    var r2 = await fetch('https://api.github.com/repos/'+REPO+'/issues', {
-      method:'POST', headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
-      body: JSON.stringify({title:'图库',body:'画廊图片存储',labels:['gallery']})
-    });
-    var issue = await r2.json();
-    GALLERY_ISSUE = issue.number;
-  } catch(e) {}
+    if (d.items && d.items.length) GALLERY_ISSUE = d.items[0].number;
+  } catch (e) {}
 }
 
-// Load gallery
+// 站长添加照片：跳到 GitHub 对应的图库话题
+window.openGalleryIssue = function () {
+  var url = GALLERY_ISSUE
+    ? 'https://github.com/' + REPO + '/issues/' + GALLERY_ISSUE
+    : 'https://github.com/' + REPO + '/issues?q=label%3Agallery';
+  window.open(url, '_blank', 'noopener');
+};
+
 async function loadGallery() {
   if (!GALLERY_ISSUE) await getGalleryIssue();
-  if (!GALLERY_ISSUE) { document.getElementById('galleryGrid').innerHTML = '<p class="gallery-empty">暂无图片</p>'; return; }
+  var grid = document.getElementById('galleryGrid');
+  if (!GALLERY_ISSUE) { grid.innerHTML = '<p class="gallery-empty">暂无图片</p>'; return; }
   try {
-    var r = await fetch('https://api.github.com/repos/'+REPO+'/issues/'+GALLERY_ISSUE+'/comments?per_page=100', {
-      headers:{'Accept':'application/vnd.github.v3+json'}
+    var r = await fetch('https://api.github.com/repos/' + REPO + '/issues/' + GALLERY_ISSUE + '/comments?per_page=100', {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
     });
     var comments = await r.json();
-    var grid = document.getElementById('galleryGrid');
-    if (comments.length === 0) {
+    if (!comments.length) {
       grid.innerHTML = '<p class="gallery-empty">还没有图片，来上传第一张吧 📷</p>';
       return;
     }
-    var curName = window._siteGetNickname ? window._siteGetNickname() : '';
-    grid.innerHTML = comments.map(function(c) {
-      var img = c.body;
-      var uploader = '';
-      try { var info = JSON.parse(c.body); img = info.url; uploader = info.by || ''; } catch(ex) {}
-      if (!img || img.indexOf('http') !== 0 && img.indexOf('data:image') !== 0) return '';
-      var canDel = curName && curName === uploader;
-      return '<div class="gallery-item" onclick="openLightbox(\''+img+'\')">' +
-        '<img src="'+img+'" alt="" loading="lazy">' +
-        (canDel ? '<button class="gl-del" onclick="event.stopPropagation();deletePhoto('+c.id+',this)" title="删除">×</button>' : '') +
-        (uploader ? '<span class="gl-uploader">'+uploader+'</span>' : '') +
+    grid.innerHTML = comments.map(function (c) {
+      var img = c.body, uploader = '';
+      try { var info = JSON.parse(c.body); img = info.url; uploader = info.by || ''; } catch (ex) {}
+      if (!img || (img.indexOf('http') !== 0 && img.indexOf('data:image') !== 0)) return '';
+      return '<div class="gallery-item" onclick="openLightbox(\'' + img + '\')">' +
+        '<img src="' + img + '" alt="" loading="lazy">' +
+        (uploader ? '<span class="gl-uploader">' + uploader + '</span>' : '') +
         '</div>';
     }).filter(Boolean).join('');
-  } catch(e) {
-    document.getElementById('galleryGrid').innerHTML = '<p class="gallery-empty">加载失败</p>';
+  } catch (e) {
+    grid.innerHTML = '<p class="gallery-empty">加载失败</p>';
   }
 }
 
 // Lightbox
 var _lbImages = [];
-window.openLightbox = function(src) {
+window.openLightbox = function (src) {
   document.getElementById('lightboxImg').src = src;
   document.getElementById('lightbox').classList.add('active');
-  // Collect current images for keyboard nav
-  _lbImages = Array.from(document.querySelectorAll('.gallery-item img')).map(function(el) { return el.src; });
+  _lbImages = Array.prototype.slice.call(document.querySelectorAll('.gallery-item img')).map(function (el) { return el.src; });
 };
-window.closeLightbox = function() {
+window.closeLightbox = function () {
   document.getElementById('lightbox').classList.remove('active');
 };
-// Keyboard nav for lightbox
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
   var lb = document.getElementById('lightbox');
   if (!lb.classList.contains('active')) return;
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
     e.stopPropagation();
     var cur = _lbImages.indexOf(document.getElementById('lightboxImg').src);
     if (cur < 0) return;
-    var next = e.key === 'ArrowRight' ? (cur + 1) % _lbImages.length : (cur - 1 + _lbImages.length) % _lbImages.length;
+    var next = e.key === 'ArrowRight'
+      ? (cur + 1) % _lbImages.length
+      : (cur - 1 + _lbImages.length) % _lbImages.length;
     document.getElementById('lightboxImg').src = _lbImages[next];
   }
 });
 
-// Upload
-var upName = window._siteGetNickname ? window._siteGetNickname() : '';
-if (upName) document.getElementById('uploadArea').style.display = 'block';
-
-window.showUpload = function() {
-  var name = window._siteGetNickname ? window._siteGetNickname() : '';
-  if (!name) { if(window._siteShowRegister) window._siteShowRegister(); return; }
-  document.getElementById('uploadOverlay').classList.add('active');
-  document.getElementById('uploadFile').value = '';
-  document.getElementById('uploadPreview').style.display = 'none';
-  document.getElementById('uploadStatus').textContent = '';
-  document.getElementById('uploadSubmit').disabled = false;
-};
-
-window.closeUpload = function() {
-  document.getElementById('uploadOverlay').classList.remove('active');
-};
-
-window.previewImage = function() {
-  var file = document.getElementById('uploadFile').files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var preview = document.getElementById('uploadPreview');
-    preview.src = e.target.result;
-    preview.style.display = 'block';
-  };
-  reader.readAsDataURL(file);
-};
-
-window.doUpload = async function() {
-  var file = document.getElementById('uploadFile').files[0];
-  if (!file) { document.getElementById('uploadStatus').textContent = '请选择图片'; return; }
-  var name = window._siteGetNickname ? window._siteGetNickname() : '匿名';
-  var status = document.getElementById('uploadStatus');
-  var btn = document.getElementById('uploadSubmit');
-  btn.disabled = true; status.textContent = '压缩中...';
-
-  // Compress image
-  var reader = new FileReader();
-  reader.onload = async function(e) {
-    var img = new Image();
-    img.onload = async function() {
-      var canvas = document.createElement('canvas');
-      var maxW = 1200;
-      var scale = Math.min(1, maxW / Math.max(img.width, img.height));
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.78);
-
-      if (dataUrl.length > 500000) { status.textContent = '图片太大，请换张小的'; btn.disabled = false; return; }
-
-      status.textContent = '上传中...';
-      try {
-        var T = loadToken();
-        var body = JSON.stringify({url: dataUrl, by: name, time: new Date().toISOString()});
-        await fetch('https://api.github.com/repos/'+REPO+'/issues/'+GALLERY_ISSUE+'/comments', {
-          method:'POST', headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
-          body: JSON.stringify({body: body})
-        });
-        closeUpload();
-        loadGallery();
-      } catch(ex) { status.textContent = '上传失败，请重试'; btn.disabled = false; }
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-};
-
-// Delete
-window.deletePhoto = function(commentId, btn) {
-  window._showConfirm('确定删除这张图片吗？', async function() {
-    try {
-      var T = loadToken();
-      await fetch('https://api.github.com/repos/'+REPO+'/issues/comments/'+commentId, {
-        method:'DELETE', headers:{'Authorization':'token '+T,'Accept':'application/vnd.github.v3+json'}
-      });
-      var item = btn.closest('.gallery-item');
-      if (item) { item.style.opacity = '0'; item.style.transform = 'scale(0.9)'; setTimeout(function(){item.remove();}, 300); }
-    } catch(e) { alert('删除失败'); }
-  });
-};
-
-// Init
 getGalleryIssue().then(loadGallery);
 </script>
+<script src="comments.js"></script>
 <script src="ux.js"></script>
 </body>
 </html>

@@ -36,197 +36,115 @@
 
     <section class="comments-section" id="comments">
         <h2>评论</h2>
-        <div class="comment-form-wrap" id="commentFormWrap">
-            <div class="comment-form-row">
-                <textarea id="commentInput" class="comment-input" placeholder="写下你的评论...（支持 Markdown）" rows="3"></textarea>
-                <div class="comment-form-footer">
-                    <span class="comment-md-hint">支持 **粗体** *斜体* `代码`</span>
-                    <button id="submitBtn" class="comment-submit-btn" onclick="submitComment()">发表评论</button>
-                </div>
-                <p id="commentError" class="comment-error" style="display:none"></p>
-            </div>
-        </div>
-        <div class="comments-loading" id="commentsLoading">
-            <div class="loading-spinner"></div><p>正在加载评论...</p>
-        </div>
-        <div id="comments-list" style="display:none"></div>
+        <p style="text-align:center;color:var(--text-light);font-size:0.85rem;margin-bottom:1.2rem;">
+            用 GitHub 账号登录即可评论<span id="articlePv"></span>
+        </p>
+        <div class="giscus-host" id="giscusHost" data-giscus-term="article-0"></div>
     </section>
 
     <footer><p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p></footer>
 
-    <script src="api-auth.js"></script>
+    <!-- 访问量占位（第三方计数脚本写入此处，再由页面取值渲染） -->
+    <div style="display:none" aria-hidden="true">
+        <span id="busuanzi_container_page_pv">本页访问量<span id="busuanzi_value_page_pv"></span>次</span>
+    </div>
+
     <script src="blog-data.js"></script>
     <script src="user.js"></script>
     <script src="stats.js"></script>
+    <script src="gh-publish.js"></script>
     <script>
-// ===== 全局评论系统 =====
-var REPO='yjcc520/my-page', loadingEl=document.getElementById('commentsLoading'), listEl=document.getElementById('comments-list');
-var issueNumber=null, ghToken='', allComments=[];
+var REPO = 'yjcc520/my-page';
 
-function loadToken(){ var h='6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e'; return h.match(/.{1,2}/g).map(function(b){return String.fromCharCode(parseInt(b,16));}).join(''); }
-function eHtml(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
-function fBody(b){ return b.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>'); }
-function gLike(id){ return {count:parseInt(localStorage.getItem('comment_like_'+id)||'0'),liked:localStorage.getItem('comment_liked_'+id)==='true'}; }
-function tLike(id){ var l=gLike(id); if(l.liked){l.count=Math.max(0,l.count-1);l.liked=false;}else{l.count++;l.liked=true;} localStorage.setItem('comment_like_'+id,l.count); localStorage.setItem('comment_liked_'+id,l.liked); return l; }
+function eHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-function pComment(c){
-    var raw=c.body||'',pid=null,cont=raw,m=raw.match(/^>>(\d+)\n/);
-    if(m){pid=parseInt(m[1]);cont=raw.slice(m[0].length);}
-    var nm=cont.match(/^\*\*(.+?)\*\*[：:]\s*([\s\S]*)$/);
-    return {id:c.id,name:nm?nm[1]:(c.user?c.user.login:'匿名'),body:nm?nm[2]:cont,time:c.created_at,parentId:pid,pending:c.pending||false};
-}
+function fm(md) { return ('<p>' + (md || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/### (.+)/g, '<h4>$1</h4>').replace(/## (.+)/g, '<h3>$1</h3>').replace(/# (.+)/g, '<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/^> (.+)/gm, '<blockquote>$1</blockquote>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>'); }
 
-function avHtml(n){
-    var cn=window._siteGetNickname?window._siteGetNickname():'',av=window._siteGetAvatar?window._siteGetAvatar():'';
-    if(cn&&n===cn&&av) return '<img class="comment-avatar" src="'+av+'" alt="" width="32" height="32">';
-    return '<div class="comment-avatar-icon comment-avatar-sm">'+n[0].toUpperCase()+'</div>';
-}
-
-function rComment(p){
-    var l=gLike(p.id);
-    return '<div class="comment-header">'+avHtml(p.name)+'<div><span class="comment-author-name">'+eHtml(p.name)+'</span><span class="comment-time">'+(p.pending?'发送中...':new Date(p.time).toLocaleDateString('zh-CN'))+'</span></div></div>'+
-    '<div class="comment-body">'+fBody(p.body)+'</div>'+
-    '<div class="comment-actions"><button class="comment-action-btn '+(l.liked?'liked':'')+'" onclick="toggleCLike('+p.id+',this)">👍 <span>'+l.count+'</span></button><button class="comment-action-btn" onclick="showReplyForm('+p.id+')">💬 回复</button></div>'+
-    '<div class="comment-reply-form" id="replyForm-'+p.id+'" style="display:none"><textarea id="replyInput-'+p.id+'" class="comment-input comment-input-sm" placeholder="回复 '+eHtml(p.name)+'..." rows="2"></textarea><button id="replyBtn-'+p.id+'" class="comment-submit-btn comment-submit-sm" onclick="submitComment('+p.id+')">回复</button></div>';
-}
-
-window.toggleCLike=function(id,btn){ var l=tLike(id); btn.classList.toggle('liked',l.liked); btn.querySelector('span').textContent=l.count; };
-window.showReplyForm=function(id){ var f=document.getElementById('replyForm-'+id); if(!f)return; f.style.display=f.style.display==='none'?'block':'none'; if(f.style.display==='block'){var t=document.getElementById('replyInput-'+id);if(t)t.focus();} };
-
-function rNode(node,level){
-    var p=node.data,h='';
-    if(level===0){ h+='<div class="comment-item'+(p.pending?' comment-pending':'')+'" id="c-'+p.id+'">'+rComment(p); }
-    else { var l=gLike(p.id); h+='<div class="comment-reply-item" id="c-'+p.id+'">'+avHtml(p.name)+'<div class="comment-reply-content"><span class="comment-author-name">'+eHtml(p.name)+'</span> '+fBody(p.body)+'<div class="comment-reply-actions-inline"><button class="comment-action-btn '+(l.liked?'liked':'')+'" onclick="toggleCLike('+p.id+',this)">👍 <span>'+l.count+'</span></button><button class="comment-action-btn" onclick="showReplyForm('+p.id+')">💬 回复</button></div><div class="comment-reply-form" id="replyForm-'+p.id+'" style="display:none"><textarea id="replyInput-'+p.id+'" class="comment-input comment-input-sm" placeholder="回复 '+eHtml(p.name)+'..." rows="2"></textarea><button id="replyBtn-'+p.id+'" class="comment-submit-btn comment-submit-sm" onclick="submitComment('+p.id+')">回复</button></div>'; }
-    var ch=node.children||[];
-    if(ch.length>0){ ch.sort(function(a,b){return gLike(b.data.id).count-gLike(a.data.id).count;});
-        h+='<div class="comment-replies">'+rNode(ch[0],level+1);
-        if(ch.length>1){ var c=ch.length-1,gid='replies-'+p.id;
-            h+='<div class="comment-replies-more" onclick="toggleRep(this)" data-group="'+gid+'">展开 '+c+' 条回复 ▾</div><div class="comment-replies-all" id="'+gid+'" style="display:none">';
-            for(var i=1;i<ch.length;i++) h+=rNode(ch[i],level+1);
-            h+='</div>'; }
-        h+='</div>'; }
-    if(level===0) h+='</div>'; else h+='</div></div>';
-    return h;
-}
-
-window.toggleRep=function(btn){ var a=document.getElementById(btn.getAttribute('data-group')); if(!a)return; var v=a.style.display!=='none'; a.style.display=v?'none':'block'; btn.textContent=v?('展开 '+a.children.length+' 条回复 ▾'):'收起 ▴'; };
-
-function renderAll(comments){
-    var map={},roots=[];
-    comments.forEach(function(c){var p=pComment(c);map[p.id]={data:p,children:[]};});
-    comments.forEach(function(c){var n=map[c.id],pid=n&&n.data.parentId;if(pid&&map[pid])map[pid].children.push(n);else if(n)roots.push(n);});
-    roots.sort(function(a,b){var la=gLike(a.data.id).count,lb=gLike(b.data.id).count;if(la!==lb)return lb-la;return new Date(b.data.time)-new Date(a.data.time);});
-    var h=roots.length===0?'<p class="comments-empty">暂无评论，来做第一个评论的人吧 👇</p>':roots.map(function(n){return rNode(n,0);}).join('');
-    listEl.innerHTML=h;listEl.style.display='block';
-    setTimeout(function(){ if(window._uxObserve) window._uxObserve(listEl); },50);
-}
-
-window.submitComment=async function(pid){
-    var name=window._siteGetNickname?window._siteGetNickname():'';
-    if(!name){if(window._siteShowRegister)window._siteShowRegister();return;}
-    var ti=pid?document.getElementById('replyInput-'+pid):document.getElementById('commentInput');
-    var err=document.getElementById('commentError'),btn=pid?document.getElementById('replyBtn-'+pid):document.getElementById('submitBtn');
-    var body=ti.value.trim();
-    if(!body){err.textContent='请输入内容';err.style.display='block';return;}
-    btn.disabled=true;btn.textContent='发送中...';err.style.display='none';ti.value='';
-    if(!ghToken)ghToken=loadToken();
-    if(!ghToken){err.textContent='服务暂不可用';err.style.display='block';btn.disabled=false;btn.textContent=pid?'回复':'发表评论';return;}
-    var prefix=pid?('>>'+pid+'\n'):'',cb=prefix+'**'+name+'**：'+body;
-    var fid='opt-'+Date.now();
-    renderAll([{id:fid,user:{login:name},created_at:new Date().toISOString(),body:cb,pending:true}].concat(allComments));
-    try{
-        var resp=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+issueNumber+'/comments',{method:'POST',headers:{'Authorization':'token '+ghToken,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({body:cb})});
-        if(resp.ok){var real=await resp.json();allComments.unshift(real);}
-        else{var e=await resp.json().catch(function(){return{};});err.textContent='发送失败：'+(e.message||'请重试');err.style.display='block';}
-    }catch(ex){err.textContent='网络错误';err.style.display='block';}
-    allComments=allComments.filter(function(c){return c.id!==fid;});
-    renderAll(allComments);
-    btn.disabled=false;btn.textContent=pid?'回复':'发表评论';
+// ===== 删除文章 =====
+// 关闭 Issue 需要仓库权限，因此改为跳到 GitHub 上操作；预置文章则记在本地
+window.deleteArticle = function (id) {
+    window._showConfirm('删除需要到 GitHub 上关闭这篇 Issue，现在打开吗？', function () {
+        window.open(window._ghIssueUrl(id), '_blank', 'noopener');
+    });
 };
 
-function initComments(id){
-    ghToken=loadToken();
-    (async function(){
-        try{var sr=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:comment+article-'+id+'+in:title+type:issue&sort=created&order=desc',{headers:{'Accept':'application/vnd.github.v3+json'}});var sd=await sr.json();if(sd.items&&sd.items.length>0)issueNumber=sd.items[0].number;}catch(e){}
-        loadingEl.style.display='none';
-        if(!issueNumber){listEl.innerHTML='<p class="comments-empty">暂无评论</p>';listEl.style.display='block';return;}
-        try{var r=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+issueNumber+'/comments',{headers:{'Accept':'application/vnd.github.v3+json'}});allComments=await r.json();}catch(e){}
-        renderAll(allComments);
-    })();
-}
-
-function fm(md){ return ('<p>'+(md||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/### (.+)/g,'<h4>$1</h4>').replace(/## (.+)/g,'<h3>$1</h3>').replace(/# (.+)/g,'<h2>$1</h2>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/^> (.+)/gm,'<blockquote>$1</blockquote>').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')+'</p>'); }
-
-window.deleteArticle=function(id){
-    window._showConfirm('确定删除这篇文章吗？', async function(){
-    var T=loadToken();
-    try{
-        var resp=await fetch('https://api.github.com/repos/'+REPO+'/issues/'+id,{method:'PATCH',headers:{'Authorization':'token '+T,'Content-Type':'application/json'},body:JSON.stringify({state:'closed'})});
-        if(!resp.ok){alert('删除失败');return;}
-        try{
-            var sr=await fetch('https://api.github.com/search/issues?q=repo:'+REPO+'+label:comment+article-'+id+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});
-            var sd=await sr.json();
-            if(sd.items&&sd.items.length){
-                await fetch('https://api.github.com/repos/'+REPO+'/issues/'+sd.items[0].number,{method:'PATCH',headers:{'Authorization':'token '+T,'Content-Type':'application/json'},body:JSON.stringify({state:'closed'})});
-            }
-        }catch(ex){}
-        alert('已删除');window.location.href='blog.html';
-    }catch(e){alert('网络错误');}
-    }); // end _showConfirm
+window.deletePreset = function (id) {
+    window._showConfirm('确定隐藏这篇预置文章吗？（仅对当前浏览器生效）', function () {
+        var list = [];
+        try { list = JSON.parse(localStorage.getItem('deleted_presets') || '[]'); } catch (e) {}
+        if (list.indexOf(id) < 0) list.push(id);
+        localStorage.setItem('deleted_presets', JSON.stringify(list));
+        window.location.href = 'blog.html';
+    });
 };
 
 // ===== 文章加载 =====
-var params=new URLSearchParams(window.location.search),aid=parseInt(params.get('id')),isIssue=params.get('type')==='issue';
-_trackRead(aid);
+var params = new URLSearchParams(window.location.search);
+var aid = parseInt(params.get('id'));
+var isIssue = params.get('type') === 'issue';
 
-if(isIssue){
-    (async function(){
-        try{
-            var resp=await fetch('https://api.github.com/repos/yjcc520/my-page/issues/'+aid,{headers:{'Accept':'application/vnd.github.v3+json'}});
-            if(!resp.ok)throw new Error('nf');
-            var issue=await resp.json(),body=issue.body||'';
-            var content=body.replace(/\*\*作者\*\*[：:].+\n?/,'').replace(/\*\*标签\*\*[：:].+\n?/,'').trim();
-            var tags=[],tm=body.match(/\*\*标签\*\*[：:]\s*(.+)/);
-            if(tm)tags=tm[1].split(/[,，]/).map(function(t){return t.trim();}).filter(Boolean);
-            document.title=issue.title+' | 蔡梓涵';
-            var isForum=issue.labels.some(function(l){return l.name==='forum';});
-            var delBtn=window._siteGetNickname&&window._siteGetNickname()?'<button class="article-del-btn" onclick="deleteArticle('+aid+')" title="删除文章">🗑</button>':'';
-            var backLink=isForum?'<a href="forum.html">← 返回论坛</a>':'<a href="blog.html">← 返回博客列表</a>';
-            document.getElementById('articleContent').innerHTML='<header class="article-header"><div class="article-tags">'+tags.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</div><h1>'+issue.title+'</h1><time>'+issue.created_at.split('T')[0]+'</time>'+delBtn+'</header><div class="article-body">'+fm(content)+'</div><div class="article-back">'+backLink+'</div>';
-            document.getElementById('interactions').style.display='none';
-            initComments(aid);
-        }catch(e){ document.getElementById('articleContent').innerHTML='<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>'; }
+// giscus 按文章区分讨论话题：article-<id>
+document.getElementById('giscusHost').setAttribute('data-giscus-term', 'article-' + aid);
+
+_trackRead(aid);
+window._onStatsReady = function (sitePv, pagePv) {
+    if (pagePv) document.getElementById('articlePv').textContent = ' · 本页阅读 ' + pagePv + ' 次';
+};
+
+if (isIssue) {
+    (async function () {
+        try {
+            var resp = await fetch('https://api.github.com/repos/yjcc520/my-page/issues/' + aid, {
+                headers: { 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!resp.ok) throw new Error('nf');
+            var issue = await resp.json(), body = issue.body || '';
+            var content = body.replace(/\*\*作者\*\*[：:].+\n?/, '').replace(/\*\*标签\*\*[：:].+\n?/, '').trim();
+            var tags = [], tm = body.match(/\*\*标签\*\*[：:]\s*(.+)/);
+            if (tm) tags = tm[1].split(/[,，]/).map(function (t) { return t.trim(); }).filter(Boolean);
+            document.title = issue.title + ' | 蔡梓涵';
+            var isForum = issue.labels.some(function (l) { return l.name === 'forum'; });
+            var delBtn = '<button class="article-del-btn" onclick="deleteArticle(' + aid + ')" title="到 GitHub 上删除">🗑</button>';
+            var backLink = isForum ? '<a href="forum.html">← 返回论坛</a>' : '<a href="blog.html">← 返回博客列表</a>';
+            document.getElementById('articleContent').innerHTML =
+                '<header class="article-header"><div class="article-tags">' + tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('') + '</div><h1>' + issue.title + '</h1><time>' + issue.created_at.split('T')[0] + '</time>' + delBtn + '</header><div class="article-body">' + fm(content) + '</div><div class="article-back">' + backLink + '</div>';
+            document.getElementById('interactions').style.display = 'none';
+        } catch (e) {
+            document.getElementById('articleContent').innerHTML = '<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
+        }
     })();
-}else{
-    var article=articles.find(function(a){return a.id===aid;});
-    if(!article){
-        document.getElementById('articleContent').innerHTML='<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
-    }else{
-        document.title=article.title+' | 蔡梓涵';
-        var preDelBtn=window._siteGetNickname&&window._siteGetNickname()?'<button class="article-del-btn" onclick="deletePreset('+aid+')" title="删除文章">🗑</button>':'';
-        document.getElementById('articleContent').innerHTML='<header class="article-header"><div class="article-tags">'+article.tags.map(function(t){return'<span class="tag">'+t+'</span>';}).join('')+'</div><h1>'+article.title+'</h1><time>'+article.date+'</time>'+preDelBtn+'</header><div class="article-body">'+article.content+'</div><div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
-        var sk='likes_'+aid,liked=localStorage.getItem(sk+'_liked')==='true',count=parseInt(localStorage.getItem(sk)||'0');
-        function ul(){document.getElementById('likeCount').textContent=count;var b=document.getElementById('likeBtn');if(liked){b.classList.add('liked');b.querySelector('.like-text').textContent='已赞';}else{b.classList.remove('liked');b.querySelector('.like-text').textContent='点赞';}}
-        window.toggleLike=function(){if(liked){count=Math.max(0,count-1);liked=false;}else{count++;liked=true;}localStorage.setItem(sk,count);localStorage.setItem(sk+'_liked',liked);ul();};
-        ul();
-        window.deletePreset=function(id){
-          window._showConfirm('确定删除这篇文章吗？', async function(){
-            try {
-              await fetch('https://api.github.com/repos/yjcc520/my-page/issues/1/comments', {
-                method: 'POST',
-                headers: { 'Authorization': 'token ' + loadToken(), 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-                body: JSON.stringify({ body: 'delete-preset:preset-' + id })
-              });
-            } catch(e) {}
-            window.location.href='blog.html';
-          });
+} else {
+    var article = articles.find(function (a) { return a.id === aid; });
+    if (!article) {
+        document.getElementById('articleContent').innerHTML = '<div class="article-not-found"><h1>文章不存在</h1><p><a href="blog.html">← 返回博客列表</a></p></div>';
+    } else {
+        document.title = article.title + ' | 蔡梓涵';
+        var preDelBtn = '<button class="article-del-btn" onclick="deletePreset(' + aid + ')" title="隐藏文章">🗑</button>';
+        document.getElementById('articleContent').innerHTML =
+            '<header class="article-header"><div class="article-tags">' + article.tags.map(function (t) { return '<span class="tag">' + t + '</span>'; }).join('') + '</div><h1>' + article.title + '</h1><time>' + article.date + '</time>' + preDelBtn + '</header><div class="article-body">' + article.content + '</div><div class="article-back"><a href="blog.html">← 返回博客列表</a></div>';
+
+        var sk = 'likes_' + aid;
+        var liked = localStorage.getItem(sk + '_liked') === 'true';
+        var count = parseInt(localStorage.getItem(sk) || '0');
+        function ul() {
+            document.getElementById('likeCount').textContent = count;
+            var b = document.getElementById('likeBtn');
+            if (liked) { b.classList.add('liked'); b.querySelector('.like-text').textContent = '已赞'; }
+            else { b.classList.remove('liked'); b.querySelector('.like-text').textContent = '点赞'; }
+        }
+        window.toggleLike = function () {
+            if (liked) { count = Math.max(0, count - 1); liked = false; } else { count++; liked = true; }
+            localStorage.setItem(sk, count);
+            localStorage.setItem(sk + '_liked', liked);
+            ul();
         };
-        initComments(aid);
+        ul();
     }
 }
     </script>
     <script src="theme.js"></script>
     <script src="music.js"></script>
+    <script src="comments.js"></script>
     <script src="ux.js"></script>
 </body>
 </html>

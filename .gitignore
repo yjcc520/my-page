@@ -2,6 +2,7 @@
 push.py
 push_*.py
 *.local.py
+_*.py
 
 # 系统 / 编辑器
 .DS_Store

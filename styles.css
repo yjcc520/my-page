@@ -1902,3 +1902,14 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
     padding: 4px 10px;
   }
 }
+
+/* ===== giscus 评论区（评论由 GitHub Discussions 承载）===== */
+.giscus-host { margin-top: 0.4rem; }
+.giscus-host iframe { border: none; }
+
+/* 文章页与画廊：评论区收窄，读起来更舒服 */
+.comments-section .giscus-host,
+.gallery-comments .giscus-host { max-width: 760px; margin-left: auto; margin-right: auto; }
+
+/* 留言墙：便签风格由 giscus-wall-*.css 在 iframe 内实现，这里只管外壳 */
+.wall-board .giscus-host { margin-top: 0; }

@@ -1,52 +1,45 @@
-// Stats tracking - records page views and article reads to GitHub Issue #82
-(function() {
-  var STATS_ISSUE = 82;
-  var REPO = 'yjcc520/my-page';
+// 站点统计 · 不蒜子（第三方免费计数服务）
+// 说明：不需要任何凭据、后端或数据库，纯前端一行脚本即可工作。
+// 旧版本依赖 GitHub Issue #82 写入，需要前端持有写权限令牌 —— 已停用。
+(function () {
+  var SRC = 'https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
 
-  function getToken() {
-    var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
-    return h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
+  function read(id) {
+    var el = document.getElementById('busuanzi_value_' + id);
+    var v = el ? (el.textContent || '').trim() : '';
+    return /^\d+$/.test(v) ? v : '';
   }
 
-  window._trackVisit = function() {
-    var key = 'visit_' + new Date().toISOString().split('T')[0];
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, '1');
-    try {
-      fetch('https://api.github.com/repos/' + REPO + '/issues/' + STATS_ISSUE + '/comments', {
-        method: 'POST',
-        headers: { 'Authorization': 'token ' + getToken(), 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-        body: JSON.stringify({ body: 'hit:' + new Date().toISOString().split('T')[0] })
-      });
-    } catch(e) {}
-  };
+  function poll(n) {
+    var pv = read('site_pv');
+    var ppv = read('page_pv');
+    if (pv) window._sitePv = pv;
+    if (ppv) window._pagePv = ppv;
+    if ((pv || ppv) && typeof window._onStatsReady === 'function') {
+      window._onStatsReady(window._sitePv || '', window._pagePv || '');
+    }
+    if (n < 45 && !(pv && ppv)) setTimeout(function () { poll(n + 1); }, 400);
+  }
 
-  window._trackRead = function(articleId) {
-    var key = 'read_' + articleId;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, '1');
-    try {
-      fetch('https://api.github.com/repos/' + REPO + '/issues/' + STATS_ISSUE + '/comments', {
-        method: 'POST',
-        headers: { 'Authorization': 'token ' + getToken(), 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-        body: JSON.stringify({ body: 'read:article-' + articleId })
-      });
-    } catch(e) {}
-  };
+  function load() {
+    if (window._bszLoaded) return;
+    window._bszLoaded = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = SRC;
+    s.referrerPolicy = 'no-referrer-when-downgrade';
+    document.head.appendChild(s);
+    poll(0);
+  }
 
-  window._fetchStats = async function() {
-    try {
-      var r = await fetch('https://api.github.com/repos/' + REPO + '/issues/' + STATS_ISSUE + '/comments?per_page=100', {
-        headers: { 'Authorization': 'token ' + getToken(), 'Accept': 'application/vnd.github.v3+json' }
-      });
-      var comments = await r.json();
-      var hits = 0, reads = {};
-      comments.forEach(function(c) {
-        if (c.body.startsWith('hit:')) hits++;
-        var m = c.body.match(/^read:article-(\d+)/);
-        if (m) reads[m[1]] = (reads[m[1]] || 0) + 1;
-      });
-      return { hits: hits, reads: reads };
-    } catch(e) { return { hits: 0, reads: {} }; }
-  };
+  // 兼容旧调用点：现在什么都不用上报，计数由第三方脚本自动完成
+  window._trackVisit = function () {};
+  window._trackRead = function () {};
+  window._fetchStats = function () { return Promise.resolve({ hits: 0, reads: {} }); };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', load);
+  } else {
+    load();
+  }
 })();

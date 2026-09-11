@@ -1,0 +1,27 @@
+/* giscus 自定义主题 · 留言墙（暗色）
+   便签颜色沿用站点暗色模式下的 .note-* 配色 */
+@import url('https://caizihan.cn/giscus-dark.css');
+
+.gsc-comment {
+  padding: 1rem 1.1rem 0.85rem;
+  border: none;
+  border-radius: 3px 3px 14px 3px;
+  box-shadow: 2px 3px 10px rgba(0, 0, 0, 0.45);
+  margin: 0.55rem 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.gsc-comment:hover {
+  transform: rotate(0deg) scale(1.015) !important;
+  box-shadow: 2px 4px 18px rgba(0, 0, 0, 0.55);
+}
+
+.gsc-comment:nth-of-type(6n+1) { background: #2d2a1a; transform: rotate(-0.5deg); }
+.gsc-comment:nth-of-type(6n+2) { background: #2d1f1f; transform: rotate(0.4deg); }
+.gsc-comment:nth-of-type(6n+3) { background: #1a2330; transform: rotate(-0.3deg); }
+.gsc-comment:nth-of-type(6n+4) { background: #1a2d20; transform: rotate(0.6deg); }
+.gsc-comment:nth-of-type(6n+5) { background: #231f2d; transform: rotate(-0.5deg); }
+.gsc-comment:nth-of-type(6n+6) { background: #2d231a; transform: rotate(0.3deg); }
+
+.gsc-comment .gsc-comment-content { color: #e2e8f0; }
+
+.gsc-reply { background: transparent; border-radius: 8px; }

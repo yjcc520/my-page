@@ -62,7 +62,6 @@ h1{font-size:2.5rem;margin-bottom:0.5rem}p{font-size:1.1rem;opacity:0.8}
     <button class="lb-close" onclick="hideLB()">关闭</button>
   </div>
 </div>
-<script src="api-auth.js"></script>
     <script src="../user.js"></script>
 <script>
 var GAME='反应速度-排行榜';
@@ -97,23 +96,9 @@ function resetIdle(){setClass('waiting');state='idle';title.textContent='反应�
 function updateDots(){var h=document.getElementById('history');h.innerHTML='';times.slice(-20).forEach(t=>{var d=document.createElement('div');d.className='dot '+(t<250?'fast':t<400?'mid':'slow');h.appendChild(d)})}
 function updateResult(rt){var m='';if(rt<200)m='⚡ 闪电般！';else if(rt<280)m='🔥 很快！';else if(rt<350)m='👍 不错';else if(rt<450)m='😐 一般';else m='🐢 再练练';result.textContent=m}
 // Leaderboard
-function _token(){var h='6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';var r='';for(var i=0;i<h.length;i+=2)r+=String.fromCharCode(parseInt(h.substr(i,2),16));return r}
 function _name(){return (typeof _siteGetNickname==='function')?_siteGetNickname()||'匿名玩家':'匿名玩家'}
 function showLB(){document.getElementById('lbOverlay').classList.add('show');loadLB()}
 function hideLB(){document.getElementById('lbOverlay').classList.remove('show')}
-async function submitScore(sc){
-  if(!sc||sc===Infinity)return;var T=_token(),name=_name();
-  try{
-    var r=await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME)+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});
-    var d=await r.json();var num,body='';
-    if(d.items&&d.items.length){num=d.items[0].number;body=d.items[0].body||''}
-    else{var r2=await fetch('https://api.github.com/repos/yjcc520/my-page/issues',{method:'POST',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({title:GAME,body:'游戏排行榜',labels:['leaderboard']})});var issue=await r2.json();num=issue.number;body=issue.body||''}
-    var scores={};body.split('\n').forEach(function(l){var m=l.match(/^(\d+)ms[：:]\s*(.+)/);if(m){var n=m[2].trim(),s=parseInt(m[1]);if(!scores[n]||scores[n]>s)scores[n]=s}});
-    if(!scores[name]||scores[name]>sc)scores[name]=sc;
-    var newBody=Object.entries(scores).sort(function(a,b){return a[1]-b[1]}).map(function(e){return e[1]+'ms：'+e[0]}).join('\n');
-    await fetch('https://api.github.com/repos/yjcc520/my-page/issues/'+num,{method:'PATCH',headers:{'Authorization':'token '+T,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},body:JSON.stringify({body:newBody})});
-  }catch(e){}
-}
 async function loadLB(){
   var list=document.getElementById('lbList');list.innerHTML='<p class="lb-placeholder">加载中...</p>';
   try{var r=await fetch('https://api.github.com/search/issues?q=repo:yjcc520/my-page+label:leaderboard+'+encodeURIComponent(GAME)+'+in:title+type:issue',{headers:{'Accept':'application/vnd.github.v3+json'}});var d=await r.json();
@@ -126,6 +111,45 @@ async function loadLB(){
   }catch(e){list.innerHTML='<p class="lb-placeholder">加载失败</p>'}
 }
 resetIdle();
+</script>
+<script>
+/* 排行榜改造：写入 GitHub 需要前端持有凭据（存在泄露风险），已停用。
+   成绩改为记录在本机；线上榜单保留为历史数据展示。 */
+(function () {
+  var G = (typeof GAME !== 'undefined' && GAME) ||
+          (typeof GAME_SNAKE !== 'undefined' && GAME_SNAKE) ||
+          (typeof GAME_SHOOT !== 'undefined' && GAME_SHOOT) || 'game';
+
+  function toast(msg) {
+    var d = document.createElement('div');
+    d.textContent = msg;
+    d.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%);' +
+      'background:rgba(30,41,59,0.92);color:#fff;padding:0.55rem 1.1rem;border-radius:10px;' +
+      'font-size:0.85rem;z-index:9999;pointer-events:none;transition:opacity .4s;font-family:inherit';
+    document.body.appendChild(d);
+    setTimeout(function () { d.style.opacity = '0'; }, 1800);
+    setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 2400);
+  }
+
+  window.submitScore = function (sc) {
+    if (!sc) return;
+    try { localStorage.setItem('lb_local_' + G, sc); } catch (e) {}
+    toast('本机成绩已记录：' + sc + ' · 公网榜暂停提交');
+  };
+
+  var _orig = window.loadLB;
+  if (typeof _orig === 'function') {
+    window.loadLB = async function () {
+      await _orig.apply(this, arguments);
+      var l = document.getElementById('lbList');
+      if (l && !l.querySelector('.lb-frozen')) {
+        l.insertAdjacentHTML('afterbegin',
+          '<p class="lb-frozen" style="font-size:0.75rem;color:#889;text-align:center;margin-bottom:0.6rem">' +
+          '历史榜单 · 公网提交已暂停</p>');
+      }
+    };
+  }
+})();
 </script>
 </body>
 </html>

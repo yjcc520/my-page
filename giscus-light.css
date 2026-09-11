@@ -1,0 +1,52 @@
+/* giscus 自定义主题 · 亮色
+   底色沿用站点配色：白 / 靛青 #3a5670 / 暖金 #c4903a */
+@import url('https://giscus.app/themes/light.css');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap');
+
+:root, main {
+  --color-canvas-default: #ffffff;
+  --color-canvas-overlay: #ffffff;
+  --color-canvas-inset: #f8fafc;
+  --color-canvas-subtle: #f8fafc;
+
+  --color-border-default: #e2e8f0;
+  --color-border-muted: #eef2f7;
+
+  --color-fg-default: #1e293b;
+  --color-fg-muted: #64748b;
+  --color-fg-subtle: #94a3b8;
+
+  --color-accent-fg: #3a5670;
+  --color-accent-emphasis: #3a5670;
+  --color-accent-muted: rgba(58, 86, 112, 0.35);
+  --color-accent-subtle: rgba(58, 86, 112, 0.08);
+  --color-neutral-muted: rgba(58, 86, 112, 0.08);
+
+  --color-btn-bg: #f8fafc;
+  --color-btn-border: #e2e8f0;
+  --color-btn-hover-bg: #eef2f7;
+  --color-btn-hover-border: #cfd8e3;
+  --color-btn-active-bg: #e5ebf2;
+  --color-btn-active-border: #c3cedb;
+  --color-btn-selected-bg: #e5ebf2;
+  --color-btn-text: #1e293b;
+
+  --color-btn-primary-bg: #3a5670;
+  --color-btn-primary-hover-bg: #2f465c;
+  --color-btn-primary-selected-bg: #2f465c;
+  --color-btn-primary-hover-border: transparent;
+  --color-btn-primary-border: transparent;
+  --color-btn-primary-disabled-bg: #aab5c2;
+  --color-btn-primary-disabled-border: transparent;
+  --color-btn-primary-disabled-text: #f2f5f8;
+  --color-btn-primary-text: #ffffff;
+
+  --color-action-list-item-default-hover-bg: rgba(58, 86, 112, 0.07);
+}
+
+/* 细节：正文与评论用衬线，和站点气质一致 */
+main { font-family: -apple-system, 'Segoe UI', 'PingFang SC', sans-serif; }
+.gsc-comment-content, .gsc-reply-content, .gsc-comment-box-textarea {
+  font-family: 'Noto Serif SC', Georgia, 'Songti SC', serif;
+}
+.gsc-comment-box, .gsc-comment { border-radius: 12px; }

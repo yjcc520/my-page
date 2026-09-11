@@ -67,21 +67,12 @@
         </div>
     </div>
 
-    <script src="api-auth.js"></script>
     <script src="user.js"></script>
+    <script src="gh-publish.js"></script>
     <script>
-        function loadToken() {
-            var h = '6768705f6859744677364b6b4f56504c3562754b4c664f6b786c534d333347756b6b31676c616b6e';
-            return h.match(/.{1,2}/g).map(function(b) { return String.fromCharCode(parseInt(b, 16)); }).join('');
-        }
 
-        var name = window._siteGetNickname ? window._siteGetNickname() : '';
-        if (!name) {
-            document.getElementById('writePage').innerHTML =
-                '<div class="write-login-wrap"><div class="write-login-card"><div class="write-login-icon">✍️</div><h2>开始写作</h2><p>设置昵称后即可发布文章</p><button class="tb-btn-publish" style="margin-top:1.2rem;padding:0.6rem 2rem;font-size:1rem;" onclick="window._siteShowRegister()">设置昵称</button><p style="margin-top:1rem;font-size:0.85rem;color:var(--text-light)">已设置？<a href="write.html" style="color:var(--primary)">刷新页面</a></p></div></div>';
-        } else {
-            document.getElementById('writeAuthor').textContent = '作者：' + name;
-        }
+        var name = (window._siteGetNickname && window._siteGetNickname()) || '蔡梓涵';
+        document.getElementById('writeAuthor').textContent = '作者：' + name;
 
         var previewMode = false;
         window.togglePreview = function() {
@@ -146,43 +137,38 @@
         if (dg) document.getElementById('edTags').value = dg;
         if (dc) { document.getElementById('edContent').value = dc; updateWordCount(); }
 
-        window.publish = async function() {
+        // 发布：不在前端保存任何凭据，改为跳转 GitHub 官方新建 Issue 页面
+        window.publish = function() {
             var title = titleEl.value.trim();
             var tagsStr = document.getElementById('edTags').value.trim();
             var body = document.getElementById('edContent').value.trim();
-            var btn = document.getElementById('publishBtn');
             var err = document.getElementById('edError');
+            var status = document.getElementById('edStatus');
 
             if (!title) { err.textContent = '请输入标题'; err.style.display = 'block'; return; }
             if (!body) { err.textContent = '请输入正文'; err.style.display = 'block'; return; }
+            err.style.display = 'none';
 
-            btn.disabled = true; btn.textContent = '发布中...'; err.style.display = 'none';
             var tags = tagsStr ? tagsStr.split(/[,，]/).map(function(t) { return t.trim(); }).filter(Boolean) : [];
             var issueBody = '**作者**：' + name + '\n**标签**：' + (tags.join(',') || '未分类') + '\n\n' + body;
 
-            try {
-                var T = loadToken();
-                var resp = await fetch('https://api.github.com/repos/yjcc520/my-page/issues', {
-                    method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-                    body: JSON.stringify({ title: title, body: issueBody, labels: ['article'] })
-                });
-                if (resp.ok) {
-                    var issue = await resp.json();
-                    await fetch('https://api.github.com/repos/yjcc520/my-page/issues', {
-                        method: 'POST', headers: { 'Authorization': 'token ' + T, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-                        body: JSON.stringify({ title: 'article-' + issue.number, body: '> 文章：' + title + '\n\n欢迎留下你的想法 👇', labels: ['comment'] })
-                    });
-                    localStorage.removeItem('draft_title');
-                    localStorage.removeItem('draft_tags');
-                    localStorage.removeItem('draft_content');
-                    document.getElementById('edStatus').textContent = '✅ 发布成功！即将跳转...';
-                    setTimeout(function() { window.location.href = 'article.html?id=' + issue.number + '&type=issue'; }, 1200);
-                } else {
-                    var e = await resp.json().catch(function() { return {}; });
-                    err.textContent = '发布失败：' + (e.message || '请重试'); err.style.display = 'block';
-                }
-            } catch (ex) { err.textContent = '网络错误，请重试'; err.style.display = 'block'; }
-            btn.disabled = false; btn.textContent = '发布';
+            var r = window._ghNewIssue({ title: title, body: issueBody, labels: ['article'] });
+
+            status.innerHTML = (r.copied
+                ? '📋 正文较长，已复制到剪贴板 —— 在刚打开的 GitHub 页面里粘贴进正文框，点 <b>Submit new issue</b> 即可。'
+                : '📝 已在新标签页打开 GitHub 发布页，确认内容后点 <b>Submit new issue</b> 即可。')
+                + ' <a href="javascript:void(0)" onclick="clearDraft()" style="color:var(--primary)">发布完成后清空草稿</a>';
+        };
+
+        window.clearDraft = function() {
+            localStorage.removeItem('draft_title');
+            localStorage.removeItem('draft_tags');
+            localStorage.removeItem('draft_content');
+            titleEl.value = '';
+            document.getElementById('edTags').value = '';
+            document.getElementById('edContent').value = '';
+            updateWordCount();
+            document.getElementById('edStatus').textContent = '草稿已清空';
         };
 
         function formatMarkdown(md) {
