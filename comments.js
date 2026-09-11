@@ -9,8 +9,10 @@
 (function () {
   var REPO = 'yjcc520/my-page';
   var REPO_ID = 'R_kgDOTll2vQ';
-  var CATEGORY = 'Announcements';
-  var CATEGORY_ID = 'DIC_kwDOTll2vc4DCI4v';
+  // 用 General 而非 Announcements：Announcements 分类只有仓库管理员能新建话题，
+  // 访客首次评论时 giscus 无法自动创建讨论，会直接失败。
+  var CATEGORY = 'General';
+  var CATEGORY_ID = 'DIC_kwDOTll2vc4DCI4w';
 
   // 自定义主题：用站点自己的靛青 / 暖金配色覆盖 giscus 默认的 GitHub 蓝
   var THEMES = {
