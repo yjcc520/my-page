@@ -69,18 +69,27 @@
     if (/请先登录/.test(m)) return '登录状态已失效，请重新登录。';
     if (/提交过于频繁/.test(m)) return '发得太快了，歇一分钟再来。';
     if (/row-level security|violates row-level/i.test(m)) return '没有权限执行这个操作。';
-    if (/failed to fetch|networkerror|load failed/i.test(m)) return '网络不通，稍后再试。';
+    if (/请求超时|failed to fetch|networkerror|load failed/i.test(m)) return '网络不太顺，稍后再试。';
     return m || '出了点问题，稍后再试。';
   }
 
   // ============================================================ 通用外壳
 
   function mount(host) {
-    if (host.getAttribute('data-mounted')) return;
-    host.setAttribute('data-mounted', '1');
-
-    var term = host.getAttribute('data-term') || location.pathname;
+    var term = host.getAttribute('data-term') || '';
     var kind = host.getAttribute('data-kind') === 'wall' ? 'wall' : 'thread';
+
+    // 没有 data-term 的宿主先不挂：以前这里会退回 location.pathname，
+    // 结果文章页被「抢先」用 /article.html 当 term 查了一次并锁死，
+    // 等真正的 article-<id> 设上来时已经不再重挂了 —— 评论区就一直空着。
+    if (!term) return;
+
+    // 已挂载且 term / kind 没变 → 不重复挂。变了则重挂（换内容、切标签页等）。
+    if (host.getAttribute('data-mounted') === '1' &&
+        host._czhTerm === term && host._czhKind === kind) return;
+    host._czhTerm = term;
+    host._czhKind = kind;
+    host.setAttribute('data-mounted', '1');
 
     var state = {
       host: host, term: term, kind: kind,
@@ -94,7 +103,10 @@
       root.innerHTML = state.kind === 'wall' ? wallHtml(state) : threadHtml(state);
     }
 
-    function load() {
+    // attempt：自动重试计数。首屏网络抖一下不至于让访客自己刷新，
+    // 后台静默重试两次再报错。
+    function load(attempt) {
+      attempt = attempt || 0;
       state.loading = true;
       state.error = '';
       render();
@@ -116,21 +128,31 @@
         state.loading = false;
         render();
       }).catch(function (e) {
+        if (attempt < 2) {
+          setTimeout(function () { load(attempt + 1); }, attempt === 0 ? 600 : 1500);
+          return;
+        }
         state.loading = false;
         state.error = errText(e);
         render();
       });
     }
 
-    host._czhReload = load;
+    host._czhReload = function () { load(0); };
     // 监听只绑一次：render 会被反复调用（初始 / 加载中 / 加载完成），
     // 绑在 render 里会在同一个节点上叠出多重监听，一次点击就发多条内容。
     bind(root, state, render, load);
     render();
-    load();
+    load(0);
   }
 
   // ============================================================ 线程式评论
+
+  // 加载失败时给一个「重试」，省得访客整页刷新
+  function errorHtml(state) {
+    return '<div class="comments-error">' + esc(state.error) +
+      '<button type="button" class="cmt-retry" data-act="retry">重试</button></div>';
+  }
 
   function threadHtml(state) {
     var rows = state.rows;
@@ -153,7 +175,7 @@
       (total ? '<div class="cmt-summary">共 ' + total + ' 条评论</div>' : '') +
       composerHtml(state, 'thread') +
       (state.loading ? '<div class="comments-loading"><div class="loading-spinner"></div>加载中…</div>' :
-        state.error ? '<div class="comments-error">' + esc(state.error) + '</div>' :
+        state.error ? errorHtml(state) :
         (!total ? '<div class="comments-empty">空着也是空着，说点什么吧</div>' :
           roots.map(function (c) {
             return commentHtml(c, 0, state, kidsMap, '');
@@ -248,7 +270,7 @@
       (rows.length ? '<div class="cmt-summary">墙上贴着 ' + rows.length + ' 张便签</div>' : '') +
       composerHtml(state, 'wall') +
       (state.loading ? '<div class="comments-loading"><div class="loading-spinner"></div>加载中…</div>' :
-        state.error ? '<div class="comments-error">' + esc(state.error) + '</div>' :
+        state.error ? errorHtml(state) :
         (!rows.length ? '<div class="comments-empty">来贴第一张吧</div>' :
           '<div class="wall-notes">' + rows.map(function (n, i) {
             var own = mine(n);
@@ -278,9 +300,11 @@
       var id = t.getAttribute('data-id');
 
       if (act === 'login') {
-        if (window._siteRequireLogin) window._siteRequireLogin().then(function () { load(); });
+        if (window._siteRequireLogin) window._siteRequireLogin().then(function () { load(0); });
         return;
       }
+
+      if (act === 'retry') { load(0); return; }
 
       if (act === 'reply') {
         state.openReply = (state.openReply === Number(id)) ? null : Number(id);
@@ -410,10 +434,9 @@
       if (box) box.removeAttribute('data-dirty');
     });
     all().forEach(function (h) {
-      if (h.getAttribute('data-mounted')) {
-        h.removeAttribute('data-mounted');
-        mount(h);
-      }
+      if (h.getAttribute('data-mounted') !== '1') return;
+      if (h._czhRepaint) h._czhRepaint();
+      else { h.removeAttribute('data-mounted'); mount(h); }
     });
   });
 

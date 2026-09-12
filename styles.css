@@ -1282,6 +1282,24 @@ body.dark .comment-item.comment-item-nested {
     padding: 1rem;
 }
 
+.cmt-retry {
+    display: inline-block;
+    margin-left: 0.6rem;
+    padding: 0.2rem 0.75rem;
+    font-size: 0.8rem;
+    color: inherit;
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+}
+
+.cmt-retry:hover {
+    opacity: 1;
+}
+
 /* ===== 用户系统 ===== */
 .user-menu {
     display: flex;

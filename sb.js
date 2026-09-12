@@ -104,10 +104,18 @@
     if (opt.headers) {
       for (var k in opt.headers) if (opt.headers.hasOwnProperty(k)) headers[k] = opt.headers[k];
     }
-    return fetch(BASE + path, {
+    // 加超时：国内直连 supabase 偶尔会挂住迟迟不返回，
+    // 没有这道闸请求会一直悬着，界面就停在「加载中…」。
+    var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var aborted = false;
+    var timer = ac ? setTimeout(function () { aborted = true; ac.abort(); }, opt.timeout || 20000) : null;
+    function cleanup() { if (timer) { clearTimeout(timer); timer = null; } }
+
+    var done = fetch(BASE + path, {
       method: method,
       headers: headers,
-      body: hasBody ? JSON.stringify(body) : undefined
+      body: hasBody ? JSON.stringify(body) : undefined,
+      signal: ac ? ac.signal : undefined
     }).then(function (r) {
       if (r.status === 401 && opt.auth !== false && session) {
         // 令牌失效（可能是服务端重置了）：清掉本地会话，提示重新登录
@@ -128,6 +136,16 @@
         }
         return d;
       });
+    });
+
+    return done.then(function (v) { cleanup(); return v; }, function (e) {
+      cleanup();
+      if (aborted) {
+        var err = new Error('请求超时');
+        err.code = 'timeout';
+        throw err;
+      }
+      throw e;
     });
   }
 

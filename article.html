@@ -37,7 +37,9 @@
 
     <section class="comments-section" id="comments">
         <h2>评论<span class="cmt-pv" id="articlePv"></span></h2>
-        <div id="commentHost" class="comment-host"></div>
+        <!-- 刻意不带 .comment-host：term 要等文章数据回来才知道，
+             由 mountComments() 设好 data-term 再挂载，避免被提前用错路径挂上 -->
+        <div id="commentHost"></div>
     </section>
 
     <footer><p>&copy; 2026 蔡梓涵 · Powered by GitHub Pages</p></footer>
@@ -132,11 +134,16 @@ function initLike(row) {
 function mountComments() {
     var el = document.getElementById('commentHost');
     if (!el) return;
-    el.className = 'comment-host';
     el.setAttribute('data-term', TERM);
-    var go = function () { if (window._mountComments) window._mountComments('#commentHost'); };
-    if (window._mountComments) go();
-    else window.addEventListener('load', go);
+    el.className = 'comment-host';
+    // comments.js 是同步脚本，正常此时已就绪；万一还没到，稍等重试，
+    // 不再依赖 load 事件（load 已经过去的话就永远等不到了）。
+    var tries = 0;
+    (function go() {
+        if (window._mountComments) { window._mountComments('#commentHost'); return; }
+        if (++tries > 50) return;
+        setTimeout(go, 100);
+    })();
 }
 
 function notFound(msg) {
