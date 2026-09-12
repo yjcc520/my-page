@@ -296,6 +296,10 @@ nav {
     pointer-events: none;
 }
 .shinchan-float:hover .mascot-tip { opacity: 1; transform: translateY(0); }
+/* 说完关键台词 / 聊天框开着时，气泡常显一会儿 */
+.shinchan-float.talking .mascot-tip,
+.shinchan-float.talking:hover .mascot-tip { opacity: 1; transform: translateY(0); }
+.shinchan-float.talking .shinchan img { box-shadow: 0 16px 40px rgba(58,86,112,.5); }
 .shinchan.shake { animation: shinchanShake 0.5s ease; }
 @keyframes shinchanShake {
   0%, 100% { transform: translateX(0) rotate(0); }

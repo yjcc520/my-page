@@ -59,6 +59,7 @@
 })();
 
 // 小新对话气泡：悬停显示第一句，点击循环切换，刷新自动重置（状态仅存于内存）
+// 说到最后一句「不要打扰小新了」之后，再点 10 次 → 小新松口开聊，弹出聊天框
 (function () {
   var floatEl = document.getElementById('shinchanFloat');
   if (!floatEl) return;
@@ -75,24 +76,69 @@
     '再点我的话，就尝尝我的动感光波！'                           // 带抖动
   ];
   var finalLine = '不要打扰小新了。';
+  var openLine = '真那你没办法，那就和你聊一聊吧。';
+  var openedLine = '那我就在这里说话啦，你快点讲。';
   var clicks = 0;
+  var opened = false;   // 聊天框是否已经放过行（放行之后不再重复触发）
+
+  function shake() {
+    var s = floatEl.querySelector('.shinchan');
+    if (s) { s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake'); }
+  }
 
   function setTip(t) { tip.textContent = t; }
-  setTip(lines[0]); // 初���/悬停时的第一句
+
+  // 让气泡常显一会儿：聊天框开着、或刚说完关键台词时，别被 hover 的隐藏规则吃掉
+  function peek(ms) {
+    floatEl.classList.add('talking');
+    clearTimeout(peek._t);
+    peek._t = setTimeout(function () { floatEl.classList.remove('talking'); }, ms || 6000);
+  }
+
+  setTip(lines[0]); // 初始/悬停时的第一句
 
   function advance() {
+    // 已经开聊了：再点就是催他出来
+    if (opened) {
+      setTip(openedLine);
+      peek(4000);
+      if (window.ShinchanChat) window.ShinchanChat.open();
+      shake();
+      return;
+    }
+
     clicks++;
+
     if (clicks < lines.length) {
       setTip(lines[clicks]);          // 依次切换各句
-    } else {
-      setTip(finalLine);              // 之后→不要打扰小新了
+      if (lines[clicks].indexOf('动感光波') !== -1) shake();
+      return;
     }
-    // 出现「动感光波」那句时抖动一下（按文案判断，避免索引错位）
-    if (lines[clicks] && lines[clicks].indexOf('动感光波') !== -1) {
-      var s = floatEl.querySelector('.shinchan');
-      if (s) { s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake'); }
+
+    if (clicks < lines.length + 9) {
+      // 停留在「不要打扰小新了。」，还要再点 10 次
+      setTip(finalLine);
+      if (clicks === lines.length || clicks === lines.length + 4) shake();
+      return;
+    }
+
+    // 第 10 次：小新松口，弹出聊天框
+    opened = true;
+    setTip(openLine);
+    peek(7000);
+    shake();
+    if (window.ShinchanChat) {
+      setTimeout(function () { window.ShinchanChat.open(); }, 520);
     }
   }
 
   floatEl.addEventListener('click', advance);
+
+  // 聊天框关掉后，气泡回到「不要打扰小新了。」
+  document.addEventListener('click', function (e) {
+    if (!opened) return;
+    if (e.target.closest && e.target.closest('#scClose, #scMask')) {
+      setTimeout(function () { if (!window.ShinchanChat || !window.ShinchanChat.isOpen()) setTip(finalLine); }, 0);
+    }
+  });
 })();

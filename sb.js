@@ -163,7 +163,7 @@
 
   // 表名白名单，避免拼接出意外路径
   // score_board 是聚合视图（只读）；visit_sessions 是访问快照，RLS 只放行站长
-  var TABLES = { comments: 1, notes: 1, posts: 1, articles: 1, scores: 1, photos: 1, profiles: 1, score_board: 1, visit_sessions: 1 };
+  var TABLES = { comments: 1, notes: 1, posts: 1, articles: 1, scores: 1, photos: 1, profiles: 1, score_board: 1, visit_sessions: 1, chat_messages: 1 };
 
   function table(name) {
     if (!TABLES[name]) throw new Error('未知数据表：' + name);
