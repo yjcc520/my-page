@@ -175,8 +175,9 @@ nav {
     margin: 0 auto;
     padding: 0.85rem 2rem;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
+    gap: 1.5rem;
 }
 
 .logo {
@@ -185,9 +186,21 @@ nav {
     color: var(--primary);
     text-decoration: none;
     letter-spacing: -0.02em;
+    flex: 0 0 auto;
+    margin-right: auto;
 }
 
-.nav-links { display: flex; gap: 1.8rem; align-items: center; }
+.nav-links { display: flex; gap: 1.6rem; align-items: center; justify-content: flex-end; min-width: 0; }
+
+/* 语言/主题等右侧工具区：不参与导航滚动，始终可见 */
+.nav-side {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+}
+.nav-side .theme-toggle { margin-left: 0; }
+.user-menu { flex: 0 0 auto; }
 .nav-links a {
     color: var(--text-light);
     text-decoration: none;
@@ -652,9 +665,28 @@ footer {
         grid-template-columns: 1fr;
     }
 
-    .nav-links {
-        gap: 1rem;
+    /* 手机上导航项横向滑动，工具区固定 —— 栏目一个都不少，也不挤压换行 */
+    .nav-inner {
+        padding: 0.7rem 1rem;
+        gap: 0.7rem;
     }
+    .logo {
+        font-size: 1.15rem;
+    }
+    .nav-links {
+        gap: 1.1rem;
+        justify-content: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding-bottom: 6px;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-links > * { flex: 0 0 auto; }
+    .nav-side { gap: 0.25rem; }
+    .lang-btn { padding: 2px 5px; font-size: 0.65rem; }
 
     .about, .skills, .contact {
         padding: 3rem 1.5rem;

@@ -4,6 +4,7 @@
     zh: {
       nav_home: '首页', nav_about: '关于我', nav_blog: '博客',
       nav_tags: '标签', nav_gallery: '画廊', nav_games: '小游戏',
+      nav_forum: '论坛', nav_tests: '测试', nav_visits: '访问',
       hero_greet: '你好，我是', hero_tagline: '中国人',
       section_about: '关于我',
       about_city: '📍 所在城市', about_city_val: '北京 / 长沙',
@@ -25,6 +26,7 @@
     en: {
       nav_home: 'Home', nav_about: 'About', nav_blog: 'Blog',
       nav_tags: 'Tags', nav_gallery: 'Gallery', nav_games: 'Games',
+      nav_forum: 'Forum', nav_tests: 'Quiz', nav_visits: 'Visits',
       hero_greet: 'Hello, I am', hero_tagline: 'Chinese',
       section_about: 'About Me',
       about_city: '📍 City', about_city_val: 'Beijing / Changsha',
@@ -46,6 +48,7 @@
     ja: {
       nav_home: 'ホーム', nav_about: '私について', nav_blog: 'ブログ',
       nav_tags: 'タグ', nav_gallery: 'ギャラリー', nav_games: 'ゲーム',
+      nav_forum: 'フォーラム', nav_tests: 'テスト', nav_visits: 'アクセス',
       hero_greet: 'こんにちは、', hero_tagline: '中国人',
       section_about: '私について',
       about_city: '📍 都市', about_city_val: '北京 / 長沙',

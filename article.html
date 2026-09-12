@@ -9,19 +9,8 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <nav>
-        <div class="nav-inner">
-            <a href="index.html" class="logo">Zihan</a>
-            <div class="nav-links">
-                <a href="index.html">首页</a>
-                <a href="index.html#about">关于我</a>
-                <a href="blog.html">博客</a>
-                <a href="forum.html">论坛</a>
-                <a href="index.html#contact">联系</a>
-                <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
-            </div>
-        </div>
-    </nav>
+    <nav id="siteNav" data-extra="联系:index.html#contact"></nav>
+    <script src="nav.js"></script>
 
     <article class="article-page" id="articleContent"></article>
 
