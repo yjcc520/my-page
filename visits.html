@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>访问记录 | 蔡梓涵</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="stylesheet" href="styles.css">
+<style>
+.visit-page { padding: 6rem 1.5rem 4rem; max-width: 900px; margin: 0 auto; min-height: 70vh; }
+.visit-header { margin-bottom: 1.5rem; }
+.visit-header h1 { font-size: 1.8rem; margin-bottom: 0.3rem; }
+.visit-header p { color: var(--text-light); font-size: 0.88rem; }
+.visit-summary { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+.vs-card { flex: 1 1 130px; background: var(--bg-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.85rem 1rem; }
+.vs-card b { display: block; font-size: 1.5rem; font-weight: 700; color: var(--primary); line-height: 1.2; }
+.vs-card span { font-size: 0.76rem; color: var(--text-light); }
+.visit-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 1.1rem; font-size: 0.82rem; color: var(--text-light); }
+.visit-toolbar button {
+  font-family: inherit; font-size: 0.78rem; padding: 0.25rem 0.75rem;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text-light);
+  border-radius: 999px; cursor: pointer; transition: all 0.15s;
+}
+.visit-toolbar button.on { border-color: var(--primary); color: var(--primary); background: var(--primary-glow); }
+.day { margin-bottom: 1.5rem; }
+.day-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
+.day-head h2 { font-size: 0.98rem; font-weight: 700; }
+.day-head em { font-style: normal; font-size: 0.78rem; color: var(--text-light); }
+.sess { display: flex; gap: 0.8rem; padding: 0.6rem 0; border-bottom: 1px dashed var(--border); }
+.sess:last-child { border-bottom: none; }
+.sess-time { flex: 0 0 100px; font-size: 0.8rem; color: var(--text-light); font-variant-numeric: tabular-nums; }
+.sess-main { flex: 1; min-width: 0; }
+.sess-top { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.35rem; }
+.badge { font-size: 0.68rem; padding: 0.08rem 0.5rem; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.b-微信 { color: #0a7d33; border-color: rgba(10,125,51,0.4); background: rgba(10,125,51,0.1); }
+.b-桌面浏览器 { color: var(--primary); border-color: var(--primary); background: var(--primary-glow); }
+.b-手机浏览器 { color: #2a6b8f; border-color: rgba(42,107,143,0.4); background: rgba(42,107,143,0.1); }
+.b-爬虫, .b-脚本 { color: var(--text-light); border-color: var(--border); background: var(--bg-alt); }
+.sess-ua { font-size: 0.74rem; color: var(--text-light); }
+.sess-ip { font-size: 0.72rem; color: var(--text-light); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.sess-pages { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+.sess-pages i { font-style: normal; font-size: 0.72rem; padding: 0.08rem 0.45rem; border-radius: 4px; background: var(--bg-alt); border: 1px solid var(--border); color: var(--text-light); }
+.visit-gate, .visit-empty { text-align: center; padding: 3.5rem 1rem; color: var(--text-light); line-height: 1.9; }
+@media (max-width: 600px) {
+  .visit-page { padding: 5rem 1rem 3rem; }
+  .sess { flex-direction: column; gap: 0.3rem; }
+  .sess-time { flex: none; }
+}
+</style>
+</head>
+<body>
+    <nav>
+        <div class="nav-inner">
+            <span class="logo">Zihan</span>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="blog.html">博客</a>
+                <a href="gallery.html">画廊</a>
+                <a href="forum.html">论坛</a>
+                <a href="games.html">小游戏</a>
+                <button class="theme-toggle" onclick="_toggleTheme()" title="切换主题">☀️</button>
+            </div>
+        </div>
+    </nav>
+
+<main class="visit-page">
+    <div class="visit-header">
+        <h1>访问记录</h1>
+        <p>后端日志只留 24 小时，这里每天 9:30 自动存档一次。</p>
+    </div>
+    <div id="gate" class="visit-gate" style="display:none"></div>
+    <div id="body" style="display:none">
+        <div class="visit-summary" id="summary"></div>
+        <div class="visit-toolbar">
+            <span>显示：</span>
+            <button id="tgScript">我的脚本</button>
+            <button id="tgBot">爬虫</button>
+        </div>
+        <div id="days"></div>
+    </div>
+</main>
+
+<script src="sb.js"></script>
+<script src="user.js"></script>
+<script src="theme.js"></script>
+<script>
+(function () {
+    var OWNER = 'yjcc';
+    var rows = [];
+    var showScript = false, showBot = false;
+    var gate = document.getElementById('gate');
+    var body = document.getElementById('body');
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    // 前端只控制显隐，真正的门槛是数据库 RLS（只有站长那一行 uid 能读）
+    function isOwner() {
+        return (typeof window._siteGetNickname === 'function') &&
+               window._siteGetNickname() === OWNER;
+    }
+
+    function hhmm(iso) {
+        try {
+            return new Date(iso).toLocaleTimeString('zh-CN', {
+                timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false
+            });
+        } catch (e) { return '--:--'; }
+    }
+
+    function dayLabel(d) {        var p = String(d).split('-');
+        if (p.length !== 3) return d;
+        var dt = new Date(+p[0], +p[1] - 1, +p[2]);
+        var wd = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][dt.getDay()];
+        return (+p[1]) + '月' + (+p[2]) + '日 ' + wd;
+    }
+
+    // 只发了单次请求的会话，起止时间一样，只显示一个
+    function span(r) {
+        var a = hhmm(r.started_at), b = hhmm(r.ended_at);
+        return a === b ? a : a + '–' + b;
+    }
+
+    function isReal(r) { return r.channel !== '脚本' && r.channel !== '爬虫'; }
+
+    function visible(r) {
+        if (r.channel === '脚本') return showScript;
+        if (r.channel === '爬虫') return showBot;
+        return true;
+    }
+
+    function render() {
+        var real = rows.filter(isReal);
+        var cutoff = Date.now() - 7 * 864e5;
+        var week = real.filter(function (r) { return new Date(r.started_at).getTime() >= cutoff; });
+        function uniqIp(list) {
+            var s = {};
+            list.forEach(function (r) { s[r.ip] = 1; });
+            return Object.keys(s).length;
+        }
+        var dayCount = {};
+        real.forEach(function (r) { dayCount[r.day] = 1; });
+
+        document.getElementById('summary').innerHTML =
+            '<div class="vs-card"><b>' + week.length + '</b><span>近 7 天访问</span></div>' +
+            '<div class="vs-card"><b>' + uniqIp(week) + '</b><span>近 7 天独立来源</span></div>' +
+            '<div class="vs-card"><b>' + uniqIp(real) + '</b><span>累计独立来源</span></div>' +
+            '<div class="vs-card"><b>' + Object.keys(dayCount).length + '</b><span>已存档天数</span></div>';
+
+        var groups = [];
+        var map = {};
+        rows.filter(visible).forEach(function (r) {
+            if (!map[r.day]) { map[r.day] = []; groups.push(r.day); }
+            map[r.day].push(r);
+        });
+
+        var html = groups.map(function (day) {
+            var list = map[day];
+            var rl = list.filter(isReal);
+            var head = '<div class="day-head"><h2>' + esc(dayLabel(day)) + '</h2><em>' +
+                rl.length + ' 次访问 · ' + uniqIp(rl) + ' 个来源' +
+                (list.length !== rl.length ? '（另有 ' + (list.length - rl.length) + ' 次脚本 / 爬虫）' : '') +
+                '</em></div>';
+
+            var items = list.map(function (r) {
+                var pages = String(r.pages || '').split(' / ').filter(Boolean);
+                return '<div class="sess">' +
+                    '<div class="sess-time">' + span(r) + '</div>' +
+                    '<div class="sess-main">' +
+                        '<div class="sess-top">' +
+                            '<span class="badge b-' + esc(r.channel) + '">' + esc(r.channel) + '</span>' +
+                            '<span class="sess-ua">' + esc(r.ua_sample || '') + '</span>' +
+                            '<span class="sess-ip">' + esc(r.ip) + '</span>' +
+                            '<span class="sess-ua">' + r.req_count + ' 次请求</span>' +
+                        '</div>' +
+                        '<div class="sess-pages">' +
+                            pages.map(function (p) { return '<i>' + esc(p) + '</i>'; }).join('') +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+
+            return '<div class="day">' + head + items + '</div>';
+        }).join('');
+
+        document.getElementById('days').innerHTML = html ||
+            '<div class="visit-empty">还没有存档数据。每天 9:30 会自动跑一次。</div>';
+    }
+
+    function bindToggle(id, flag) {
+        var btn = document.getElementById(id);
+        btn.addEventListener('click', function () {
+            if (flag === 'script') showScript = !showScript;
+            else showBot = !showBot;
+            btn.classList.toggle('on');
+            render();
+        });
+    }
+    bindToggle('tgScript', 'script');
+    bindToggle('tgBot', 'bot');
+
+    function ready() {
+        if (!isOwner()) {
+            gate.style.display = '';
+            gate.innerHTML = (window._siteGetNickname && window._siteGetNickname())
+                ? '这一页只有站长能看。<br><a href="index.html">回首页</a>'
+                : '请先登录站长账号。<br><a href="index.html">回首页</a>';
+            return;
+        }
+        body.style.display = '';
+        SB.select('visit_sessions', SB.q({
+            select: 'day,started_at,ended_at,ip,channel,req_count,pages,referer,ua_sample',
+            order: 'started_at.desc',
+            limit: '1000'
+        })).then(function (list) {
+            rows = list || [];
+            render();
+        }).catch(function (e) {
+            body.style.display = 'none';
+            gate.style.display = '';
+            gate.textContent = '读取失败：' + ((e && e.message) || e);
+        });
+    }
+
+    // 等会话恢复完成再判定权限。SB.ready 是 sb.js 暴露的「会话就绪」Promise。
+    // 别用「昵称非空」当就绪信号：未登录时昵称永远是空，会把访客白等十几秒。
+    var done = false;
+    function go() { if (done) return; done = true; ready(); }
+    if (window.SB && SB.ready && SB.ready.then) SB.ready.then(go, go);
+    else go();
+    setTimeout(go, 8000);
+})();
+</script>
+</body>
+</html>

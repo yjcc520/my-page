@@ -24,6 +24,7 @@
                 <a href="forum.html">论坛</a>
                 <a href="games.html" data-i18n-text="nav_games">小游戏</a>
                 <a href="tests.html">测试</a>
+                <a href="visits.html" id="navVisits" style="display:none">访问</a>
                 <span class="lang-switcher">
                     <button class="lang-btn" onclick="_setLang('zh')" id="langZh">中</button>
                     <button class="lang-btn" onclick="_setLang('en')" id="langEn">EN</button>
@@ -340,5 +341,18 @@ window._applyI18n();
 
     <script src="shinchan.js"></script>
     <script src="piano.js"></script>
+    <script>
+    // 「访问」入口只给站长看（真正的门槛在数据库 RLS，这里只控制显隐）
+    (function () {
+        function sync() {
+            var el = document.getElementById('navVisits');
+            if (!el) return;
+            el.style.display = (window._siteGetNickname && window._siteGetNickname() === 'yjcc') ? '' : 'none';
+        }
+        if (window.SB && SB.ready && SB.ready.then) SB.ready.then(sync, sync);
+        else sync();
+        if (window.SB && SB.onChange) SB.onChange(sync);
+    })();
+    </script>
 </body>
 </html>
