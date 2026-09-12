@@ -118,7 +118,8 @@
     if (clicks < lines.length + 9) {
       // 停留在「不要打扰小新了。」，还要再点 10 次
       setTip(finalLine);
-      if (clicks === lines.length || clicks === lines.length + 4) shake();
+      // 每 2 次抖一下，避免"点了没反应"的错觉
+      if ((clicks - lines.length) % 2 === 0) shake();
       return;
     }
 
