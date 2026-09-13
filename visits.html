@@ -39,6 +39,8 @@
 .b-爬虫, .b-脚本 { color: var(--text-light); border-color: var(--border); background: var(--bg-alt); }
 .sess-ua { font-size: 0.74rem; color: var(--text-light); }
 .sess-ip { font-size: 0.72rem; color: var(--text-light); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.sess-label { font-size: 0.7rem; padding: 0.08rem 0.5rem; border-radius: 999px; border: 1px dashed var(--primary); color: var(--primary); background: var(--primary-glow); white-space: nowrap; }
+.sess-label.mine { border-style: solid; border-color: var(--border); color: var(--text-light); background: var(--bg-alt); }
 .sess-pages { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
 .sess-pages i { font-style: normal; font-size: 0.72rem; padding: 0.08rem 0.45rem; border-radius: 4px; background: var(--bg-alt); border: 1px solid var(--border); color: var(--text-light); }
 .visit-gate, .visit-empty { text-align: center; padding: 3.5rem 1rem; color: var(--text-light); line-height: 1.9; }
@@ -65,8 +67,8 @@
             <span>显示：</span>
             <button id="tgScript">我的脚本</button>
             <button id="tgBot">爬虫</button>
-        </div>
-        <div id="days"></div>
+            <button id="tgMine">我自己</button>
+        </div>        <div id="days"></div>
     </div>
 </main>
 
@@ -77,9 +79,23 @@
 (function () {
     var OWNER = 'yjcc';
     var rows = [];
-    var showScript = false, showBot = false;
+    var showScript = false, showBot = false, showMine = true;
     var gate = document.getElementById('gate');
     var body = document.getElementById('body');
+
+    // 已知 IP 的兜底归属（数据库 ip_label 为空时用；两边都空就显示「未标注」）
+    var IP_FALLBACK = {
+        '199.30.25.194': '微软 Bing 爬虫（美国）'
+    };
+
+    function labelOf(r) {
+        return r.ip_label || IP_FALLBACK[r.ip] || '';
+    }
+
+    // 站长自己的 IP 用灰底，外部来源用醒目描边
+    function isMine(r) {
+        return /站长/.test(labelOf(r));
+    }
 
     function esc(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -119,13 +135,16 @@
     function visible(r) {
         if (r.channel === '脚本') return showScript;
         if (r.channel === '爬虫') return showBot;
+        if (isMine(r) && !showMine) return false;
         return true;
     }
 
     function render() {
         var real = rows.filter(isReal);
+        // 统计口径：真实访客 = 非脚本非爬虫，且不是站长自己的 IP
+        var others = real.filter(function (r) { return !isMine(r); });
         var cutoff = Date.now() - 7 * 864e5;
-        var week = real.filter(function (r) { return new Date(r.started_at).getTime() >= cutoff; });
+        var week = others.filter(function (r) { return new Date(r.started_at).getTime() >= cutoff; });
         function uniqIp(list) {
             var s = {};
             list.forEach(function (r) { s[r.ip] = 1; });
@@ -135,9 +154,9 @@
         real.forEach(function (r) { dayCount[r.day] = 1; });
 
         document.getElementById('summary').innerHTML =
-            '<div class="vs-card"><b>' + week.length + '</b><span>近 7 天访问</span></div>' +
+            '<div class="vs-card"><b>' + week.length + '</b><span>近 7 天外部访问</span></div>' +
             '<div class="vs-card"><b>' + uniqIp(week) + '</b><span>近 7 天独立来源</span></div>' +
-            '<div class="vs-card"><b>' + uniqIp(real) + '</b><span>累计独立来源</span></div>' +
+            '<div class="vs-card"><b>' + uniqIp(others) + '</b><span>累计独立来源</span></div>' +
             '<div class="vs-card"><b>' + Object.keys(dayCount).length + '</b><span>已存档天数</span></div>';
 
         var groups = [];
@@ -157,11 +176,16 @@
 
             var items = list.map(function (r) {
                 var pages = String(r.pages || '').split(' / ').filter(Boolean);
+                var lb = labelOf(r);
+                var lbHtml = lb
+                    ? '<span class="sess-label' + (isMine(r) ? ' mine' : '') + '">' + esc(lb) + '</span>'
+                    : '<span class="sess-label mine">未标注</span>';
                 return '<div class="sess">' +
                     '<div class="sess-time">' + span(r) + '</div>' +
                     '<div class="sess-main">' +
                         '<div class="sess-top">' +
                             '<span class="badge b-' + esc(r.channel) + '">' + esc(r.channel) + '</span>' +
+                            lbHtml +
                             '<span class="sess-ua">' + esc(r.ua_sample || '') + '</span>' +
                             '<span class="sess-ip">' + esc(r.ip) + '</span>' +
                             '<span class="sess-ua">' + r.req_count + ' 次请求</span>' +
@@ -184,13 +208,16 @@
         var btn = document.getElementById(id);
         btn.addEventListener('click', function () {
             if (flag === 'script') showScript = !showScript;
+            else if (flag === 'mine') showMine = !showMine;
             else showBot = !showBot;
             btn.classList.toggle('on');
             render();
         });
     }
+    document.getElementById('tgMine').classList.add('on');
     bindToggle('tgScript', 'script');
     bindToggle('tgBot', 'bot');
+    bindToggle('tgMine', 'mine');
 
     function ready() {
         if (!isOwner()) {
@@ -202,7 +229,7 @@
         }
         body.style.display = '';
         SB.select('visit_sessions', SB.q({
-            select: 'day,started_at,ended_at,ip,channel,req_count,pages,referer,ua_sample',
+            select: 'day,started_at,ended_at,ip,ip_label,channel,req_count,pages,referer,ua_sample',
             order: 'started_at.desc',
             limit: '1000'
         })).then(function (list) {
