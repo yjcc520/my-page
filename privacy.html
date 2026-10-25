@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隐私说明 | 蔡梓涵</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="stylesheet" href="styles.css">
+<style>
+.privacy-page { padding: 6rem 1.5rem 4rem; max-width: 760px; margin: 0 auto; min-height: 70vh; line-height: 1.9; }
+.privacy-page h1 { font-size: 1.8rem; margin-bottom: 0.4rem; }
+.privacy-page .updated { color: var(--text-light); font-size: 0.82rem; margin-bottom: 1.8rem; }
+.privacy-page .lead { font-size: 1rem; margin-bottom: 1.6rem; }
+.privacy-page h2 { font-size: 1.05rem; margin: 2rem 0 0.7rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border); }
+.privacy-page p, .privacy-page li { font-size: 0.92rem; }
+.privacy-page ul { padding-left: 1.2rem; margin: 0.5rem 0; }
+.privacy-page li { margin-bottom: 0.35rem; }
+.privacy-page code { font-size: 0.85em; background: var(--bg-alt); padding: 0.1rem 0.35rem; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.privacy-page table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.85rem; }
+.privacy-page th, .privacy-page td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); }
+.privacy-page th { font-weight: 600; color: var(--text-light); font-size: 0.8rem; }
+.privacy-page a { color: var(--primary); }
+@media (max-width: 600px) { .privacy-page { padding: 5rem 1rem 3rem; } }
+</style>
+</head>
+<body>
+    <nav id="siteNav"></nav>
+    <script src="nav.js"></script>
+
+<main class="privacy-page">
+    <h1>隐私说明</h1>
+    <p class="updated">最后更新：2026 年 10 月 25 日</p>
+    <p class="lead">这是蔡梓涵的个人网站。下面用大白话说清楚：我收集什么、为什么收集、存多久、给了谁。</p>
+
+    <h2>一、我收集什么</h2>
+    <p><strong>1. 访问记录（自动记录）</strong></p>
+    <p>有人打开页面时，服务器会记下：</p>
+    <ul>
+        <li>脱敏后的网段，例如 <code>111.203.16.*</code> —— <strong>不保存完整 IP 地址</strong></li>
+        <li>一个「来源指纹」：把 IP 加盐后做 SHA-256 哈希再截断。它只用来判断「是不是同一个人又来了」，无法反推出 IP</li>
+        <li>浏览器标识（User-Agent）、访问了哪些页面、从哪个页面跳转过来、访问时间</li>
+    </ul>
+    <p><strong>2. 账号信息（只有你注册时）</strong></p>
+    <ul>
+        <li>昵称，以及密码（以哈希形式保存，我看不到明文）</li>
+        <li>注册时自动生成的内部标识（不用于发信）</li>
+    </ul>
+    <p><strong>3. 你主动留下的内容</strong></p>
+    <p>评论、留言、论坛帖子，以及和小新的对话。</p>
+
+    <h2>二、为什么收集</h2>
+    <ul>
+        <li><strong>访问记录</strong>：知道有没有人看、大概从哪来、区分真人和爬虫。纯粹是个人好奇心，不做商业分析。</li>
+        <li><strong>账号</strong>：登录，以及防止别人冒名发言。</li>
+        <li><strong>内容</strong>：把你自己发的东西显示出来。</li>
+    </ul>
+    <p><strong>不做的事</strong>：不建用户画像，不做广告投放，不把数据卖给别人或提供给任何第三方。</p>
+
+    <h2>三、存多久</h2>
+    <ul>
+        <li><strong>访问记录</strong>：最多 180 天，之后自动删除。</li>
+        <li><strong>账号与内容</strong>：直到你删除或注销。</li>
+        <li><strong>和小新的对话</strong>：每个会话只保留最近 30 条，用来维持上下文。</li>
+    </ul>
+
+    <h2>四、数据放在哪、经过谁</h2>
+    <table>
+        <thead>
+            <tr><th>服务</th><th>用途</th><th>接触什么数据</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>GitHub Pages</td><td>网页托管</td><td>不接触数据</td></tr>
+            <tr><td>Supabase</td><td>数据库与后端</td><td>上面提到的全部内容</td></tr>
+            <tr><td>DeepSeek</td><td>小新的对话生成</td><td>你发给小新的文字</td></tr>
+        </tbody>
+    </table>
+    <p><strong>需要单独说明</strong>：和小新聊天时，你发送的消息会提交给 DeepSeek 的模型接口，用来生成回复。它不参与本站的其他任何数据处理。</p>
+
+    <h2>五、你的权利</h2>
+    <ul>
+        <li>想查看自己的数据、想删除、想注销账号：可以在 <a href="https://github.com/yjcc520" target="_blank" rel="noopener">GitHub</a> 找我，或者直接在站内留言。</li>
+        <li>关于访问记录：浏览器开启「请勿追踪」本站不会识别；不过本站本身不保存完整 IP，也无法把它关联到你的真实身份。</li>
+    </ul>
+
+    <h2>六、变更</h2>
+    <p>这份说明有变化时，会更新本页顶部的日期。</p>
+</main>
+
+<script src="theme.js"></script>
+</body>
+</html>

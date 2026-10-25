@@ -20,6 +20,7 @@ __pycache__/
 # 临时文件
 *.tmp
 *.log
+.playwright-mcp/
 
 # 环境变量
 .env

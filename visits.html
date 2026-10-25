@@ -58,7 +58,7 @@
 <main class="visit-page">
     <div class="visit-header">
         <h1>访问记录</h1>
-        <p>后端日志只留 24 小时，这里每天 9:30 自动存档一次。</p>
+        <p>后端日志只留 24 小时，这里每天 9:30 自动存档一次。IP 已脱敏，只保留网段与来源指纹。</p>
     </div>
     <div id="gate" class="visit-gate" style="display:none"></div>
     <div id="body" style="display:none">
@@ -83,13 +83,13 @@
     var gate = document.getElementById('gate');
     var body = document.getElementById('body');
 
-    // 已知 IP 的兜底归属（数据库 ip_label 为空时用；两边都空就显示「未标注」）
+    // 已知网段的兜底归属（数据库 ip_label 为空时用；两边都空就显示「未标注」）
     var IP_FALLBACK = {
-        '199.30.25.194': '微软 Bing 爬虫（美国）'
+        '199.30.25.*': '微软 Bing 爬虫（美国）'
     };
 
     function labelOf(r) {
-        return r.ip_label || IP_FALLBACK[r.ip] || '';
+        return r.ip_label || IP_FALLBACK[r.ip_prefix] || '';
     }
 
     // 站长自己的 IP 用灰底，外部来源用醒目描边
@@ -147,7 +147,7 @@
         var week = others.filter(function (r) { return new Date(r.started_at).getTime() >= cutoff; });
         function uniqIp(list) {
             var s = {};
-            list.forEach(function (r) { s[r.ip] = 1; });
+            list.forEach(function (r) { s[r.ip_hash] = 1; });
             return Object.keys(s).length;
         }
         var dayCount = {};
@@ -187,7 +187,8 @@
                             '<span class="badge b-' + esc(r.channel) + '">' + esc(r.channel) + '</span>' +
                             lbHtml +
                             '<span class="sess-ua">' + esc(r.ua_sample || '') + '</span>' +
-                            '<span class="sess-ip">' + esc(r.ip) + '</span>' +
+                            '<span class="sess-ip">' + esc(r.ip_prefix || '未知网段') +
+                            ' · ' + esc(String(r.ip_hash || '').slice(0, 8)) + '</span>' +
                             '<span class="sess-ua">' + r.req_count + ' 次请求</span>' +
                         '</div>' +
                         '<div class="sess-pages">' +
@@ -229,7 +230,7 @@
         }
         body.style.display = '';
         SB.select('visit_sessions', SB.q({
-            select: 'day,started_at,ended_at,ip,ip_label,channel,req_count,pages,referer,ua_sample',
+            select: 'day,started_at,ended_at,ip_hash,ip_prefix,ip_label,channel,req_count,pages,referer,ua_sample',
             order: 'started_at.desc',
             limit: '1000'
         })).then(function (list) {
